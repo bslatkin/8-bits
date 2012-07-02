@@ -1,0 +1,18 @@
+v1 Features:
+- Show join/leave messages
+- Roster of users who are present
+- New shard button; creates shortlink
+- Change nickname button
+- Prompt for nickname before joining (except for landing shard)
+- URL auto-linking
+
+Polish:
+- Add a favicon static file
+- See where app stats is spending time
+
+Future:
+- Use historical queries to backfill chat after login
+- Drag/drop image upload
+- News post feature for longer posts
+- Roster icons
+- Silly clicking sounds when posting chat, user join, etc

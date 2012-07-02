@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/posts.css">
+    <script src="/js/closure/goog/base.js"></script>
+    <script src="/js/bits/deps.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      goog.require('bits.posts.PostContainer');
+      goog.require('goog.debug.Console');
+    </script>
+  </head>
+  <body>
+    <p>
+      Here's a container of posts! Mouse-over to see a tooltip. Try copying/pasting lines into a text editor to make sure that they properly render in plaintext format. Clicking on a line should not cause a horizontal scrollbar to show. Here the IDs should go in descending order because we just blindly add them to the end of the list regardless of their sequence number. This scrollbar should be automatically scrolled to the end because these posts were appended.
+    </p>
+
+    <div style="height: 200px; width: 400px; border: 1px solid black;">
+      <div id="scrollable-posts" class="bits-post-container"></div>
+    </div>
+
+    <br><br>
+
+    <p>
+      Here's another container where they've been filled in historically. Make sure that the posts show up in historical order, lower IDs first. Here the scrollbar should also be showing the first post, since historical addition should leave the scrollbar in its old location (highlighting the non-historically added element).
+    </p>
+
+    <div style="height: 200px; width: 400px; border: 1px solid black;">
+      <div id="scrollable-posts2" class="bits-post-container"></div>
+    </div>
+
+    <br><br>
+
+    <p>
+      Here's one more container that receives its messages via pubsub events. There should be messages in here for the various receiving modes. Click the send buttons to see the auto-scroll-to-bottom behavior for new posts and the stay-in-place behavior for historical posts. If the scrollbar is not already at the bottom upon message receipt it should not scroll.
+    </p>
+
+    <div style="height: 200px; width: 400px; border: 1px solid black;">
+      <div id="scrollable-posts3" class="bits-post-container"></div>
+    </div>
+
+    <br>
+
+    <div>
+      <input type="button" value="Send message" id="send-message">
+      <input type="button" value="Historical message" id="historical-message">
+    </div>
+
+    <script>
+      var c = new goog.debug.Console();
+      c.setCapturing(true);
+
+      //////////////////
+      // Test filling posts as they come in an event-driven manner.
+      var container = new bits.posts.PostContainer();
+      container.decorate(goog.dom.getElement('scrollable-posts'));
+
+      for (var i = 50; i > 0; i--) {
+        var postId = 'my id ' + i;
+        var post = new bits.posts.Post({
+            shardId: 1,
+            archiveType: 'chat',
+            nickname: 'User' + i + 'how longcanit get',
+            body: 'Hello from user ' + i + ', let us make these lines really long so they wrap around for fun and profit',
+            postTimeMs: (new goog.date.DateTime()).getTime(),
+            sequenceId: null,  // Do not assign it on purpose.
+            postId: postId,
+            postName: 'my post title',
+            postAttachment: '/dead-link/' + i
+          });
+
+        container.addOrUpdatePost(post);
+        var foundPost = container.postIdMap.get(postId);
+        goog.asserts.assert(foundPost);
+        goog.asserts.assert(foundPost.sequenceId == null);
+
+        // Re-adding the same postId will update the sequence number.
+        container.addOrUpdatePost(new bits.posts.Post({
+          postId: postId,
+          sequenceId: i,
+        }));
+        goog.asserts.assert(foundPost.sequenceId == i);
+      }
+
+      //////////////////
+      // Test filling in historical posts as a result of a polling query.
+      var container2 = new bits.posts.PostContainer();
+      container2.decorate(goog.dom.getElement('scrollable-posts2'));
+
+      // This one should be at the bottom.
+      container2.addOrUpdatePost(new bits.posts.Post({
+          shardId: 1,
+          archiveType: 'chat',
+          nickname: 'Starting',
+          body: 'This is an appended post that should be at the bottom',
+          postTimeMs: (new goog.date.DateTime()).getTime(),
+          postId: 'cool beans'
+        }));
+
+      var postList = [];
+      for (var i = 50; i > 0; i--) {
+        var postId = 'my id ' + i;
+        var post = new bits.posts.Post({
+            shardId: 1,
+            archiveType: 'chat',
+            nickname: 'User' + i + 'how longcanit get',
+            body: 'Hello from user ' + i + ', let us make these lines really long so they wrap around for fun and profit',
+            postTimeMs: (new goog.date.DateTime()).getTime(),
+            sequenceId: i,
+            postId: postId,
+            postName: 'my post title',
+            postAttachment: '/dead-link/' + i
+          });
+        postList.push(post);
+      }
+
+      container2.prependPosts(postList);
+      goog.asserts.assert(container2.postIdMap.getCount() == 51);
+      
+      // Re-adding known posts will do nothing.
+      container2.prependPosts(postList);
+      goog.asserts.assert(container2.postIdMap.getCount() == 51);
+
+      //////////////////
+      // Tests that PostContainers know which messages to subscribe to.
+      var shardId = 5;
+      var container3 = new bits.posts.PostContainer(shardId);
+      container3.decorate(goog.dom.getElement('scrollable-posts3'));
+
+      bits.events.PubSub.publish(
+        shardId, bits.events.EventType.PostReceived,
+        {
+          shardId: 5,
+          archiveType: 'chat',
+          nickname: 'From server',
+          body: 'Correct shard.',
+          postTimeMs: (new goog.date.DateTime()).getTime(),
+          sequenceId: 123,
+          postId: 'post 1',
+          postName: 'my post title',
+          postAttachment: '/dead-link/foo'
+      });
+
+      bits.events.PubSub.publish(
+        shardId, bits.events.EventType.SubmittedPostReceived,
+        {
+          shardId: 5,
+          archiveType: 'chat',
+          nickname: 'User post',
+          body: 'Acked by connection',
+          postTimeMs: (new goog.date.DateTime()).getTime(),
+          sequenceId: 567,
+          postId: 'post 2',
+          postName: 'my post title',
+          postAttachment: '/dead-link/foo'
+      });
+
+      var postId = 5;
+      goog.events.listen(
+          goog.dom.getElement('send-message'), goog.events.EventType.CLICK,
+          function(event) {
+            event.preventDefault();
+            bits.events.PubSub.publish(
+              shardId, bits.events.EventType.PostReceived,
+              {
+                shardId: 5,
+                archiveType: 'chat',
+                nickname: 'From button',
+                body: 'This is fun',
+                postTimeMs: (new goog.date.DateTime()).getTime(),
+                postId: 'post ' + (postId++)
+            });
+          });
+
+      goog.events.listen(
+          goog.dom.getElement('historical-message'),
+          goog.events.EventType.CLICK,
+          function(event) {
+            event.preventDefault();
+            container3.prependPosts([new bits.posts.Post({
+              shardId: 5,
+              archiveType: 'chat',
+              nickname: 'Historical',
+              body: 'Fake message',
+              postTimeMs: (new goog.date.DateTime()).getTime(),
+              sequenceId: postId,
+              postId: 'post ' + (postId++)
+            })]);
+          });
+    </script>
+  </body>
+</html>

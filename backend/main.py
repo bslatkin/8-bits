@@ -1,0 +1,890 @@
+#!/usr/bin/env python
+# 
+# Copyright 2010 Brett Slatkin, Nathan Naze
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import cgi
+import datetime
+import json
+import logging
+## Useful to enable when testing in dev_appserver.
+logging.getLogger().setLevel(logging.DEBUG)
+import os
+import time
+import traceback
+import uuid
+import wsgiref.handlers
+
+from google.appengine.api import api_base_pb
+from google.appengine.api import apiproxy_stub_map
+from google.appengine.api.channel import channel
+from google.appengine.api.channel import channel_service_pb
+from google.appengine.api import memcache
+from google.appengine.api import taskqueue
+from google.appengine.ext.appstats import recording
+from google.appengine.ext import blobstore
+from google.appengine.ext import webapp
+from google.appengine.ext.webapp import blobstore_handlers
+from google.appengine.ext.webapp import template
+from google.appengine.runtime import apiproxy_errors
+
+# Local libs
+from beaker import middleware
+import config
+import models
+import ndb
+
+################################################################################
+
+# TODO(bslatkin): Cronjobs
+# - check for logins with old presence data, log them out
+
+class Error(Exception):
+  """Base class for exceptions."""
+
+class MissingParameterError(Error):
+  """A required parameter was missing."""
+
+class BadParameterValueError(Error):
+  """A parameter has a bad type."""
+
+class NotAuthorizedError(Error):
+  """The user is not authorized to do this action."""
+
+class PostError(Error):
+  """A posting could not be made."""
+
+################################################################################
+# Utility classes, functions.
+
+class BaseHandler(webapp.RequestHandler):
+  """Base handler for turning responses into JSON.
+
+  Sub-classes should override the handle() method and stuff their response
+  parameters into self.json_response. In the event an exception is raised
+  it will be returned to the caller as 'error_class' and 'error_detail'
+  parameters in the JSON response with a 500 response. In the successful case
+  the response will be JSON with a 200 response.
+
+  Properties:
+    - all_shards: List of all shards this user is logged into.
+    - shard: The current logged in shard, set when 'require_shard' is True.
+  """
+
+  # Allow RPCs with the GET verb.
+  get_enabled = False
+
+  # Allow RPCs with the POST verb.
+  post_enabled = True
+
+  # Whether or not to require user log-in to the shard they assert.
+  require_shard = False
+
+  # Do not write the output JSON or content-type to the response.
+  raw_response = False
+
+  def get(self):
+    if not self.get_enabled:
+      self.response.set_status(405)
+      return
+    self.handle_request()
+
+  def post(self):
+    if not self.post_enabled:
+      self.response.set_status(405)
+      return
+    self.handle_request()
+
+  def handle_request(self):
+    self.session = self.request.environ['beaker.session']
+    if 'shards' in self.session:
+      self.all_shards = self.session['shards']
+    else:
+      self.all_shards = []
+    if self.require_shard:
+      self.shard = self._verify_shard_login()
+      self.user_id = self.all_shards[self.shard]
+    else:
+      self.shard = None
+      self.user_id = None
+
+    self.json_response = {}
+    try:
+      self.handle()
+    except Exception, e:
+      logging.exception('Error encountered during RPC')
+      self.json_response['errorClass'] = e.__class__.__name__
+      self.json_response['errorDetail'] = str(e)
+      self.json_response['errorTraceback'] = traceback.format_exc()
+      self.response.set_status(500)
+    finally:
+      if not self.raw_response:
+        self.response.headers['Content-Type'] = 'text/javascript'
+        self.response.out.write(json.dumps(self.json_response))
+
+  def handle(self):
+    raise NotImplementedError('Override in sub-class')
+
+  def _verify_shard_login(self):
+    """Verifies the user is logged into the shard they assert, return it."""
+    shard = self.get_required('shard', int)
+    if shard not in self.session['shards']:
+      raise NotAuthorizedError('You may not access shard %s' % shard)
+    return shard
+
+  def get_required(self, name, type_constructor,
+                   default=None,
+                   html_escape=False):
+    """Retrieves a required parameter with the given name and default."""
+    value = self.request.get(name)
+    if value == '':
+      value = default
+    if value is None:
+      raise MissingParameterError('Parameter "%s" is required' % name)
+
+    try:
+      value = type_constructor(value)
+    except ValueError:
+      raise BadParameterValueError('Parameter "%s" has an invalid value: %r'
+                                   % (name, value))
+
+    if html_escape:
+      return cgi.escape(value)
+    else:
+      return value
+
+################################################################################
+# Posts and sequencing
+
+
+def dirty_bit(shard, set=False, check=False, clear=False):
+  """Sets or checks the dirty bit for a shard."""
+  assert set ^ check ^ clear
+  key = 'dirty-bit-shard-%s' % shard
+  if set:
+    memcache.set(key, 1)
+  elif clear:
+    memcache.delete(key)
+  else:
+    return bool(memcache.get(key))
+
+
+@ndb.tasklet
+def enqueue_apply_task(shard, post_id=None):
+  """Enqueues a push task to apply new Posts to be sequenced.
+
+  post_id, if supplied, indicates to the apply task which posts it should
+  apply at the very least. This lets us handle the race condition where
+  a pull task is enqueued, then the apply task runs, the apply task queries
+  for pull tasks, finds none, and gives up, leaving the pull task around.
+  """
+  join_index = 1
+  shard_record = yield models.Shard.get_by_id_async(
+      shard, use_cache=False, use_memcache=False)
+  if shard_record:
+    logging.debug('Adding apply task for shard=%r with sequence_number=%r',
+                  shard, shard_record.sequence_number)
+    join_index = shard_record.sequence_number
+
+  if post_id is None:
+    post_id = ''
+
+  try:
+    taskqueue.Task(
+      url='/work/apply_posts',
+      params=dict(shard=shard, post_id=post_id),
+      name='apply-%d-join-%d' % (shard, join_index)
+    ).add(config.apply_queue)
+  except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
+    logging.debug('Enqueued apply task for shard=%r but task already present',
+                  shard)
+
+
+def insert_post(shard, **kwargs):
+  """Inserts a post at the present time, returning its key.
+
+  If the post_id keyword argument is not supplied, a new post ID will be
+  auto assigned.
+  """
+  # Create the posting and insert it.
+  post_id = kwargs.pop('post_id', None)
+  if not post_id:
+    post_id = uuid.uuid1().hex
+  post_key = ndb.Key(models.Post._get_kind(), post_id)
+
+  if 'post_time' not in kwargs:
+    kwargs['post_time'] = datetime.datetime.now()
+
+  def txn():
+    post = post_key.get(use_memcache=False, use_cache=False)
+    if post:
+      logging.warning('Post already exists for shard=%r, post_id=%r',
+                      shard, post_id)
+      raise ndb.Rollback()
+
+    post = models.Post(
+      key=post_key,
+      shard_id=shard,
+      **kwargs)
+    post.put(use_memcache=False, use_cache=False)
+
+    # Pull task that indicates the post to apply
+    taskqueue.Task(
+      method='PULL',
+      tag=str(shard),
+      params=dict(shard=shard, post_key=post_key.urlsafe()),
+    ).add(config.pending_queue, transactional=True)
+
+    return post
+
+  try:
+    post = ndb.transaction(txn)
+  except Exception, e:
+    logging.warning('Could not insert post with kwargs=%r',
+                     kwargs, exc_info=True)
+    raise PostError(str(e))
+
+  # Notify all users of the post.
+  futures = []
+  futures.append(notify_posts(shard, [post]))
+
+  # Set the dirty bit for this shard. This causes apply_posts to run a
+  # second time if the Post transaction above completed while apply_posts
+  # was already in flight.
+  dirty_bit(shard, set=True)
+
+  # Enqueue an apply task to sequence and notify the new post.
+  futures.append(enqueue_apply_task(shard, post_id=post_key.id()))
+
+  # Wait on futures in case they raise errors.
+  ndb.Future.wait_all(futures)
+
+  return post_key
+
+
+def apply_posts(shard=None,
+                insertion_post_id=None,
+                lease_seconds=10,
+                max_tasks=20):
+  """Applies a set of pending posts to a shard.
+
+  If shard is None then this function will apply mods for whatever is the
+  first shard it can find in the pull task queue.
+
+  insertion_post_id is the post_id that first caused this apply task to be
+  enqueued. This task will retry until it applies the insertion_post_id itself
+  or it can confirm that the insertion_post_id has already been applied.
+  insertion_post_id may be empty if the apply task is not associated with
+  a particular post (such as cronjobs/cleanup tasks).
+  """
+  # Do not use caching for NDB in this task queue worker.
+  ctx = ndb.get_context()
+  ctx.set_cache_policy(lambda x: False)
+  ctx.set_memcache_policy(lambda x: False)
+
+  # Fetch the new Posts to put in sequence.
+  queue = taskqueue.Queue(config.pending_queue)
+
+  # When no shard is specified, process the first tag we find.
+  task_list = []
+  if not shard:
+    task_list.extend(queue.lease_tasks(lease_seconds, 1))
+    if not task_list:
+      logging.debug('apply_posts with no specific shard found no tasks')
+      return
+    params = task_list[0].extract_params()
+    shard = int(params['shard'])
+    logging.debug('apply_posts with no specific shard found shard=%r', shard)
+
+  # Clear the dirty bit on this shard to start the time horizon.
+  dirty_bit(shard, clear=True)
+
+  # Find tasks pending for the current shard.
+  task_list.extend(
+      queue.lease_tasks_by_tag(lease_seconds, max_tasks, tag=str(shard)))
+
+  work_key_list = []
+  for task in task_list:
+    params = task.extract_params()
+    work_key_list.append(ndb.Key(urlsafe=params['post_key']))
+  work = ndb.get_multi(work_key_list)
+
+  # Some tasks may be in the pull queue that were already put in sequence.
+  # So ignore these and only apply the new ones.
+  sequence_numbers = [w.sequence for w in work if w.sequence is not None]
+  unapplied_work = [w for w in work if w.sequence is None]
+  new_sequence_numbers = []
+
+  if unapplied_work:
+    def txn():
+      shard_record = models.Shard.get_by_id(shard)
+      if shard == 1 and not shard_record:
+        # Auto-create the landing page shard if it doesn't exist.
+        shard_record = models.Shard(
+            key=ndb.Key(models.Shard._get_kind(), shard),
+            pretty_name='Landing chat')
+
+      # Clear any new sequence numbers that were allocated but were not
+      # applied due to a transaction rollback.
+      new_sequence_numbers[:] = []
+      new_sequence_numbers.extend(
+          xrange(shard_record.sequence_number,
+                 shard_record.sequence_number + len(unapplied_work)))
+      shard_record.sequence_number += max(1, len(unapplied_work))
+
+      # Write post references that point at the newly sequenced posts.
+      to_put = [shard_record]
+      for post, sequence in zip(unapplied_work, new_sequence_numbers):
+        to_put.append(models.PostReference(
+            id=sequence,
+            parent=shard_record.key,
+            post_id=post.post_id))
+      ndb.put_multi(to_put)
+
+    # Have this only attempt a transaction a single time. If the transaction
+    # fails the task queue will retry this task within 4 seconds. Because
+    # apply tasks are always named by the current Shard.sequence_number we
+    # can be reasonably sure that no other apply task for this shard will be
+    # running concurrently when this fails.
+    ndb.transaction(txn, retries=1)
+
+    sequence_numbers.extend(new_sequence_numbers)
+    for post, sequence in zip(unapplied_work, new_sequence_numbers):
+      post.sequence = sequence
+    ndb.put_multi(unapplied_work)
+    logging.debug('Applied %d posts for shard=%r, sequence_numbers=%r',
+                  len(unapplied_work), shard, sequence_numbers)
+  else:
+    if not insertion_post_id:
+      logging.debug('No post application to do for shard=%r')
+    else:
+      post = models.Post.get_by_id(insertion_post_id)
+      if post and post.sequence:
+        logging.warning('No post application to do for shard=%r, but'
+                        'post_id=%r already applied; dropping this task',
+                        shard, insertion_post_id)
+      else:
+        raise Error('No post application to do for shard=%r, but'
+                    'post_id=%r has not been applied; will retry' %
+                    (shard, insertion_post_id))
+
+  # Notify all logged in users of the new posts.
+  futures = []
+  futures.append(notify_posts(shard, work))
+
+  # Success! Delete the tasks from this queue.
+  queue.delete_tasks(task_list)
+
+  # Always run one more apply task to clean up any posts that came in
+  # while this transaction was processing.
+  if dirty_bit(shard, check=True):
+    futures.append(enqueue_apply_task(shard))
+
+  # Wait on all pending futures in case they raise errors.
+  ndb.Future.wait_all(futures)
+
+
+def marshal_posts(post_list):
+  """Organizes a list of posts into a JSON-serializable list."""
+  out = []
+  for post in post_list:
+    post_dict = dict(
+      shardId=post.shard_id,
+      archiveType=models.Post.ARCHIVE_REVERSE_MAPPING[post.archive_type],
+      nickname=post.nickname,
+      body=post.body,
+      postTimeMs=int(
+          models.datetime_to_stamp_seconds(post.post_time) * 1000),
+      sequenceId=post.sequence,
+      postId=post.post_id)
+    if post.post_name:
+      post_dict.update(dict(postName=post.post_name))
+    if post.post_attachment:
+      post_dict.update(dict(
+          postAttachment='/file/download?shard=%d&post_id=%s' %
+                          (post.shard_id, post.post_id)))
+    out.append(post_dict)
+  return out
+
+
+def _GetChannelServiceName():
+  """Gets the service name to use, based on if we're on the dev server."""
+  if os.environ.get('SERVER_SOFTWARE', '').startswith('Devel'):
+    return 'channel'
+  else:
+    return 'xmpp'
+
+
+@ndb.tasklet
+def send_message_async(client_id, message):
+  """Send a message to a channel asynchronously.
+
+  Based off of App Engine's channel.send_message function.
+  """
+  if isinstance(message, unicode):
+    message = message.encode('utf-8')
+
+  request = channel_service_pb.SendMessageRequest()
+  response = api_base_pb.VoidProto()
+  request.set_application_key(client_id)
+  request.set_message(message)
+
+  rpc = apiproxy_stub_map.UserRPC(channel._GetService())
+  rpc.make_call('SendChannelMessage', request, response)
+  yield rpc
+  try:
+    raise ndb.Return(rpc.get_result())
+  except apiproxy_errors.ApplicationError, e:
+    raise channel._ToChannelError(e)
+
+
+@ndb.tasklet
+def notify_posts(shard, post_list):
+  """Notifies logged-in users of a set of new posts."""
+  if not post_list:
+    return
+
+  posts_json = json.dumps({
+    'posts': marshal_posts(post_list),
+  })
+
+  login_record_list = get_present_users(shard)
+  rpc_list = []
+  for login_record in login_record_list:
+    logging.debug('Informing shard=%d, user=%r, nickname=%r about messages '
+                  'with sequence_numbers=%r', shard, login_record.user_id,
+                  login_record.nickname, [p.sequence for p in post_list])
+    browser_token = get_token(shard, login_record.user_id)
+    rpc_list.append(send_message_async(browser_token, posts_json))
+
+  for rpc in rpc_list:
+    try:
+      yield rpc
+    except channel.Error, e:
+      # NOTE: When receiving an InvalidChannelKeyError the message may still
+      # be available the next time the user connects to the channel with that
+      # same application key due to buffering in the backends. The 
+      # dev_appserver mimics this behavior, but it's not reliable in prod.
+      logging.warning('Could not send JSON message to user=%r with '
+                      'browser_token=%r. %s: %s', login_record.user_id,
+                      browser_token, e.__class__.__name__, str(e))
+
+
+################################################################################
+# User login and presence
+
+def invalidate_user_cache(shard):
+  """Invalidates the present user cache for the given shard."""
+  shard_key = 'users-shard-%s' % shard
+  memcache.delete(shard_key)
+
+
+def get_present_users(shard):
+  """Returns a list of present users for a shard in descending log-in order.
+
+  Notably, this query is going to be eventually consistent and miss the folks
+  who have just recently joined. That's okay. It's like they joined the chat
+  a little bit late. They will still be able to see previous Posts through
+  historical queries.
+  """
+  shard_key = 'users-shard-%s' % shard
+  user_list = memcache.get(shard_key)
+  if user_list:
+    return user_list
+
+  # TODO(bslatkin): Better serialization, paging for > 1000 users.
+  user_list = (models.LoginRecord.query()
+      .filter(models.LoginRecord.shard_id == shard)
+      .filter(models.LoginRecord.online == True)
+      .order(-models.LoginRecord.last_update_time)
+      .fetch(1000))
+  memcache.set(shard_key, user_list, 300)
+  return user_list
+
+
+def user_logged_in(shard, user_id):
+  """Logs in a user to a shard. Always returns the current user ID."""
+  if user_id:
+    # Re-login the user if they somehow lost their browser state and
+    # needed to reload the page. This assumes the cookie was okay.
+    login_record = models.LoginRecord.get_by_id(user_id)
+    if not login_record or not login_record.online:
+      login_record = models.LoginRecord(
+        key=ndb.Key(models.LoginRecord._get_kind(), user_id),
+        shard_id=shard,
+        online=True)
+      login_record.put()
+      logging.debug('Re-logged-in user_id=%r to shard=%r',
+                    login_record.user_id, shard)
+  else:
+    # User is logging in for the first time.
+    login_record = models.LoginRecord(
+      key=ndb.Key(models.LoginRecord._get_kind(), uuid.uuid1().hex),
+      shard_id=shard,
+      online=True)
+    login_record.put()
+    logging.debug('Logged-in user_id=%r to shard=%r',
+                  login_record.user_id, shard)
+
+  invalidate_user_cache(shard)
+  return login_record.user_id
+
+
+def user_logged_out(shard, user_id):
+  """Notifies other users that the given user has logged out of a shard."""
+  def txn():
+    login_record = models.LoginRecord.get_by_id(user_id)
+    login_record.online = False
+    login_record.put()
+    return login_record
+  login_record = ndb.transaction(txn)
+
+  insert_post(
+      shard,
+      archive_type=models.Post.USER_LOGOUT,
+      nickname=login_record.nickname,
+      user_id=user_id,
+      body='%s has left' % login_record.nickname)
+
+  invalidate_user_cache(shard)
+  logging.debug('Logged out user_id=%r from shard=%r', user_id, shard)
+
+
+def get_token(shard, user_id):
+  """Gets the channel token for the given user."""
+  return 'shard-%s-token-%s' % (shard, user_id)
+
+################################################################################
+# Workers
+
+class ApplyWorker(webapp.RequestHandler):
+  """Applies pending posts."""
+
+  def post(self):
+    shard = int(self.request.get('shard'))
+    post_id = self.request.get('post_id')
+    apply_posts(shard=shard, insertion_post_id=post_id)
+
+  def get(self):
+    apply_posts()
+
+################################################################################
+# RPC handlers
+
+class CreateShardHandler(BaseHandler):
+  """Creates new shards."""
+
+  def handle(self):
+    pretty_name = self.get_required('pretty', str)
+    shard = models.Shard(pretty_name=pretty_name)
+    shard.put()
+    self.json_response['shardId'] = shard.shard_id
+
+
+class LoginHandler(BaseHandler):
+  """Handles user logins, logouts, and issuing session cookies."""
+
+  def handle(self):
+    shard = self.get_required('shard', int)
+    mode = self.get_required('mode', str)
+
+    if 'shards' not in self.session:
+      # First login with no cookie present.
+      self.session['shards'] = {}
+
+    if mode.lower() == 'join':
+      user_id = self.session['shards'].get(shard)
+      user_id = user_logged_in(shard, user_id)
+
+      # Always issue a new browser channel ID for the user if their
+      # session is in good shape.
+      self.session['shards'][shard] =  user_id
+      browser_token = channel.create_channel(get_token(shard, user_id))
+      self.json_response['browserToken'] = browser_token
+    elif mode.lower() == 'leave' and shard in self.session['shards']:
+      user_id = self.session['shards'][shard]
+      user_logged_out(shard, user_id)
+
+    self.session.save()
+
+
+class PresenceHandler(BaseHandler):
+  """Handles updating user presence."""
+
+  require_shard = True
+
+  def handle(self):
+    nickname = self.get_required('nickname', str, html_escape=True)
+
+    last_nickname = [None]
+    def txn():
+      # TODO(bslatkin): Verify the login is active and valid (max age).
+      login = models.LoginRecord.get_by_id(self.user_id)
+      last_nickname[0] = login.nickname
+      login.nickname = nickname
+      login.put()
+    ndb.transaction(txn)
+
+    message = None
+    archive_type = models.Post.USER_LOGIN
+    if last_nickname[0] is None:
+      message = '%s has joined' % nickname
+    elif last_nickname[0] != nickname:
+      message = '%s has changed their nickname to %s' % (
+          last_nickname[0], nickname)
+      archive_type = models.Post.USER_UPDATE
+
+    if message:
+      insert_post(
+          self.shard,
+          archive_type=archive_type,
+          nickname=nickname,
+          user_id=self.user_id,
+          body=message)
+
+    logging.debug('Presence updated for user_id=%r in shard=%r',
+                  self.user_id, self.shard)
+
+
+class ChannelPresenceHandler(webapp.RequestHandler):
+  """Handles user disconnect presence notifications."""
+
+  def post(self, action):
+    if action.startswith('disconnected'):
+      client_id = self.request.get('from')
+      # Format is 'shard-<number>-token-<userid>'
+      parts = client_id.split('-')
+      if len(parts) != 4:
+        logging.warning('Unexpected channel client_id=%r', client_id)
+        return
+
+      try:
+        shard = int(parts[1])
+        user_id = parts[3]
+      except ValueError:
+        logging.warning('Invalid channel client_id=%r', client_id)
+        return
+
+      user_logged_out(shard, user_id)
+
+
+class PostHandler(BaseHandler):
+  """Handles users making new posts."""
+
+  require_shard = True
+
+  def handle(self):
+    archive_type = self.get_required('type', str)
+    archive_enum = models.Post.ARCHIVE_MAPPING.get(archive_type)
+    if archive_enum not in models.Post.ALLOWED_ARCHIVES:
+      raise BadParameterValueError(
+          '"%s" is not a valid post type' % archive_type)
+    body = self.get_required('body', str, html_escape=True)
+    post_id = self.get_required('post_id', str)
+
+    # TODO(bslatkin): Verify the login is active and valid (max age).
+    login_record = models.LoginRecord.get_by_id(self.user_id)
+    post_key = insert_post(
+      self.shard,
+      post_id=post_id,
+      archive_type=archive_enum,
+      nickname=login_record.nickname,
+      user_id=login_record.user_id,
+      body=body)
+    self.json_response['postId'] = post_key.id()
+
+
+class ListPostsHandler(BaseHandler):
+  """Handles retrieving posts for a shard."""
+
+  get_enabled = True
+  post_enabled = False
+  require_shard = True
+
+  def handle(self):
+    start = self.get_required('start', int, 0)
+    end = self.get_required('end', int, 0)
+    count = self.get_required('count', int, 50)
+
+    archive_type = self.get_required('type', str, default='')
+    if archive_type:
+      archive_enum = models.Post.ARCHIVE_MAPPING.get(archive_type)
+      if archive_enum is None:
+        raise BadParameterValueError(
+            '"%s" is not a valid post type' % archive_type)
+      query = models.Post.post_type_index.query()
+      extra = dict(archive_type=archive_enum)
+    else:
+      query = models.Post.post_index.query()
+      extra = {}
+
+    if start and end:
+      query.start(shard_id=self.shard, sequence=start, **extra)
+      query.end(shard_id=self.shard, sequence=end, **extra)
+    elif start:
+      query.start(shard_id=self.shard, sequence=start, **extra)
+      query.end(shard_id=self.shard, **extra)
+    elif end:
+      query.start(shard_id=self.shard, **extra)
+      query.end(shard_id=self.shard, sequence=end, **extra)
+    else:
+      query.prefix(shard_id=self.shard, **extra)
+
+    query.descending()
+    self.json_response['posts'] = marshal_posts(query.fetch(count))
+
+################################################################################
+# File-related handlers
+
+class StartUploadHandler(BaseHandler):
+  """Handles getting new upload URLs for files."""
+
+  get_enabled = True
+  post_enabled = False
+  require_shard = True
+
+  def handle(self):
+    # TODO(bslatkin): Verify the login is active and valid (max age).
+    return blobstore.create_upload_url('/work/upload_end')
+
+
+class EndUploadHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
+  """Handles completing a file upload."""
+
+  require_shard = True
+  raw_response = True
+
+  def handle(self):
+    upload_files = self.get_uploads('file')
+    blob_info = upload_files[0]
+    filename = cgi.escape(blob_info.filename)
+
+    # TODO(bslatkin): Verify the login is active and valid (max age).
+    login_record = models.LoginRecord.get_by_id(self.user_id)
+    post_key = insert_post(
+      self.shard,
+      archive_type=models.Post.FILE,
+      nickname=login_record.nickname,
+      user_id=login_record.user_id,
+      body='The file "%s" has been uploaded' % filename,
+      post_name=filename,
+      post_attachment=blob_info.key())
+
+    self.redirect('/file/upload_complete?shard=%d&post_id=%s' %
+                  (self.shard, post_key.id()))
+
+
+class CompleteUploadHandler(BaseHandler):
+  """Echos the post ID of a completed file upload."""
+
+  get_enabled = True
+  post_enabled = False
+  require_shard = True
+
+  def handle(self):
+    self.json_response['postId'] = self.get_required('post_id', int)
+
+
+class DownloadFileHandler(BaseHandler):
+  """Gives users access to a file for download."""
+
+  get_enabled = True
+  post_enabled = False
+  require_shard = True
+  raw_response = True
+
+  def handle(self):
+    post_id = self.get_required('post_id', int)
+    post = models.Post.get_by_id(post_id)
+
+    if not post:
+      raise NotAuthorizedError('Non-existent post')
+    if post.shard_id != self.shard:
+      raise NotAuthorizedError('Invalid shard ID')
+    if post.archive_type != models.Post.FILE:
+      raise NotAuthorizedError('Post type is not a file')
+
+    self.response.headers[blobstore.BLOB_KEY_HEADER] = str(
+        post.post_attachment.key())
+    # Use blob's default content-type.
+    del self.response.headers['Content-Type']
+
+################################################################################
+# UI handlers
+
+class MainHandler(webapp.RequestHandler):
+  """Replace me."""
+
+  def get(self):
+    js_mode = 'compiled'
+    if self.request.environ.get('SERVER_SOFTWARE').startswith('Dev'):
+      js_mode = self.request.get('js_mode', 'raw')
+
+    context = {
+      'js_mode': js_mode,
+    }
+    self.response.out.write(
+      template.render('templates/index.html', context))
+
+
+class DebugFormHandler(webapp.RequestHandler):
+  """Serves the debug form for admins."""
+
+  def get(self):
+    context = {
+      'upload_file_path': blobstore.create_upload_url('/work/upload_end'),
+    }
+    self.response.out.write(
+      template.render('debug_forms.html', context))
+
+
+class WarmupHandler(webapp.RequestHandler):
+  """Handles warm-up requests by doing nothing."""
+
+  def get(self):
+    pass
+
+################################################################################
+
+
+ROUTES = webapp.WSGIApplication([
+  (r'/', MainHandler),
+  (r'/_ah/warmup', WarmupHandler),
+  (r'/_ah/channel/([^/]+)/', ChannelPresenceHandler),
+  (r'/admin/debug', DebugFormHandler),
+  (r'/work/apply_posts', ApplyWorker),
+  (r'/work/upload_end', EndUploadHandler),
+  (r'/rpc/create_shard', CreateShardHandler),
+  (r'/rpc/list_posts', ListPostsHandler),
+  (r'/rpc/login', LoginHandler),
+  (r'/rpc/post', PostHandler),
+  (r'/rpc/presence', PresenceHandler),
+  (r'/file/upload_start', StartUploadHandler),
+  (r'/file/upload_complete', CompleteUploadHandler),
+  (r'/file/download', DownloadFileHandler),
+], debug=config.debug)
+
+
+SESSION_OPTS = {
+  'session.type': 'cookie',
+  'session.key': '8bits',
+  'session.validate_key': config.session_validate_key,
+  'session.encrypt_key': config.session_encrypt_key,
+}
+
+
+APP = middleware.SessionMiddleware(ROUTES, SESSION_OPTS)
+
+## Enable appstats
+# APP = recording.appstats_wsgi_middleware(APP)

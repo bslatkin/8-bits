@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/posts.css">
+    <link rel="stylesheet" href="/static/css/chatbox.css">
+    <script src="/js/closure/goog/base.js"></script>
+    <script src="/js/closure/goog/base.js"></script>
+    <script src="/js/bits/deps.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      goog.require('bits.chatbox.ChatBox');
+      goog.require('goog.debug.Console');
+    </script>
+  </head>
+  <body>
+
+    <p>
+      Here is a chatbox. Make sure the PostContainer looks good and you can interact with it (select post text, show mouse-over tooltips). Typing in the textarea will submit a message to the pubsub channel and the "repeater" embedded in this test page will echo it so it ends up in the PostContainer.
+    </p>
+
+    <div class="bits-chatbox-container">
+      <div id="chatbox" class="bits-chatbox">
+        <div class="goog-splitpane-first-container">
+          <div class="bits-post-container"></div>
+        </div>
+        <div class="goog-splitpane-second-container">
+          <textarea class="bits-chat-input"></textarea>
+        </div>
+        <div class="goog-splitpane-handle"></div>
+      </div>
+    </div>
+
+    <script>
+      var c = new goog.debug.Console();
+      c.setCapturing(true);
+
+      var shardId = 5;
+      var chatbox = new bits.chatbox.ChatBox(shardId);
+      chatbox.decorate(goog.dom.getElement('chatbox'));
+
+      var postId = 0;
+      
+
+      for (var i = 50; i > 0; i--) {
+        var post = new bits.posts.Post({
+            shardId: 1,
+            archiveType: 'chat',
+            nickname: 'User' + i + 'how longcanit get',
+            body: 'Hello from user ' + i + ', let us make these lines really long so they wrap around for fun and profit',
+            postTimeMs: (new goog.date.DateTime()).getTime(),
+            sequenceId: i,
+            postId: 'my post id ' + i,
+            postName: 'my post title',
+            postAttachment: '/dead-link/' + i
+          });
+        chatbox.postContainer.addOrUpdatePost(post);
+      }
+
+      // Simulate ACKs sent by bits.connection.Connection class.
+      bits.events.PubSub.subscribe(
+          shardId, bits.events.EventType.SubmitPost,
+          function(postMap) {
+            postMap.nickname = 'myNickname';
+            postMap.postId = 'my post ' + (postId++);
+            postMap.nickname = 'Current user';
+            postMap.postTimeMs = (new goog.date.DateTime()).getTime();
+            bits.events.PubSub.publish(
+                shardId, bits.events.EventType.SubmittedPostReceived, postMap);
+          });
+
+    </script>
+  </body>
+</html>

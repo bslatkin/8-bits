@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block additional_css %}
+
+<link rel="stylesheet" href="/static/css/posts.css">
+<link rel="stylesheet" href="/static/css/chatbox.css">
+
+{% endblock additional_css %}
+
+
+{% block additional_js %}
+
+<script src='/_ah/channel/jsapi'></script>
+
+{% if js_mode == 'raw' %}
+  <script type="text/javascript" src="/js/closure/goog/base.js"></script>
+  <script type="text/javascript" src="/js/bits/deps.js"></script>
+  <script type="text/javascript">
+    goog.require('bits.startup');
+  </script>
+{% else %}
+  <script type="text/javascript" src="/static/compiled.js"></script>
+{% endif %}
+
+{% endblock additional_js %}
+
+
+{% block body %}
+
+<div class="bits-chatbox-container">
+  <div id="chatbox" class="bits-chatbox">
+    <div class="goog-splitpane-first-container">
+      <div class="bits-post-container"></div>
+    </div>
+    <div class="goog-splitpane-second-container">
+      <textarea class="bits-chat-input"></textarea>
+    </div>
+    <div class="goog-splitpane-handle"></div>
+  </div>
+</div>
+
+<script>
+  bits.startup(1, 'Anonymous');
+</script>
+
+{% endblock body %}

@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+  <title>Debug forms</title>
+  <style type="text/css" media="screen">
+    body > div {
+      border-top: 1px dashed black;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Debug forms</h1>
+
+<div>
+  <h2>Create shard</h2>
+  <form action="/rpc/create_shard" method="post" accept-charset="utf-8">
+    <p>
+      <label for="create_shard.pretty">Pretty name:</label>
+      <input type="text" name="pretty" id="create_shard.pretty" size="40">
+    </p>
+    <p><input type="submit" value="Create shard"></p>
+  </form>
+</div>
+
+<div>
+  <h2>Login</h2>
+  <form action="/rpc/login" method="post" accept-charset="utf-8">
+    <p>
+      <label for="login.shard">Shard ID:</label>
+      <input type="text" name="shard" id="login.shard" size="10">
+    </p>
+    <p>
+      <label for="login.mode">Mode:</label>
+      <select name="mode" id="login.mode">
+        <option value="join">Join</option>
+        <option value="leave">Leave</option>
+      </select>
+    </p>
+    <p><input type="submit" value="Login"></p>
+  </form>
+</div>
+
+<div>
+  <h2>Presence</h2>
+  <form action="/rpc/presence" method="post" accept-charset="utf-8">
+    <p>
+      <label for="presence.shard">Shard ID:</label>
+      <input type="text" name="shard" id="presence.shard" size="10">
+    </p>
+    <p>
+      <label for="presence.nickname">Nickname:</label>
+      <input type="text" name="nickname" id="presence.nickname" size="40">
+    </p>
+    <p><input type="submit" value="Set presence"></p>
+  </form>
+</div>
+
+<div>
+  <h2>Post</h2>
+  <form action="/rpc/post" method="post" accept-charset="utf-8">
+    <p>
+      <label for="post.shard">Shard ID:</label>
+      <input type="text" name="shard" id="post.shard" size="10">
+    </p>
+    <p>
+      <label for="post.type">Post type:</label>
+      <select name="type" id="post.type">
+        <option value="chat">Chat</option>
+        <option value="news">News</option>
+      </select>
+    </p>
+    <p>
+      <label for="post.body">Body:</label>
+    </p>
+    <p>
+      <textarea rows="6" cols="40" name="body" id="post.body"></textarea>
+    </p>
+    <p><input type="submit" value="Post"></p>
+  </form>
+</div>
+
+<div>
+  <h2>Post file</h2>
+  <form action="{{upload_file_path}}" method="post" enctype="multipart/form-data">
+    <p>
+      <label for="post_file.shard">Shard ID:</label>
+      <input type="text" name="shard" id="post_file.shard" size="10">
+    </p>
+    <input type="hidden" name="type" value="file">
+    <p>
+      <label for="post_file.file">File:</label><input type="file" name="file" id="post_file.file">
+      
+    <p>
+      <label for="post_file.body">Description:</label>
+    </p>
+    <p>
+      <textarea rows="6" cols="40" name="body" id="post_file.body"></textarea>
+    </p>
+    <p><input type="submit" value="Post"></p>
+  </form>
+</div>
+
+<div>
+  <h2>List posts</h2>
+  <form action="/rpc/list_posts" method="get" accept-charset="utf-8">
+    <p>
+      <label for="list_posts.shard">Shard ID:</label>
+      <input type="text" name="shard" id="list_posts.shard" size="10">
+    </p>
+    <p>
+      Sequence number
+      <label for="list_posts.start">start:</label>
+      <input type="text" name="start" id="list_posts.start" size="5">
+      <label for="list_posts.end">end:</label>
+      <input type="text" name="end" id="list_posts.end" size="5">
+      <em>(Leave empty for latest posts)</em>
+    </p>
+    <p>
+      <label for="list_posts.count">Count:</label>
+      <input type="text" name="count" id="list_posts.count" value="50" size="5">
+    </p>
+    <p>
+      <label for="list_posts.type">Post type:</label>
+      <select name="type" id="list_posts.type">
+        <option value="">All</option>
+        <option value="chat">Chat</option>
+        <option value="news">News</option>
+        <option value="file">File</option>
+      </select>
+    </p>
+    <p><input type="submit" value="List posts"></p>
+  </form>
+</div>
+
+
+</body>
+</html>

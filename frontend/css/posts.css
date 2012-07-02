@@ -1,0 +1,51 @@
+.bits-post-container {
+  border: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.bits-post {
+  clear: both;
+  padding: 0;
+  margin: 1px;
+}
+
+.bits-post-tooltip {
+  background: infobackground;
+  color: infotext;
+  border: 1px solid infotext;
+  padding: 2px;
+  font: menu;
+  z-index: 100;
+}
+
+.bits-post-chat-nickname {
+  display: block;
+  float: left;
+  padding: 0;
+  margin: 0;
+  width: 8.5em;
+  font-size: 12px;
+  line-height: 15px;
+  height: 15px;  /* need height for strict overflow */
+  overflow: hidden;
+  text-align: right;
+  word-wrap: break-word;
+  white-space: nowrap;
+}
+
+.bits-post-chat-separator {
+  float: left;
+  display: block;
+}
+
+.bits-post-chat-body {
+  /* line height here must be a pixel value or else 'em' rounding causes
+     the page to jump inconsistent heights on each newly added post line. */
+  line-height: 15px;
+  margin-left: 10em;
+  display: block;
+}

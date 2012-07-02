@@ -1,0 +1,4 @@
+cron:
+- description: Cleanup missed apply tasks
+  url: /work/apply_posts
+  schedule: every 1 minutes
