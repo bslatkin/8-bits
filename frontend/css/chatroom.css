@@ -1,0 +1,28 @@
+.bits-chatbox-container {
+  width: 700px;
+  height: 500px;
+  margin: 0 auto;
+  border-left: 1px solid #000; 
+  border-right: 1px solid #000;
+}
+
+.bits-chatbox {
+  height: 100%;
+}
+
+.bits-footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background-color: #eee;
+}
+
+.bits-footer-settings {
+  float: left;
+}
+
+.bits-footer-help {
+  float: right;
+}

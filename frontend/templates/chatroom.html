@@ -4,6 +4,7 @@
 
 <link rel="stylesheet" href="/static/css/posts.css">
 <link rel="stylesheet" href="/static/css/chatbox.css">
+<link rel="stylesheet" href="/static/css/chatroom.css">
 
 {% endblock additional_css %}
 
@@ -36,6 +37,17 @@
       <textarea class="bits-chat-input"></textarea>
     </div>
     <div class="goog-splitpane-handle"></div>
+  </div>
+</div>
+
+<div class="bits-footer-bar">
+  <div class="bits-footer-settings">
+    Nickname: <span id="nickname-display">Anonymous</span>
+    <a href="javascript:void(0)" id="nickname-change">change</a>
+  </div>
+  <div class="bits-footer-help">
+    <a href="/about" target="_blank">about</a>
+    <a href="/" target="_blank">home</a>
   </div>
 </div>
 

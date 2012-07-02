@@ -857,7 +857,7 @@ class BaseUiHandler(webapp.RequestHandler):
       my_context.update(context)
 
     self.response.out.write(
-      template.render('templates/' + template_name, context))
+      template.render('templates/' + template_name, my_context))
 
 
 class MainHandler(BaseUiHandler):

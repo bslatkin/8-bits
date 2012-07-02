@@ -93,7 +93,7 @@ bits.chatbox.ChatBox.prototype.decorateInternal = function(element) {
   this.splitPane.decorate(element);
   this.splitPane.setContinuousResize(true);
   this.splitPane.setHandleSize(6);
-  this.splitPane.setSize(new goog.math.Size(600, 300));
+  // this.splitPane.setSize(new goog.math.Size(400, 200));
 
   this.kh_ = new goog.events.KeyHandler(this.chatInput.getElement());
   this.eh_.listen(this.kh_, goog.events.KeyHandler.EventType.KEY, this.onKey_);

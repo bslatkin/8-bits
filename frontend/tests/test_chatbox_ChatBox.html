@@ -4,6 +4,20 @@
     <link rel="stylesheet" href="/static/css/common.css">
     <link rel="stylesheet" href="/static/css/posts.css">
     <link rel="stylesheet" href="/static/css/chatbox.css">
+
+    <style type="text/css" media="screen">
+      .chatbox-wrapper {
+        border: 1px solid black;
+        display: inline-block;
+      }
+      .bits-chatbox-container {
+        width: 500px;
+      }
+      .bits-chatbox {
+        height: 200px;
+      }
+    </style>
+
     <script src="/js/closure/goog/base.js"></script>
     <script src="/js/closure/goog/base.js"></script>
     <script src="/js/bits/deps.js"></script>
@@ -18,16 +32,20 @@
       Here is a chatbox. Make sure the PostContainer looks good and you can interact with it (select post text, show mouse-over tooltips). Typing in the textarea will submit a message to the pubsub channel and the "repeater" embedded in this test page will echo it so it ends up in the PostContainer.
     </p>
 
-    <div class="bits-chatbox-container">
-      <div id="chatbox" class="bits-chatbox">
-        <div class="goog-splitpane-first-container">
-          <div class="bits-post-container"></div>
+    <div class="chatbox-wrapper">
+
+      <div class="bits-chatbox-container">
+        <div id="chatbox" class="bits-chatbox">
+          <div class="goog-splitpane-first-container">
+            <div class="bits-post-container"></div>
+          </div>
+          <div class="goog-splitpane-second-container">
+            <textarea class="bits-chat-input"></textarea>
+          </div>
+          <div class="goog-splitpane-handle"></div>
         </div>
-        <div class="goog-splitpane-second-container">
-          <textarea class="bits-chat-input"></textarea>
-        </div>
-        <div class="goog-splitpane-handle"></div>
       </div>
+
     </div>
 
     <script>
