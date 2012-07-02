@@ -4,9 +4,6 @@
 
 debug = True
 
-# URL signing key
-url_signature_key = 'foobartime'
-
 # Beaker keys
 session_encrypt_key = 'asdf'
 session_validate_key = 'asdfasdf'

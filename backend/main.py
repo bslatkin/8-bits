@@ -17,6 +17,7 @@
 import base64
 import cgi
 import datetime
+import hashlib
 import json
 import logging
 ## Useful to enable when testing in dev_appserver.
@@ -139,7 +140,7 @@ class BaseHandler(webapp.RequestHandler):
 
   def _verify_shard_login(self):
     """Verifies the user is logged into the shard they assert, return it."""
-    shard = self.get_required('shard', int)
+    shard = self.get_required('shard', str)
     if shard not in self.session['shards']:
       raise NotAuthorizedError('You may not access shard %s' % shard)
     return shard
@@ -220,7 +221,7 @@ def enqueue_apply_task(shard, post_id=None):
     taskqueue.Task(
       url='/work/apply_posts',
       params=dict(shard=shard, post_id=post_id),
-      name='apply-%d-join-%d' % (shard, join_index)
+      name='apply-%s-join-%s' % (shard, join_index)
     ).add(config.apply_queue)
   except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
     logging.debug('Enqueued apply task for shard=%r but task already present',
@@ -579,7 +580,7 @@ def user_logged_out(shard, user_id):
 
 def get_token(shard, user_id):
   """Gets the channel token for the given user."""
-  return 'shard-%s-token-%s' % (shard, user_id)
+  return hashlib.sha1('shard:%s::token:%s' % (shard, user_id)).hexdigest()
 
 ################################################################################
 # Workers
@@ -588,7 +589,7 @@ class ApplyWorker(webapp.RequestHandler):
   """Applies pending posts."""
 
   def post(self):
-    shard = int(self.request.get('shard'))
+    shard = self.request.get('shard')
     post_id = self.request.get('post_id')
     apply_posts(shard=shard, insertion_post_id=post_id)
 
@@ -612,7 +613,7 @@ class LoginHandler(BaseHandler):
   """Handles user logins, logouts, and issuing session cookies."""
 
   def handle(self):
-    shard = self.get_required('shard', int)
+    shard = self.get_required('shard', str)
     mode = self.get_required('mode', str)
 
     if 'shards' not in self.session:
@@ -809,7 +810,7 @@ class CompleteUploadHandler(BaseHandler):
   require_shard = True
 
   def handle(self):
-    self.json_response['postId'] = self.get_required('post_id', int)
+    self.json_response['postId'] = self.get_required('post_id', str)
 
 
 class DownloadFileHandler(BaseHandler):
@@ -821,7 +822,7 @@ class DownloadFileHandler(BaseHandler):
   raw_response = True
 
   def handle(self):
-    post_id = self.get_required('post_id', int)
+    post_id = self.get_required('post_id', str)
     post = models.Post.get_by_id(post_id)
 
     if not post:
@@ -898,6 +899,12 @@ class ChatroomHandler(BaseUiHandler):
     normalized = normalize_human_uuid(shard_id)
     if normalized != shard_id:
       self.redirect('/' + normalized)
+      return
+
+    shard = models.Shard.get_by_id(shard_id)
+    if not shard:
+      self.response.set_status(404)
+      self.response.out.write('Unknown shard')
       return
 
     context = {

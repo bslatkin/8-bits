@@ -74,7 +74,7 @@ class LoginRecord(ndb.Model):
   def user_id(self):
     return self.key.id()
 
-  shard_id = ndb.IntegerProperty(required=True)
+  shard_id = ndb.StringProperty(required=True)
   online = ndb.BooleanProperty(required=True)
   last_update_time = ndb.DateTimeProperty(auto_now=True)
   nickname = ndb.TextProperty()
@@ -129,7 +129,7 @@ class Post(ndb.Model):
   post_time = ndb.DateTimeProperty(indexed=False)
 
   # Which Shard this happened on and in what order.
-  shard_id = ndb.IntegerProperty(required=True, indexed=False)
+  shard_id = ndb.StringProperty(required=True, indexed=False)
   sequence = ndb.IntegerProperty(indexed=False)
 
   @property
