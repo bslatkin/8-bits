@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
 import cgi
 import datetime
 import json
@@ -164,6 +165,21 @@ class BaseHandler(webapp.RequestHandler):
     else:
       return value
 
+
+def human_uuid():
+  """Generates a more human friendly UUID."""
+  return base64.b32encode(uuid.uuid1().bytes).strip('=').lower()
+
+
+def normalize_human_uuid(user_supplied):
+  """Normalizes a UUID typed by a human.
+
+  Replaces any '1's with 'L's, etc; following the base32 encoding style.
+  """
+  # TODO
+  return user_supplied
+
+
 ################################################################################
 # Posts and sequencing
 
@@ -220,7 +236,7 @@ def insert_post(shard, **kwargs):
   # Create the posting and insert it.
   post_id = kwargs.pop('post_id', None)
   if not post_id:
-    post_id = uuid.uuid1().hex
+    post_id = human_uuid()
   post_key = ndb.Key(models.Post._get_kind(), post_id)
 
   if 'post_time' not in kwargs:
@@ -530,7 +546,7 @@ def user_logged_in(shard, user_id):
   else:
     # User is logging in for the first time.
     login_record = models.LoginRecord(
-      key=ndb.Key(models.LoginRecord._get_kind(), uuid.uuid1().hex),
+      key=ndb.Key(models.LoginRecord._get_kind(), human_uuid()),
       shard_id=shard,
       online=True)
     login_record.put()
@@ -823,33 +839,84 @@ class DownloadFileHandler(BaseHandler):
 ################################################################################
 # UI handlers
 
-class MainHandler(webapp.RequestHandler):
-  """Replace me."""
 
-  def get(self):
+class BaseUiHandler(webapp.RequestHandler):
+  """Base handler for rendering UI."""
+
+  def render(self, template_name, context=None):
+    """Renders the given template and context."""
     js_mode = 'compiled'
     if self.request.environ.get('SERVER_SOFTWARE').startswith('Dev'):
       js_mode = self.request.get('js_mode', 'raw')
 
-    context = {
+    my_context = {
       'js_mode': js_mode,
     }
+    if context:
+      my_context.update(context)
+
     self.response.out.write(
-      template.render('templates/index.html', context))
+      template.render('templates/' + template_name, context))
 
 
-class DebugFormHandler(webapp.RequestHandler):
+class MainHandler(BaseUiHandler):
+  """Replace me."""
+
+  def get(self):
+    self.render('index.html')
+
+
+class CreateChatroomHandler(BaseUiHandler):
+  """Creates a new chatroom URL and redirects the user to it."""
+
+  def post(self):
+    # TODO: Add XSRF protection
+
+    shard_id = None
+    while True:
+      def txn():
+        shard_id = human_uuid()
+        shard = models.Shard.get_by_id(
+            shard_id, use_cache=False, use_memcache=False)
+        if shard:
+          raise ndb.Rollback()
+        shard = models.Shard(id=shard_id)
+        shard.put()
+        return shard_id
+
+      shard_id = ndb.transaction(txn)
+      if shard_id:
+        break
+
+    self.redirect('/' + shard_id)
+
+
+class ChatroomHandler(BaseUiHandler):
+  """Renders a specific chatroom with the given shard ID."""
+
+  def get(self, shard_id):
+    normalized = normalize_human_uuid(shard_id)
+    if normalized != shard_id:
+      self.redirect('/' + normalized)
+      return
+
+    context = {
+      'shard_id': shard_id,
+    }
+    self.render('chatroom.html', context)
+
+
+class DebugFormHandler(BaseUiHandler):
   """Serves the debug form for admins."""
 
   def get(self):
     context = {
       'upload_file_path': blobstore.create_upload_url('/work/upload_end'),
     }
-    self.response.out.write(
-      template.render('debug_forms.html', context))
+    self.render('debug_forms.html', context)
 
 
-class WarmupHandler(webapp.RequestHandler):
+class WarmupHandler(BaseUiHandler):
   """Handles warm-up requests by doing nothing."""
 
   def get(self):
@@ -860,6 +927,7 @@ class WarmupHandler(webapp.RequestHandler):
 
 ROUTES = webapp.WSGIApplication([
   (r'/', MainHandler),
+  (r'/create', CreateChatroomHandler),
   (r'/_ah/warmup', WarmupHandler),
   (r'/_ah/channel/([^/]+)/', ChannelPresenceHandler),
   (r'/admin/debug', DebugFormHandler),
@@ -873,6 +941,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/file/upload_start', StartUploadHandler),
   (r'/file/upload_complete', CompleteUploadHandler),
   (r'/file/download', DownloadFileHandler),
+  (r'/([a-z0-9A-Z]+)', ChatroomHandler)
 ], debug=config.debug)
 
 

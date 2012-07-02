@@ -50,7 +50,7 @@ class Shard(ndb.Model):
   def _get_kind(cls):
     return 'S'
 
-  pretty_name = ndb.StringProperty(required=True)
+  pretty_name = ndb.StringProperty(default='')
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
   update_time = ndb.DateTimeProperty(auto_now=True)
   sequence_number = ndb.IntegerProperty(indexed=False, default=1)
