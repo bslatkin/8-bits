@@ -903,6 +903,7 @@ class ChatroomHandler(BaseUiHandler):
 
     shard = models.Shard.get_by_id(shard_id)
     if not shard:
+      # TODO: Pretty 404
       self.response.set_status(404)
       self.response.out.write('Unknown shard')
       return

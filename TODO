@@ -1,14 +1,14 @@
 v1 Features:
+- Landing page to explain what it does
+- Create real chat page for chatbox
 - Show join/leave messages
 - Roster of users who are present
-- New shard button; creates shortlink
 - Change nickname button
-- Prompt for nickname before joining (except for landing shard)
+- Prompt for nickname after joining
 - URL auto-linking
 
 Polish:
 - Add a favicon static file
-- See where app stats is spending time
 
 Future:
 - Use historical queries to backfill chat after login

@@ -1,3 +1,4 @@
 closure http://closure-library.googlecode.com/svn/trunk
 nose-gae http://nose-gae.googlecode.com/svn/trunk
 beaker https://github.com/bbangert/beaker/trunk
+blueprint https://github.com/joshuaclayton/blueprint-css/trunk
