@@ -70,7 +70,6 @@ class PostError(Error):
 ################################################################################
 # Utility classes, functions.
 
-
 class BaseUiHandler(webapp.RequestHandler):
   """Base handler for rendering UI."""
 
@@ -125,6 +124,7 @@ class BaseUiHandler(webapp.RequestHandler):
       js_mode = self.request.get('js_mode', 'raw')
 
     my_context = {
+      'cache_buster': config.version_id,
       'js_mode': js_mode,
     }
     if context:

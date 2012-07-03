@@ -37,8 +37,10 @@ handlers:
   # Test files are for debug only. Do not upload.
   upload: does_not_exist
 
-- url: /static
-  static_dir: static
+# Prefix static files with the current version number to bust caches on push.
+- url: /static/[0-9]+/(.+)
+  static_files: static/\1
+  upload: static
 
 - url: /work/.*
   script: main.APP

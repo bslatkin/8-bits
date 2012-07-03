@@ -1,0 +1,35 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: #555;
+}
+
+.landing-wrapper {
+  background-color: #ccc;
+}
+
+.landing-message {
+  width: 400px;
+  min-height: 400px;
+  padding: 0 0 50px 0;
+}
+
+.landing-image {
+  display: block;
+  margin: 0 auto;
+  padding: 100px 0;
+}
+
+.landing-button-container {
+  text-align: center;
+}
+
+.landing-footer {
+  height: 200px;
+  width: 100%;
+}
+
+.landing-footer-message {
+  margin: 0 auto;
+  width: 400px;
+}

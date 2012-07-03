@@ -2,11 +2,11 @@
 
 {% block additional_css %}
 
-<link rel="stylesheet" href="/static/css/chatbox.css">
-<link rel="stylesheet" href="/static/css/chatroom.css">
-<link rel="stylesheet" href="/static/css/footer.css">
-<link rel="stylesheet" href="/static/css/posts.css">
-<link rel="stylesheet" href="/static/css/settings.css">
+<link rel="stylesheet" href="/static/{{cache_buster}}/css/chatbox.css">
+<link rel="stylesheet" href="/static/{{cache_buster}}/css/chatroom.css">
+<link rel="stylesheet" href="/static/{{cache_buster}}/css/footer.css">
+<link rel="stylesheet" href="/static/{{cache_buster}}/css/posts.css">
+<link rel="stylesheet" href="/static/{{cache_buster}}/css/settings.css">
 
 {% endblock additional_css %}
 
@@ -53,8 +53,7 @@
         title="Update your look">edit</a>
   </div>
   <div class="bits-footer-help">
-    <a href="/about" target="_blank">about</a>
-    <a href="/" target="_blank">home</a>
+    <a href="/" target="_blank">about</a>
   </div>
 </div>
 
