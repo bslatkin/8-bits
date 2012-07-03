@@ -71,6 +71,13 @@ goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
 
 
 /**
+ * Thickness of the chatbox splitpane handle.
+ * @type {number}
+ */
+bits.chatbox.ChatBox.HANDLE_HEIGHT = 6;
+
+
+/**
  * Creates an initial DOM representation for the component.
  */
 bits.chatbox.ChatBox.prototype.createDom = function() {
@@ -89,24 +96,14 @@ bits.chatbox.ChatBox.prototype.decorateInternal = function(element) {
   var element = this.getElement();
 
   var postElem = goog.dom.getElementByClass('bits-post-container', element);
-  if (!postElem) {
-    postElem = this.dom_.createDom('div', 'bits-post-container');
-  }
   this.postContainer.decorate(postElem);
 
   var inputElem = goog.dom.getElementByClass('bits-chat-input', element);
-  if (!inputElem) {
-    inputElem = this.dom_.createDom('div', 'bits-chat-input');
-  }
   this.chatInput.decorate(inputElem);
 
   this.splitPane.decorate(element);
   this.splitPane.setContinuousResize(true);
-  this.splitPane.setHandleSize(6);
-  // this.splitPane.setSize(new goog.math.Size(400, 200));
-
-  this.kh_ = new goog.events.KeyHandler(this.chatInput.getElement());
-  this.eh_.listen(this.kh_, goog.events.KeyHandler.EventType.KEY, this.onKey_);
+  this.splitPane.setHandleSize(bits.chatbox.ChatBox.HANDLE_HEIGHT);
 };
 
 
@@ -127,6 +124,9 @@ bits.chatbox.ChatBox.prototype.disposeInternal = function() {
  */
 bits.chatbox.ChatBox.prototype.enterDocument = function() {
   bits.chatbox.ChatBox.superClass_.enterDocument.call(this);
+
+  this.kh_ = new goog.events.KeyHandler(this.chatInput.getElement());
+  this.eh_.listen(this.kh_, goog.events.KeyHandler.EventType.KEY, this.onKey_);
 };
 
 
@@ -167,12 +167,16 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
  * private
  */
 bits.chatbox.ChatBox.prototype.resize_ = function() {
+  var currentSize = goog.style.getBorderBoxSize(this.getElement());
   var firstSize = this.splitPane.getFirstComponentSize();
-
   var parentSize = goog.style.getBorderBoxSize(this.getElement().parentNode);
+
   this.splitPane.setSize(
       new goog.math.Size(parentSize.width, parentSize.height));
 
-  // todo make the split pane stay the same distance from the bottom
-  // there's already code in splitpane to calculate the heights here
+  var secondComponentHeight = currentSize.height - firstSize -
+      bits.chatbox.ChatBox.HANDLE_HEIGHT;
+  var firstComponentNewHeight = parentSize.height - secondComponentHeight -
+      bits.chatbox.ChatBox.HANDLE_HEIGHT;
+  this.splitPane.setFirstComponentSize(firstComponentNewHeight);
 };
