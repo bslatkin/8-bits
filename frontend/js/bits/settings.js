@@ -135,8 +135,9 @@ bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
   if (isVisible && this.dialog_.isVisible()) {
     return
   }
+  this.dialog_.setVisible(isVisible);
   if (isVisible) {
     this.dialog_.reposition();
+    this.nicknameEl_.focus();
   }
-  this.dialog_.setVisible(isVisible);
 };

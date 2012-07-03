@@ -40,7 +40,7 @@ bits.chatbox.ChatBox = function(shardId) {
   this.shardId = shardId;
   this.postContainer = new bits.posts.PostContainer(shardId);
   this.chatInput = new goog.ui.LabelInput(
-      'Type chat messages here, or paste a link to start a new topic');
+      'Type chat messages here');
   this.splitPane = new goog.ui.SplitPane(
         this.postContainer, this.chatInput,
         goog.ui.SplitPane.Orientation.VERTICAL);

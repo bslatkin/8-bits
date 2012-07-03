@@ -1,0 +1,18 @@
+.bits-footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #ccc;
+  height: 29px;
+  background-color: #eee;
+  line-height: 29px;
+  vertical-align: middle;
+  padding: 0 8px;
+}
+.bits-footer-settings {
+  float: left;
+}
+.bits-footer-help {
+  float: right;
+}
