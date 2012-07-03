@@ -9,6 +9,7 @@ v1 Features:
 
 Polish:
 - Add a favicon static file
+- Make splitpane collapse down to show all chat, not up
 
 Future:
 - Use historical queries to backfill chat after login

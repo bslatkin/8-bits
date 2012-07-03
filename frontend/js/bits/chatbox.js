@@ -21,6 +21,7 @@ goog.provide('bits.chatbox.ChatBox');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('goog.dom.forms');
+goog.require('goog.dom.ViewportSizeMonitor');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.math.Size');
 goog.require('goog.ui.Component');
@@ -56,6 +57,15 @@ bits.chatbox.ChatBox = function(shardId) {
    * @private
    */
   this.kh_ = null;
+
+  /**
+   * For watching the size of the parent container.
+   * @type {goog.dom.ViewportSizeMonitor}
+   * @private
+   */
+  this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
+  this.eh_.listen(
+      this.sizeMonitor_, goog.events.EventType.RESIZE, this.resize_);
 }
 goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
 
@@ -130,15 +140,6 @@ bits.chatbox.ChatBox.prototype.exitDocument = function() {
 
 
 /**
- * Handles DIV element clicks.
- * @param {goog.events.Event} event The click event.
- * @private
- */
-bits.chatbox.ChatBox.prototype.onDivClicked_ = function(event) {
-};
-
-
-/**
  * Fired when user presses a key while the DIV has focus.
  * @param {goog.events.Event} event The key event.
  * @private
@@ -157,4 +158,21 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
     goog.dom.forms.setValue(this.chatInput.getElement(), '');
     event.preventDefault();
   }
+};
+
+
+/**
+ * Resize this element to fill its parent container. Will keep the chatbox
+ * part of the splitpane the same size.
+ * private
+ */
+bits.chatbox.ChatBox.prototype.resize_ = function() {
+  var firstSize = this.splitPane.getFirstComponentSize();
+
+  var parentSize = goog.style.getBorderBoxSize(this.getElement().parentNode);
+  this.splitPane.setSize(
+      new goog.math.Size(parentSize.width, parentSize.height));
+
+  // todo make the split pane stay the same distance from the bottom
+  // there's already code in splitpane to calculate the heights here
 };
