@@ -1,19 +1,23 @@
 v1 Features:
 - Landing page to explain what it does
-- Create real chat page for chatbox
-- Show join/leave messages
-- Roster of users who are present
 - Change nickname button
-- Prompt for nickname after joining
+- Show join/leave messages
+- On join print roster of users who are present
+- Prompt for nickname after first-time join
 - URL auto-linking
+- Use historical queries to backfill chat after login
 
 Polish:
 - Add a favicon static file
+- Add a logo somewhere
+- Add an about page
+- Fix up color scheme
+- Add privacy policy/13-yo opt-in to first-time join
 - Make splitpane collapse down to show all chat, not up
 
-Future:
-- Use historical queries to backfill chat after login
+-----
+
+v2 features:
 - Drag/drop image upload
-- News post feature for longer posts
-- Roster icons
-- Silly clicking sounds when posting chat, user join, etc
+- Pasting URLs starts a new topic
+- Topic menu with auto-threading of chat
