@@ -1,17 +1,29 @@
+body {
+  background-color: #A2B3B3;
+}
+
 .content-wrapper {
-  display: table;
-  width: 700px;
-  height: 100%;
-  padding-bottom: 30px;
-  margin: 0 auto;
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 30px;
+  width: 100%;
 }
 
 .bits-chatbox-container {
-  display: table;
-  width: 100%;
+  display: block;
+  width: 700px;
   height: 100%;
-  border-left: 1px solid #000; 
-  border-right: 1px solid #000;
+  border-left: 1px solid #999;
+  border-right: 1px solid #999;
+  margin: 0 auto;
+}
+
+.bits-chatbox,
+.bits-post-container,
+.bits-chat-input {
+  color: #000;
+  background-color: #fff;
 }
 
 .bits-footer-bar {
