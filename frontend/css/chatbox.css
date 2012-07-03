@@ -53,4 +53,6 @@
   overflow: auto;
   resize: none;  /* Disable webkit textarea resize control */
   outline: none;  /* Remove focus ring */
+  font-family: Monaco, andale mono, monospace, sans-serif;
+  font-size: 12px;
 }

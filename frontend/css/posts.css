@@ -5,6 +5,7 @@
   margin: 0;
   overflow-y: scroll;
   overflow-x: hidden;
+  font-family: Monaco, andale mono, monospace, sans-serif;
 }
 
 .bits-post {
