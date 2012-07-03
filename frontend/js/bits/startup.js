@@ -20,6 +20,8 @@ goog.provide('bits.startup');
 
 goog.require('goog.dom');
 goog.require('goog.debug.Console');
+goog.require('goog.ui.Dialog');
+goog.require('goog.ui.Dialog.ButtonSet');
 
 goog.require('bits.connection.Connection');
 goog.require('bits.chatbox.ChatBox');
@@ -34,6 +36,16 @@ bits.startup = function(shardId, nickname) {
 
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));
+
+  // TODO: Move this to a separate class.
+  var settingsDialog = new goog.ui.Dialog();
+  settingsDialog.getContentElement().appendChild(
+        goog.dom.getElement('settings-dialog'));
+  settingsDialog.setButtonSet(goog.ui.Dialog.ButtonSet.OK_CANCEL);
+  settingsDialog.setEscapeToCancel(true);
+  settingsDialog.setHasTitleCloseButton(false);
+  settingsDialog.setVisible(true);
+  settingsDialog.setDraggable(false);
 };
 
 
