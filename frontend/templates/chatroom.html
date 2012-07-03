@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="/static/css/posts.css">
 <link rel="stylesheet" href="/static/css/chatbox.css">
 <link rel="stylesheet" href="/static/css/chatroom.css">
+<link rel="stylesheet" href="/static/css/settings.css">
 
 {% endblock additional_css %}
 
@@ -57,14 +58,15 @@
 
 <div class="bits-dialog" id="settings-dialog">
   <form class="">
-    <label for="setting-nickname" class="large">Set Nickname:</label>
+    <label for="setting-nickname" class="large">Nickname:</label>
     <br>
-    <input type="text" name="nickname" id="setting-nickname" class="title">
+    <input type="text" name="nickname"
+        id="setting-nickname" class="title" value="{{nickname}}">
   </form>
 </div>
 
 <script>
-  bits.startup('{{shard_id}}', 'Anonymous');
+  bits.startup('{{shard_id}}', '{{nickname}}');
 </script>
 
 {% endblock body %}

@@ -36,6 +36,7 @@ bits.events.EventType = {
   // User-submitted post was sent to the server side.
   // Args:
   //   JSON for bits.post.Post instance with postId and nickname set, but
+  //   sequenceId missing.
   SubmittedPostSent: 'SubmittedPostSent',
 
   // User-submitted post was received by the server side.
@@ -47,6 +48,11 @@ bits.events.EventType = {
   // Args:
   //   JSON for bits.posts.Post instance with postId and sequenceId both set.
   PostReceived: 'PostReceived',
+
+  // User submits a change to their presence settings.
+  // Args:
+  //  JSON dictionary with the nickname the user wants to have now.
+  SubmitPresenceChange: 'SubmitPresenceChange',
 
   // The last action resulted in a server-returned error.
   // Args:

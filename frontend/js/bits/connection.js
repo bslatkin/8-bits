@@ -52,6 +52,9 @@ bits.connection.Connection = function(shardId, nickname) {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.SubmitPost,
       goog.bind(this.handleSubmitPost, this));
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.SubmitPresenceChange,
+      goog.bind(this.handleSubmitPresenceChange, this));
 };
 
 
@@ -104,6 +107,13 @@ bits.connection.Connection.prototype.setPresence = function() {
     null,
     null,
     goog.bind(this.handleSetPresence, this));
+};
+
+
+bits.connection.Connection.prototype.handleSubmitPresenceChange =
+    function(data) {
+  this.nickname = data.nickname;
+  this.setPresence();
 };
 
 

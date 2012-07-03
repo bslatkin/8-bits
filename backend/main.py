@@ -70,80 +70,32 @@ class PostError(Error):
 ################################################################################
 # Utility classes, functions.
 
-class BaseHandler(webapp.RequestHandler):
-  """Base handler for turning responses into JSON.
 
-  Sub-classes should override the handle() method and stuff their response
-  parameters into self.json_response. In the event an exception is raised
-  it will be returned to the caller as 'error_class' and 'error_detail'
-  parameters in the JSON response with a 500 response. In the successful case
-  the response will be JSON with a 200 response.
+class BaseUiHandler(webapp.RequestHandler):
+  """Base handler for rendering UI."""
 
-  Properties:
-    - all_shards: List of all shards this user is logged into.
-    - shard: The current logged in shard, set when 'require_shard' is True.
-  """
+  # Allow requests with the GET verb.
+  get_enabled = True
 
-  # Allow RPCs with the GET verb.
-  get_enabled = False
-
-  # Allow RPCs with the POST verb.
+  # Allow requests with the POST verb.
   post_enabled = True
 
-  # Whether or not to require user log-in to the shard they assert.
-  require_shard = False
-
-  # Do not write the output JSON or content-type to the response.
-  raw_response = False
-
-  def get(self):
+  def get(self, *args):
     if not self.get_enabled:
       self.response.set_status(405)
       return
-    self.handle_request()
+    self.session = self.request.environ['beaker.session']
+    self.handle_request(*args)
 
-  def post(self):
+  def post(self, *args):
     if not self.post_enabled:
       self.response.set_status(405)
       return
-    self.handle_request()
-
-  def handle_request(self):
     self.session = self.request.environ['beaker.session']
-    if 'shards' in self.session:
-      self.all_shards = self.session['shards']
-    else:
-      self.all_shards = []
-    if self.require_shard:
-      self.shard = self._verify_shard_login()
-      self.user_id = self.all_shards[self.shard]
-    else:
-      self.shard = None
-      self.user_id = None
+    self.handle_request(*args)
 
-    self.json_response = {}
-    try:
-      self.handle()
-    except Exception, e:
-      logging.exception('Error encountered during RPC')
-      self.json_response['errorClass'] = e.__class__.__name__
-      self.json_response['errorDetail'] = str(e)
-      self.json_response['errorTraceback'] = traceback.format_exc()
-      self.response.set_status(500)
-    finally:
-      if not self.raw_response:
-        self.response.headers['Content-Type'] = 'text/javascript'
-        self.response.out.write(json.dumps(self.json_response))
-
-  def handle(self):
-    raise NotImplementedError('Override in sub-class')
-
-  def _verify_shard_login(self):
-    """Verifies the user is logged into the shard they assert, return it."""
-    shard = self.get_required('shard', str)
-    if shard not in self.session['shards']:
-      raise NotAuthorizedError('You may not access shard %s' % shard)
-    return shard
+  def handle_request(self, *args):
+    raise NotImplementedError()
 
   def get_required(self, name, type_constructor,
                    default=None,
@@ -165,6 +117,82 @@ class BaseHandler(webapp.RequestHandler):
       return cgi.escape(value)
     else:
       return value
+
+  def render(self, template_name, context=None):
+    """Renders the given template and context."""
+    js_mode = 'compiled'
+    if self.request.environ.get('SERVER_SOFTWARE').startswith('Dev'):
+      js_mode = self.request.get('js_mode', 'raw')
+
+    my_context = {
+      'js_mode': js_mode,
+    }
+    if context:
+      my_context.update(context)
+
+    self.response.out.write(
+      template.render('templates/' + template_name, my_context))
+
+
+class BaseRpcHandler(BaseUiHandler):
+  """Base handler for turning responses into JSON.
+
+  Sub-classes should override the handle() method and stuff their response
+  parameters into self.json_response. In the event an exception is raised
+  it will be returned to the caller as 'error_class' and 'error_detail'
+  parameters in the JSON response with a 500 response. In the successful case
+  the response will be JSON with a 200 response.
+
+  Properties:
+    - all_shards: List of all shards this user is logged into.
+    - shard: The current logged in shard, set when 'require_shard' is True.
+  """
+
+  # By default RPCs are post only.
+  get_enabled = False
+
+  # Whether or not to require user log-in to the shard they assert.
+  require_shard = False
+
+  # Do not write the output JSON or content-type to the response.
+  raw_response = False  # TODO: Refactor this to use BaseUiHandler
+
+  def handle_request(self, *args):
+    self.session = self.request.environ['beaker.session']
+    if 'shards' in self.session:
+      self.all_shards = self.session['shards']
+    else:
+      self.all_shards = []
+    if self.require_shard:
+      self.shard = self._verify_shard_login()
+      self.user_id = self.all_shards[self.shard]
+    else:
+      self.shard = None
+      self.user_id = None
+
+    self.json_response = {}
+    try:
+      self.handle(*args)
+    except Exception, e:
+      logging.exception('Error encountered during RPC')
+      self.json_response['errorClass'] = e.__class__.__name__
+      self.json_response['errorDetail'] = str(e)
+      self.json_response['errorTraceback'] = traceback.format_exc()
+      self.response.set_status(500)
+    finally:
+      if not self.raw_response:
+        self.response.headers['Content-Type'] = 'text/javascript'
+        self.response.out.write(json.dumps(self.json_response))
+
+  def handle(self):
+    raise NotImplementedError('Override in sub-class')
+
+  def _verify_shard_login(self):
+    """Verifies the user is logged into the shard they assert, return it."""
+    shard = self.get_required('shard', str)
+    if shard not in self.session['shards']:
+      raise NotAuthorizedError('You may not access shard %s' % shard)
+    return shard
 
 
 def human_uuid():
@@ -599,7 +627,7 @@ class ApplyWorker(webapp.RequestHandler):
 ################################################################################
 # RPC handlers
 
-class CreateShardHandler(BaseHandler):
+class CreateShardHandler(BaseRpcHandler):
   """Creates new shards."""
 
   def handle(self):
@@ -609,7 +637,7 @@ class CreateShardHandler(BaseHandler):
     self.json_response['shardId'] = shard.shard_id
 
 
-class LoginHandler(BaseHandler):
+class LoginHandler(BaseRpcHandler):
   """Handles user logins, logouts, and issuing session cookies."""
 
   def handle(self):
@@ -636,7 +664,7 @@ class LoginHandler(BaseHandler):
     self.session.save()
 
 
-class PresenceHandler(BaseHandler):
+class PresenceHandler(BaseRpcHandler):
   """Handles updating user presence."""
 
   require_shard = True
@@ -696,7 +724,7 @@ class ChannelPresenceHandler(webapp.RequestHandler):
       user_logged_out(shard, user_id)
 
 
-class PostHandler(BaseHandler):
+class PostHandler(BaseRpcHandler):
   """Handles users making new posts."""
 
   require_shard = True
@@ -722,7 +750,7 @@ class PostHandler(BaseHandler):
     self.json_response['postId'] = post_key.id()
 
 
-class ListPostsHandler(BaseHandler):
+class ListPostsHandler(BaseRpcHandler):
   """Handles retrieving posts for a shard."""
 
   get_enabled = True
@@ -764,7 +792,7 @@ class ListPostsHandler(BaseHandler):
 ################################################################################
 # File-related handlers
 
-class StartUploadHandler(BaseHandler):
+class StartUploadHandler(BaseRpcHandler):
   """Handles getting new upload URLs for files."""
 
   get_enabled = True
@@ -776,7 +804,8 @@ class StartUploadHandler(BaseHandler):
     return blobstore.create_upload_url('/work/upload_end')
 
 
-class EndUploadHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
+class EndUploadHandler(BaseRpcHandler,
+                       blobstore_handlers.BlobstoreUploadHandler):
   """Handles completing a file upload."""
 
   require_shard = True
@@ -802,7 +831,7 @@ class EndUploadHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
                   (self.shard, post_key.id()))
 
 
-class CompleteUploadHandler(BaseHandler):
+class CompleteUploadHandler(BaseRpcHandler):
   """Echos the post ID of a completed file upload."""
 
   get_enabled = True
@@ -813,7 +842,7 @@ class CompleteUploadHandler(BaseHandler):
     self.json_response['postId'] = self.get_required('post_id', str)
 
 
-class DownloadFileHandler(BaseHandler):
+class DownloadFileHandler(BaseRpcHandler):
   """Gives users access to a file for download."""
 
   get_enabled = True
@@ -839,26 +868,6 @@ class DownloadFileHandler(BaseHandler):
 
 ################################################################################
 # UI handlers
-
-
-class BaseUiHandler(webapp.RequestHandler):
-  """Base handler for rendering UI."""
-
-  def render(self, template_name, context=None):
-    """Renders the given template and context."""
-    js_mode = 'compiled'
-    if self.request.environ.get('SERVER_SOFTWARE').startswith('Dev'):
-      js_mode = self.request.get('js_mode', 'raw')
-
-    my_context = {
-      'js_mode': js_mode,
-    }
-    if context:
-      my_context.update(context)
-
-    self.response.out.write(
-      template.render('templates/' + template_name, my_context))
-
 
 class MainHandler(BaseUiHandler):
   """Replace me."""
@@ -895,7 +904,7 @@ class CreateChatroomHandler(BaseUiHandler):
 class ChatroomHandler(BaseUiHandler):
   """Renders a specific chatroom with the given shard ID."""
 
-  def get(self, shard_id):
+  def handle_request(self, shard_id):
     normalized = normalize_human_uuid(shard_id)
     if normalized != shard_id:
       self.redirect('/' + normalized)
@@ -908,7 +917,16 @@ class ChatroomHandler(BaseUiHandler):
       self.response.out.write('Unknown shard')
       return
 
+    nickname = 'Anonymous'
+    if 'shards' in self.session:
+      user_id = self.session['shards'].get(shard_id)
+      if user_id:
+        login_record = models.LoginRecord.get_by_id(user_id)
+        if login_record.shard_id == shard_id:
+          nickname = login_record.nickname
+
     context = {
+      'nickname': nickname,
       'shard_id': shard_id,
     }
     self.render('chatroom.html', context)

@@ -44,14 +44,3 @@ body {
 .bits-footer-help {
   float: right;
 }
-
-
-.bits-dialog {
-  width: 300px;
-}
-#setting-nickname {
-  width: 100%;
-}
-input[type="text"] {
-  font-family: Monaco, andale mono, monospace, sans-serif;
-}

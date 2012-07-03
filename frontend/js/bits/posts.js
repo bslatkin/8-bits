@@ -69,7 +69,7 @@ bits.posts.ArchiveType = {
  * @constructor
  */
 bits.posts.Post = function(postMap, opt_renderer, opt_domHelper) {
-  goog.ui.Control.call(this, opt_renderer, opt_domHelper);
+  goog.base(this, opt_renderer, opt_domHelper);
 
   this.shardId = postMap.shardId || null;
   this.archiveType = postMap.archiveType || bits.posts.ArchiveType.UNKNOWN;
@@ -206,6 +206,8 @@ bits.posts.Post.prototype.exitDocument = function() {
  * @constructor
  */
 bits.posts.PostContainer = function(shardId, opt_archiveType) {
+  goog.base(this);
+
   this.logger_ = goog.debug.Logger.getLogger('bits.posts.PostContainer');
   this.shardId = shardId
   if (!opt_archiveType) {

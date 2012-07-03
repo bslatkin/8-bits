@@ -25,6 +25,7 @@ goog.require('goog.ui.Dialog.ButtonSet');
 
 goog.require('bits.connection.Connection');
 goog.require('bits.chatbox.ChatBox');
+goog.require('bits.settings.SettingsDialog');
 
 
 bits.startup = function(shardId, nickname) {
@@ -37,15 +38,10 @@ bits.startup = function(shardId, nickname) {
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));
 
-  // TODO: Move this to a separate class.
-  var settingsDialog = new goog.ui.Dialog();
-  settingsDialog.getContentElement().appendChild(
-        goog.dom.getElement('settings-dialog'));
-  settingsDialog.setButtonSet(goog.ui.Dialog.ButtonSet.OK_CANCEL);
-  settingsDialog.setEscapeToCancel(true);
-  settingsDialog.setHasTitleCloseButton(false);
-  settingsDialog.setVisible(true);
-  settingsDialog.setDraggable(false);
+  // TODO: Only show the dialog if this is the first login for this shard.
+  var settings = new bits.settings.SettingsDialog(shardId);
+  settings.render();
+  settings.setVisible(true);
 };
 
 

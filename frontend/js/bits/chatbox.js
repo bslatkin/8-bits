@@ -29,12 +29,14 @@ goog.require('goog.ui.LabelInput');
 goog.require('goog.ui.SplitPane');
 goog.require('goog.ui.SplitPane.Orientation');
 
+goog.require('bits.events');
 goog.require('bits.posts.Post');
 goog.require('bits.posts.PostContainer');
-goog.require('bits.events');
 
 
 bits.chatbox.ChatBox = function(shardId) {
+  goog.base(this);
+
   this.shardId = shardId;
   this.postContainer = new bits.posts.PostContainer(shardId);
   this.chatInput = new goog.ui.LabelInput(
