@@ -10,18 +10,28 @@ html, body {
 
 .landing-message {
   width: 400px;
-  min-height: 400px;
+  min-height: 450px;
   padding: 0 0 50px 0;
 }
 
 .landing-image {
   display: block;
   margin: 0 auto;
-  padding: 100px 0;
+  padding: 50px 0 30px 0;
 }
 
 .landing-button-container {
   text-align: center;
+  padding-top: 50px;
+}
+
+.landing-create-image {
+  padding: 10px;
+  border: 1px solid rgba(80, 80, 80, 0.5);
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));  /* TODO firefox */
+  cursor: pointer;
+  border-radius: 20px;
 }
 
 .landing-footer {
@@ -31,5 +41,6 @@ html, body {
 
 .landing-footer-message {
   margin: 0 auto;
+  padding: 50px 10px;
   width: 400px;
 }
