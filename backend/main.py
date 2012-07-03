@@ -197,7 +197,7 @@ class BaseRpcHandler(BaseUiHandler):
 
 def human_uuid():
   """Generates a more human friendly UUID."""
-  return base64.b32encode(uuid.uuid1().bytes).strip('=').lower()
+  return base64.b32encode(uuid.uuid4().bytes).strip('=').lower()
 
 
 def normalize_human_uuid(user_supplied):
@@ -510,7 +510,7 @@ def notify_posts(shard, post_list):
     logging.debug('Informing shard=%d, user=%r, nickname=%r about messages '
                   'with sequence_numbers=%r', shard, login_record.user_id,
                   login_record.nickname, [p.sequence for p in post_list])
-    browser_token = get_token(shard, login_record.user_id)
+    browser_token = get_token(login_record.user_id)
     rpc_list.append(send_message_async(browser_token, posts_json))
 
   for rpc in rpc_list:
@@ -606,9 +606,9 @@ def user_logged_out(shard, user_id):
   logging.debug('Logged out user_id=%r from shard=%r', user_id, shard)
 
 
-def get_token(shard, user_id):
+def get_token(user_id):
   """Gets the channel token for the given user."""
-  return hashlib.sha1('shard:%s::token:%s' % (shard, user_id)).hexdigest()
+  return user_id
 
 ################################################################################
 # Workers
@@ -655,7 +655,7 @@ class LoginHandler(BaseRpcHandler):
       # Always issue a new browser channel ID for the user if their
       # session is in good shape.
       self.session['shards'][shard] =  user_id
-      browser_token = channel.create_channel(get_token(shard, user_id))
+      browser_token = channel.create_channel(get_token(user_id))
       self.json_response['browserToken'] = browser_token
     elif mode.lower() == 'leave' and shard in self.session['shards']:
       user_id = self.session['shards'][shard]
@@ -708,20 +708,14 @@ class ChannelPresenceHandler(webapp.RequestHandler):
   def post(self, action):
     if action.startswith('disconnected'):
       client_id = self.request.get('from')
-      # Format is 'shard-<number>-token-<userid>'
-      parts = client_id.split('-')
-      if len(parts) != 4:
-        logging.warning('Unexpected channel client_id=%r', client_id)
+      logging.info('disconnected! %s', client_id)
+      login_record = models.LoginRecord.get_by_id(client_id)
+      if not login_record:
+        logging.warning('Channel client_id=%r has no associated LoginRecord',
+                        client_id)
         return
 
-      try:
-        shard = int(parts[1])
-        user_id = parts[3]
-      except ValueError:
-        logging.warning('Invalid channel client_id=%r', client_id)
-        return
-
-      user_logged_out(shard, user_id)
+      user_logged_out(login_record.shard_id, client_id)
 
 
 class PostHandler(BaseRpcHandler):
@@ -918,17 +912,22 @@ class ChatroomHandler(BaseUiHandler):
       return
 
     nickname = 'Anonymous'
+    first_login = True
     if 'shards' in self.session:
       user_id = self.session['shards'].get(shard_id)
       if user_id:
         login_record = models.LoginRecord.get_by_id(user_id)
         if login_record.shard_id == shard_id:
           nickname = login_record.nickname
+          first_login = False
 
     context = {
+      'first_login': first_login,
       'nickname': nickname,
       'shard_id': shard_id,
     }
+    context['params'] = json.dumps(context)
+
     self.render('chatroom.html', context)
 
 

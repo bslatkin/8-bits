@@ -20,28 +20,45 @@ goog.provide('bits.startup');
 
 goog.require('goog.dom');
 goog.require('goog.debug.Console');
+goog.require('goog.debug.Logger');
+goog.require('goog.json');
 goog.require('goog.ui.Dialog');
 goog.require('goog.ui.Dialog.ButtonSet');
 
 goog.require('bits.connection.Connection');
 goog.require('bits.chatbox.ChatBox');
+goog.require('bits.footer.FooterBar');
 goog.require('bits.settings.SettingsDialog');
 
 
-bits.startup = function(shardId, nickname) {
+bits.startup = function(params) {
+  var shardId = params.shard_id;
+  var nickname = params.nickname;
+  var firstLogin = params.first_login;
+
   var c = new goog.debug.Console();
   c.setCapturing(true);
 
+  var logger = goog.debug.Logger.getLogger('bits.startup');
+  logger.info('Starting up with params: ' + goog.json.serialize(params));
+
+  // Set up all the various UI components.
   var connection = new bits.connection.Connection(shardId, nickname);
   connection.login();
 
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));
 
-  // TODO: Only show the dialog if this is the first login for this shard.
+  var footer = new bits.footer.FooterBar(shardId);
+  footer.decorate(goog.dom.getElement('footer-bar'));
+
   var settings = new bits.settings.SettingsDialog(shardId);
-  settings.render();
-  settings.setVisible(true);
+  settings.decorate(goog.dom.getElement('settings-dialog'));
+
+  // Now do initial actions.
+  if (firstLogin) {
+    settings.setVisible(true);
+  }
 };
 
 

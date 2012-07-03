@@ -131,7 +131,7 @@ bits.connection.Connection.prototype.handleChannelOpen = function() {
 
 
 bits.connection.Connection.prototype.handleChannelMessage = function(event) {
-  var message = JSON.parse(event.data);
+  var message = goog.json.parse(event.data);
   this.logger_.info('Received message for shardId=' + this.shardId + ': ' +
                     event.data);
 

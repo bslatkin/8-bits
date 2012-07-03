@@ -88,14 +88,6 @@ bits.chatbox.ChatBox.INPUT_DEFAULT_HEIGHT = 100;
 
 
 /**
- * Creates an initial DOM representation for the component.
- */
-bits.chatbox.ChatBox.prototype.createDom = function() {
-  this.decorateInternal(this.dom_.createDom('div', 'bits-chatbox'));
-};
-
-
-/**
  * Decorates an existing HTML DIV element as a PostContainer.
  *
  * @param {HTMLElement} element The DIV element to decorate.

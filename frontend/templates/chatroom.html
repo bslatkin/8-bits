@@ -45,10 +45,11 @@
 
 </div>
 
-<div class="bits-footer-bar">
+<div class="bits-footer-bar" id="footer-bar">
   <div class="bits-footer-settings">
-    Nickname: <span id="nickname-display">Anonymous</span>
-    <a href="javascript:void(0)" id="nickname-change" class="small">edit</a>
+    <span id="nickname-display">{{nickname}}</span>
+    <a href="javascript:void(0)" id="nickname-change" class="small"
+        title="Update your look">edit</a>
   </div>
   <div class="bits-footer-help">
     <a href="/about" target="_blank">about</a>
@@ -66,7 +67,7 @@
 </div>
 
 <script>
-  bits.startup('{{shard_id}}', '{{nickname}}');
+  bits.startup({{params|safe}});
 </script>
 
 {% endblock body %}

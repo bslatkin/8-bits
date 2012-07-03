@@ -1,9 +1,7 @@
 v1 Features:
 - Landing page to explain what it does
-- Change nickname button
 - Show join/leave messages
 - On join print roster of users who are present
-- Prompt for nickname after first-time join
 - URL auto-linking
 - Use historical queries to backfill chat after login
 

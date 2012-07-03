@@ -42,8 +42,7 @@ bits.settings.SettingsDialog = function(shardId) {
   this.dialog_.setHasTitleCloseButton(false);
   this.dialog_.setVisible(true);
   this.dialog_.setDraggable(false);
-
-  this.interiorEl_ = null;
+  this.dialog_.setVisible(false);
 
   this.nicknameEl_ = null;
 
@@ -62,14 +61,6 @@ bits.settings.SettingsDialog = function(shardId) {
   this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
 }
 goog.inherits(bits.settings.SettingsDialog, goog.ui.Component);
-
-
-/**
- * Creates an initial DOM representation for the component.
- */
-bits.settings.SettingsDialog.prototype.createDom = function() {
-  this.decorateInternal(this.dom_.createDom('div', 'bits-dialog'));
-};
 
 
 /**
@@ -97,12 +88,11 @@ bits.settings.SettingsDialog.prototype.disposeInternal = function() {
 bits.settings.SettingsDialog.prototype.enterDocument = function() {
   bits.settings.SettingsDialog.superClass_.enterDocument.call(this);
 
-  this.interiorEl_ = goog.dom.getElement('settings-dialog');
-  this.nicknameEl_ = goog.dom.getElement('setting-nickname');
+  var element = this.getElement();
+  this.nicknameEl_ = goog.dom.getElement('setting-nickname', element);
 
-  goog.style.setStyle('display', null);
-  this.dialog_.getContentElement().appendChild(this.interiorEl_);
-  this.dialog_.reposition();
+  goog.style.setStyle(element, 'display', null);
+  this.dialog_.getContentElement().appendChild(element);
 
   this.eh_.listen(
       this.sizeMonitor_, goog.events.EventType.RESIZE,
@@ -111,6 +101,10 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
   this.eh_.listen(
       this.dialog_, goog.ui.Dialog.EventType.SELECT,
       this.handleDialogSelect_);
+
+  bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.ShowSettingsDialog,
+      goog.bind(this.setVisible, this, true));
 };
 
 
@@ -121,8 +115,8 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
 bits.settings.SettingsDialog.prototype.exitDocument = function() {
   bits.settings.SettingsDialog.superClass_.exitDocument.call(this);
 
-  goog.style.setStyle('display', 'none');
-  document.body.appendChild(this.interiorEl_);
+  goog.style.setStyle(this.getElement(), 'display', 'none');
+  document.body.appendChild(this.getElement());
 };
 
 
@@ -138,5 +132,11 @@ bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
 
 
 bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
+  if (isVisible && this.dialog_.isVisible()) {
+    return
+  }
+  if (isVisible) {
+    this.dialog_.reposition();
+  }
   this.dialog_.setVisible(isVisible);
 };

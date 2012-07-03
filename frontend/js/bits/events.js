@@ -60,7 +60,11 @@ bits.events.EventType = {
   //   Error class that occurred.
   //   Error message of the error.
   //   Traceback from the server-side error.
-  ServerError: 'ServerError'
+  ServerError: 'ServerError',
+
+  // The user wants to see the settings dialog.
+  // No arguments.
+  ShowSettingsDialog: 'ShowSettingsDialog'
 };
 
 
@@ -98,7 +102,7 @@ bits.events.PubSub.publish = function(shardId, eventType, var_args) {
   var args = goog.array.slice(arguments, 2);
   args.unshift(topic);
   bits.events.PubSub.logger_.info(
-      'Publish event: shardId=' + shardId + ', eventType=' + eventType);
+      'Publish event: eventType=' + eventType + ', shardId=' + shardId);
   bits.events.PubSub.bridge_.publish.apply(bits.events.PubSub.bridge_, args);
 }
 
