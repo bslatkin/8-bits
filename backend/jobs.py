@@ -20,21 +20,20 @@ import datetime
 import logging
 ## Useful to enable when testing in dev_appserver.
 logging.getLogger().setLevel(logging.DEBUG)
+import time
 import wsgiref.handlers
 
 from google.appengine.ext import webapp
-from google.appengine.ext.mapreduce import context
-from google.appengine.ext.mapreduce import operation
-from google.appengine.ext.mapreduce import mapreduce_pipeline
 from google.appengine.ext.appstats import recording
 
 # Local libs
 import config
+from mapreduce import context
+from mapreduce import operation
+from mapreduce import mapreduce_pipeline
+from mapreduce.lib import pipeline
 import models
 import ndb
-
-# Convenience
-pipeline = mapreduce_pipeline.pipeline
 
 ################################################################################
 

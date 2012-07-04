@@ -54,5 +54,13 @@ handlers:
   script: main.APP
   login: admin
 
+- url: /mapreduce(/.*)?
+  script: mapreduce.main.APP
+  login: admin
+
+- url: /_ah/pipeline(/.*)?
+  script: mapreduce.main.APP
+  login: admin
+
 - url: /.*
   script: main.APP
