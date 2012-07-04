@@ -9,6 +9,16 @@
 
 {% block additional_js %}
 
+{% if js_mode == 'raw' %}
+  <script type="text/javascript" src="/js/closure/goog/base.js"></script>
+  <script type="text/javascript" src="/js/bits/deps.js"></script>
+  <script type="text/javascript">
+    goog.require('bits.landing');
+  </script>
+{% else %}
+  <script type="text/javascript" src="/static/compiled.js"></script>
+{% endif %}
+
 {% endblock additional_js %}
 
 
@@ -29,7 +39,7 @@
     </div>
 
     <div class="landing-button-container clear">
-      <form action="/create" method="post" accept-charset="utf-8">
+      <form action="/create" method="post" id="create-form">
         <div class="landing-create-image-c">
           <img class="landing-create-image" width="250" height="43"
               alt="Create your own" src="/static/{{cache_buster}}/create.png">
@@ -44,5 +54,9 @@
     {# TODO(bslatkin): Write some help text here; links to actual site #}
   </div>
 </div>
+
+<script>
+  bits.landing();
+</script>
 
 {% endblock body %}
