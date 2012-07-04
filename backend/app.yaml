@@ -22,19 +22,16 @@ libraries:
 
 
 handlers:
+
+# Various raw files which are only used in debug. Do not upload.
 - url: /js/closure/([^\.]+\.js)
   static_files: ../closure/closure/\1
-  # Raw Closure files are for debug only. Do not upload.
   upload: does_not_exist
-
 - url: /js/bits/([^\.]+\.js)
   static_files: ../frontend/js/bits/\1
-  # Raw Javascript files are for debug only. Do not upload.
   upload: does_not_exist
-
 - url: /tests/([^\.]+\.html)
   static_files: ../frontend/tests/\1
-  # Test files are for debug only. Do not upload.
   upload: does_not_exist
 
 # Prefix static files with the current version number to bust caches on push.
@@ -42,18 +39,20 @@ handlers:
   static_files: static/\1
   upload: static
 
+# Task queues serving the user-facing app.
 - url: /work/.*
   script: main.APP
   login: admin
 
+# Background jobs and work that is not user-facing.
+- url: /jobs/.*
+  script: jobs.APP
+  login: admin
+
+# Simple debug forms for messing with RPCs.
 - url: /admin/debug
   script: main.APP
   login: admin
-
-# TODO: Reenable this
-# - url: /admin/remote_api
-#   login: admin
-#   script: $PYTHON_LIB/google/appengine/ext/remote_api/handler.py
 
 - url: /.*
   script: main.APP

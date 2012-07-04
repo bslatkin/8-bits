@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Primary user-facing functionality of the 8-bits chat system."""
+
 import base64
 import cgi
 import datetime
@@ -155,7 +157,7 @@ class BaseRpcHandler(BaseUiHandler):
   require_shard = False
 
   # Do not write the output JSON or content-type to the response.
-  raw_response = False  # TODO: Refactor this to use BaseUiHandler
+  raw_response = False  # TODO(bslatkin): Refactor this to use BaseUiHandler
 
   def handle_request(self, *args):
     self.session = self.request.environ['beaker.session']
@@ -205,7 +207,7 @@ def normalize_human_uuid(user_supplied):
 
   Replaces any '1's with 'L's, etc; following the base32 encoding style.
   """
-  # TODO
+  # TODO(bslatkin): Actually do something here
   return user_supplied
 
 
@@ -874,7 +876,7 @@ class CreateChatroomHandler(BaseUiHandler):
   """Creates a new chatroom URL and redirects the user to it."""
 
   def post(self):
-    # TODO: Add XSRF protection
+    # TODO(bslatkin): Add XSRF protection
 
     shard_id = None
     while True:
@@ -906,7 +908,7 @@ class ChatroomHandler(BaseUiHandler):
 
     shard = models.Shard.get_by_id(shard_id)
     if not shard:
-      # TODO: Pretty 404
+      # TODO(bslatkin): Pretty 404
       self.response.set_status(404)
       self.response.out.write('Unknown shard')
       return

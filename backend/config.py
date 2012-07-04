@@ -22,3 +22,6 @@ session_validate_key = 'asdfasdf'
 pending_queue = 'pending-posts'
 apply_queue = 'apply-posts'
 notify_queue = 'notify-posts'
+
+# How long posts stay alive before being deleted.
+ephemeral_lifetime_seconds = 86400 * 255
