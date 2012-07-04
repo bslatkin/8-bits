@@ -2,3 +2,9 @@ cron:
 - description: Cleanup missed apply tasks
   url: /work/apply_posts
   schedule: every 1 minutes
+
+# TODO(bslatkin): Enable this
+# - description: Delete old posts
+#   url: /work/apply_posts
+#   schedule: every day 11:00
+#   timezone: America/Los_Angeles

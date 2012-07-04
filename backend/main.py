@@ -51,9 +51,6 @@ import ndb
 
 ################################################################################
 
-# TODO(bslatkin): Cronjobs
-# - check for logins with old presence data, log them out
-
 class Error(Exception):
   """Base class for exceptions."""
 

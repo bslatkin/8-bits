@@ -5,7 +5,7 @@ queue:
   max_concurrent_requests: 10
   retry_parameters:
     min_backoff_seconds: 1
-    max_backoff_seconds: 4
+    max_backoff_seconds: 10
 
 - name: notify-posts
   rate: 10/s
@@ -13,7 +13,14 @@ queue:
   max_concurrent_requests: 10
   retry_parameters:
     min_backoff_seconds: 1
-    max_backoff_seconds: 4
+    max_backoff_seconds: 10
 
 - name: pending-posts
   mode: pull
+
+- name: jobs
+  rate: 10/s
+  max_concurrent_requests: 16
+  retry_parameters:
+    min_backoff_seconds: 1
+    max_backoff_seconds: 10
