@@ -862,11 +862,11 @@ class DownloadFileHandler(BaseRpcHandler):
 ################################################################################
 # UI handlers
 
-class MainHandler(BaseUiHandler):
-  """Replace me."""
+class LandingHandler(BaseUiHandler):
+  """Renders the landing page."""
 
   def get(self):
-    self.render('index.html')
+    self.render('landing.html')
 
 
 class CreateChatroomHandler(BaseUiHandler):
@@ -950,7 +950,7 @@ class WarmupHandler(BaseUiHandler):
 
 
 ROUTES = webapp.WSGIApplication([
-  (r'/', MainHandler),
+  (r'/', LandingHandler),
   (r'/create', CreateChatroomHandler),
   (r'/_ah/warmup', WarmupHandler),
   (r'/_ah/channel/([^/]+)/', ChannelPresenceHandler),

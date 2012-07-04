@@ -25,13 +25,22 @@ html, body {
   padding-top: 50px;
 }
 
-.landing-create-image {
-  padding: 10px;
+.landing-create-image-c {
+  display: inline-block;
+  padding: 10px 30px;
   border: 1px solid rgba(80, 80, 80, 0.5);
   background-image: -webkit-gradient(
       linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));  /* TODO firefox */
   cursor: pointer;
   border-radius: 20px;
+}
+.landing-create-image-c:hover {
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#f0f0f0), to(#dcdcdc));  /* TODO firefox */
+}
+.landing-create-image {
+  padding: 0;
+  -webkit-transform: rotate(-3deg);
 }
 
 .landing-footer {
