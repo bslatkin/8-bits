@@ -1,14 +1,13 @@
 v1 Features:
-- Landing page to explain what it does
 - Show join/leave messages
 - On join print roster of users who are present
 - URL auto-linking
 - Use historical queries to backfill chat after login
+- Make it easy to copy/paste the shortlink of this room
 
 Polish:
 - Add a favicon static file
 - Add a logo somewhere
-- Add an about page
 - Fix up color scheme
 - Add privacy policy/13-yo opt-in to first-time join
 - Make splitpane collapse down to show all chat, not up
