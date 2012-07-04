@@ -1,4 +1,5 @@
 .bits-footer-bar {
+  text-align: center;
   position: fixed;
   bottom: 0;
   left: 0;
@@ -8,11 +9,25 @@
   background-color: #eee;
   line-height: 29px;
   vertical-align: middle;
+}
+
+.bits-footer-settings,
+.bits-footer-help {
+  position: absolute;
+  top: 0;
+  line-height: 29px;
+  height: 29px;
   padding: 0 8px;
 }
+
 .bits-footer-settings {
-  float: left;
+  left: 0;
 }
+
 .bits-footer-help {
-  float: right;
+  right: 0;
+}
+
+.footer-logo {
+  padding: 2px 0;
 }
