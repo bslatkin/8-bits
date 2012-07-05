@@ -33,9 +33,18 @@ from mapreduce import operation
 from mapreduce import mapreduce_pipeline
 from mapreduce.lib import pipeline
 import models
-import ndb
 
 ################################################################################
+
+class DeleteNdb(operation.Operation):
+  """Delete entity from ndb via mutation_pool."""
+
+  def __init__(self, entity):
+    self.entity = entity
+
+  def __call__(self, context):
+    context.mutation_pool.ndb_delete(self.entity)
+
 
 class DeleteOldPostsMapper(object):
   """Mapper for deleting old posts."""
@@ -48,7 +57,8 @@ class DeleteOldPostsMapper(object):
 
   def map(self, entity):
     if entity.post_time < self.before_datetime:
-      yield operation.db.Delete(entity)
+      yield operation.counters.Increment('deleted_post')
+      yield DeleteNdb(entity)
 
 
 class DeleteOldPostsPipeline(pipeline.Pipeline):
@@ -62,8 +72,8 @@ class DeleteOldPostsPipeline(pipeline.Pipeline):
 
     yield mapreduce_pipeline.MapperPipeline(
         'Delete old posts',
-        'jobs.DeleteOldPostsMapper',
-        'google.appengine.ext.mapreduce.input_readers.DatastoreInputReader',
+        'jobs.DeleteOldPostsMapper.map',
+        'mapreduce.input_readers.DatastoreInputReader',
         params=dict(entity_kind='models.Post',
                     before_timestamp_seconds=before_timestamp_seconds),
         shards=8)

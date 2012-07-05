@@ -12,6 +12,7 @@ inbound_services:
 
 builtins:
 - appstats: on
+- remote_api: on
 
 
 libraries:
