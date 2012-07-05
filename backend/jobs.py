@@ -36,6 +36,7 @@ import models
 
 ################################################################################
 
+# TODO(bslatkin): Use an upstream version of this instead.
 class DeleteNdb(operation.Operation):
   """Delete entity from ndb via mutation_pool."""
 
