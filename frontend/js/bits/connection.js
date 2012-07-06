@@ -254,10 +254,11 @@ bits.connection.Connection.prototype.handleRequestRosterSuccessful =
 
 bits.connection.Connection.prototype.requestOldPosts =
     function(start, end, count) {
+  // TODO(bslatkin): Add a guard so only one of these is outstanding.
   var params = new goog.Uri.QueryData();
   start = start || 0;
   end = end || 0;
-  count = count || 50;
+  count = count || 100;
   params.add('shard', this.shardId);
   params.add('start', start);
   params.add('end', end);

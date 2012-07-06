@@ -87,7 +87,7 @@ bits.events.EventType = {
   // Historical posts received from the server side.
   // Args:
   //   List of JSON for bits.posts.Post instances.
-  HistoricalPostsReceived: 'HistoricalPostsReceived',
+  HistoricalPostsReceived: 'HistoricalPostsReceived'
 };
 
 

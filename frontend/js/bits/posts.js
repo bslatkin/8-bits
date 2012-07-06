@@ -220,32 +220,11 @@ bits.posts.Post.prototype.exitDocument = function() {
  *
  * @constructor
  */
-bits.posts.PostContainer = function(shardId, opt_archiveType) {
+bits.posts.PostContainer = function(shardId) {
   goog.base(this);
 
   this.logger_ = goog.debug.Logger.getLogger('bits.posts.PostContainer');
   this.shardId = shardId
-  if (!opt_archiveType) {
-    opt_archiveType = null;
-  }
-  this.archiveType = opt_archiveType;
-
-  // Subscribe to internal events.
-  bits.events.PubSub.subscribe(
-      this.shardId, bits.events.EventType.PostReceived,
-      this.handlePostReceived, this);
-  bits.events.PubSub.subscribe(
-      this.shardId, bits.events.EventType.HistoricalPostsReceived,
-      this.handleHistoricalPostsReceived, this);
-  bits.events.PubSub.subscribe(
-      this.shardId, bits.events.EventType.SubmittedPostSent,
-      this.handlePostSubmitted, this);
-  bits.events.PubSub.subscribe(
-      this.shardId, bits.events.EventType.SubmittedPostReceived,
-      this.handleSubmitPostSuccess, this);
-  bits.events.PubSub.subscribe(
-      this.shardId, bits.events.EventType.RosterReceived,
-      this.handleRosterReceived, this);
 
   // Keep track of the list of Posts we have already seen. Keys are IDs
   // unique to each post but separate from the sequence numbers because
@@ -271,122 +250,6 @@ bits.posts.PostContainer = function(shardId, opt_archiveType) {
   this.container.setFocusable(true);
 }
 goog.inherits(bits.posts.PostContainer, goog.ui.Component);
-
-
-bits.posts.PostContainer.prototype.handlePostSubmitted = function(postMap) {
-  this.logger_.info('User-submitted post sent: ' +
-                    'shardId="' + postMap.shardId +
-                    '", postId="' + postMap.postId +
-                    '", nickname="' + postMap.nickname + '"');
-  // TODO: Filter by archive type.
-  this.addOrUpdatePost(new bits.posts.Post(postMap));
-};
-
-
-bits.posts.PostContainer.prototype.handleSubmitPostSuccess =
-function(postMap) {
-  this.logger_.info('User-submitted post received by server: ' +
-                    'shardId="' + postMap.shardId +
-                    '", postId="' + postMap.postId +
-                    '", nickname="' + postMap.nickname + '"');
-  this.addOrUpdatePost(new bits.posts.Post(postMap));
-};
-
-
-bits.posts.PostContainer.prototype.handlePostReceived = function(postMap) {
-  this.logger_.info('External post received from server: ' +
-                    'shardId="' + postMap.shardId +
-                    '", postId="' + postMap.postId +
-                    '", sequenceId="' + postMap.sequenceId +
-                    '", nickname="' + postMap.nickname + '"');
-  this.addOrUpdatePost(new bits.posts.Post(postMap));
-};
-
-
-bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
-    function(postMapList) {
-  this.logger_.info('Historical posts received from server');
-  var postList = [];
-  for (var i = 0, n = postMapList.length; i < n; i++) {
-    postList.push(new bits.posts.Post(postMapList[i]));
-  }
-  this.prependPosts(postList);
-};
-
-
-bits.posts.PostContainer.prototype.handleRosterReceived = function(postMap) {
-  this.logger_.info('Received roster from server: ' +
-                    'shardId="' + postMap.shardId +
-                    '", body="' + postMap.body + '"');
-  this.addOrUpdatePost(new bits.posts.Post(postMap));
-};
-
-
-bits.posts.PostContainer.prototype.prependPosts = function(postList) {
-  if (postList.length == 0) {
-    return;
-  }
-
-  // Sort in descending sequence order, newest to oldest.
-  goog.array.sort(postList, function(a, b) {
-    return b.sequenceId - a.sequenceId;
-  });
-
-  // Update the oldest sequence number that we know of.
-  if (postList[postList.length - 1].sequenceId < this.lowestSequenceId) {
-    this.lowestSequenceId = postList[postList.length - 1].sequenceId;
-  }
-
-  // Insert the posts, newest to oldest.
-  goog.array.forEach(postList, function(post) {
-    if (!this.postIdMap.containsKey(post.postId)) {
-      this.postIdMap.set(post.postId, post);
-
-      var scrollHeightBefore = this.container.getElement().scrollHeight;
-      this.container.addChildAt(post, 0, true);
-      var scrollHeightAfter = this.container.getElement().scrollHeight;
-
-      // Keep the scrollbar in the exact same position after a historical
-      // post has been added. This doesn't work if the scrollbar wasn't
-      // showing yet.
-      this.container.getElement().scrollTop +=
-          scrollHeightAfter - scrollHeightBefore;
-    }
-  }, this);
-};
-
-bits.posts.PostContainer.prototype.addOrUpdatePost = function(post) {
-  var scrollAtBottom =
-      this.container.getElement().scrollHeight ==
-      (this.container.getElement().scrollTop +
-       this.container.getElement().clientHeight);
-
-  if (post.sequenceId && post.sequenceId < this.lowestSequenceId) {
-    // Keep track of the oldest post we've seen.
-    this.lowestSequenceId = post.sequenceId;
-  }
-
-  var foundPost = this.postIdMap.get(post.postId);
-  if (foundPost) {
-    if (!foundPost.sequenceId && post.sequenceId) {
-      // Assign the sequence number if this is a post-updating message.
-      foundPost.sequenceId = post.sequenceId;
-    }
-    return;
-  }
-
-  this.postIdMap.set(post.postId, post);
-  this.container.addChildAt(post, this.postIdMap.getCount() - 1, true);
-
-  if (scrollAtBottom) {
-    // When the scrollbar is at the bottom, continue to automatically
-    // advance the document on new posts. When the scrollbar is anywhere else,
-    // leave it be so the user can keep their state.
-    this.container.getElement().scrollTop =
-        this.container.getElement().scrollHeight -
-        this.container.getElement().clientHeight;
-  }
-};
 
 
 /**
@@ -426,6 +289,26 @@ bits.posts.PostContainer.prototype.disposeInternal = function() {
  */
 bits.posts.PostContainer.prototype.enterDocument = function() {
   bits.posts.PostContainer.superClass_.enterDocument.call(this);
+
+  this.eh_.listen(
+      this.getElement(), goog.events.EventType.SCROLL, this.handleScroll_);
+
+  // Subscribe to internal events.
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.PostReceived,
+      this.handlePostReceived, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.HistoricalPostsReceived,
+      this.handleHistoricalPostsReceived, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.SubmittedPostSent,
+      this.handlePostSubmitted, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.SubmittedPostReceived,
+      this.handleSubmitPostSuccess, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.RosterReceived,
+      this.handleRosterReceived, this);
 };
 
 
@@ -435,4 +318,141 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
  */
 bits.posts.PostContainer.prototype.exitDocument = function() {
   bits.posts.PostContainer.superClass_.exitDocument.call(this);
+};
+
+
+bits.posts.PostContainer.prototype.handlePostSubmitted = function(postMap) {
+  this.logger_.info('User-submitted post sent: ' +
+                    'shardId="' + postMap.shardId +
+                    '", postId="' + postMap.postId +
+                    '", nickname="' + postMap.nickname + '"');
+  // TODO: Filter by archive type.
+  this.addOrUpdatePost(new bits.posts.Post(postMap));
+};
+
+
+bits.posts.PostContainer.prototype.handleSubmitPostSuccess =
+function(postMap) {
+  this.logger_.info('User-submitted post received by server: ' +
+                    'shardId="' + postMap.shardId +
+                    '", postId="' + postMap.postId +
+                    '", nickname="' + postMap.nickname + '"');
+  this.addOrUpdatePost(new bits.posts.Post(postMap));
+};
+
+
+bits.posts.PostContainer.prototype.handlePostReceived = function(postMap) {
+  this.logger_.info('External post received from server: ' +
+                    'shardId="' + postMap.shardId +
+                    '", postId="' + postMap.postId +
+                    '", sequenceId="' + postMap.sequenceId +
+                    '", nickname="' + postMap.nickname + '"');
+  this.addOrUpdatePost(new bits.posts.Post(postMap));
+};
+
+
+bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
+    function(postMapList) {
+  this.logger_.info('Historical posts received from server');
+  var postList = [];
+  for (var i = 0, n = postMapList.length; i < n; i++) {
+    postList.push(new bits.posts.Post(postMapList[i]));
+  }
+  console.log(postList);
+  this.prependPosts(postList);
+};
+
+
+bits.posts.PostContainer.prototype.handleRosterReceived = function(postMap) {
+  this.logger_.info('Received roster from server: ' +
+                    'shardId="' + postMap.shardId +
+                    '", body="' + postMap.body + '"');
+  this.addOrUpdatePost(new bits.posts.Post(postMap));
+};
+
+
+bits.posts.PostContainer.prototype.prependPosts = function(postList) {
+  if (postList.length == 0) {
+    return;
+  }
+
+  // Sort in descending sequence order, newest to oldest.
+  goog.array.sort(postList, function(a, b) {
+    return b.sequenceId - a.sequenceId;
+  });
+
+  // Update the oldest sequence number that we know of.
+  if (goog.isNull(this.lowestSequenceId) ||
+      postList[postList.length - 1].sequenceId < this.lowestSequenceId) {
+    this.lowestSequenceId = postList[postList.length - 1].sequenceId;
+  }
+
+  // Insert the posts, newest to oldest.
+  goog.array.forEach(postList, function(post) {
+    if (!this.postIdMap.containsKey(post.postId)) {
+      this.postIdMap.set(post.postId, post);
+
+      var scrollHeightBefore = this.container.getElement().scrollHeight;
+      this.container.addChildAt(post, 0, true);
+      var scrollHeightAfter = this.container.getElement().scrollHeight;
+
+      // Keep the scrollbar in the exact same position after a historical
+      // post has been added. This doesn't work if the scrollbar wasn't
+      // showing yet.
+      this.container.getElement().scrollTop +=
+          scrollHeightAfter - scrollHeightBefore;
+    }
+  }, this);
+};
+
+bits.posts.PostContainer.prototype.addOrUpdatePost = function(post) {
+  var scrollAtBottom =
+      this.container.getElement().scrollHeight ==
+      (this.container.getElement().scrollTop +
+       this.container.getElement().clientHeight);
+
+  if (post.sequenceId &&
+      this.lowestSequenceId &&
+      post.sequenceId < this.lowestSequenceId) {
+    // Keep track of the oldest post we've seen.
+    this.lowestSequenceId = post.sequenceId;
+  }
+
+  var foundPost = this.postIdMap.get(post.postId);
+  if (foundPost) {
+    if (!foundPost.sequenceId && post.sequenceId) {
+      // Assign the sequence number if this is a post-updating message.
+      foundPost.sequenceId = post.sequenceId;
+    }
+    return;
+  }
+
+  this.postIdMap.set(post.postId, post);
+  this.container.addChildAt(post, this.postIdMap.getCount() - 1, true);
+
+  if (scrollAtBottom) {
+    // When the scrollbar is at the bottom, continue to automatically
+    // advance the document on new posts. When the scrollbar is anywhere else,
+    // leave it be so the user can keep their state.
+    this.container.getElement().scrollTop =
+        this.container.getElement().scrollHeight -
+        this.container.getElement().clientHeight;
+  }
+};
+
+
+bits.posts.PostContainer.prototype.handleScroll_ = function(event) {
+  if (this.container.getElement().scrollHeight <
+      this.container.getElement().clientHeight) {
+    return;
+  }
+  if (this.container.getElement().scrollTop > 0) {
+    return;
+  }
+
+  bits.events.PubSub.publish(
+      this.shardId,
+      bits.events.EventType.RequestHistoricalPosts,
+      0,
+      this.lowestSequenceId || 0);
 };

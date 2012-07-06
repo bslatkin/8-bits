@@ -782,11 +782,14 @@ class ListPostsHandler(BaseRpcHandler):
   """Handles retrieving posts for a shard.
 
   If start and end are not supplied, then the most recent posts are fetched.
+  If only end is supplied, then the last 'count' posts including that
+  sequence number will be fetched. Other combinations of start/end
+  will not work.
 
   Args:
     start: Sequence number to start searching. Inclusive.
     end: Sequence number to stop searching. Inclusive.
-    count: How many posts to fetch. Defaults to 50.
+    count: How many posts to fetch. Defaults to 100.
   """
 
   require_shard = True
@@ -794,7 +797,7 @@ class ListPostsHandler(BaseRpcHandler):
   def handle(self):
     start = self.get_required('start', int, 0)
     end = self.get_required('end', int, 0)
-    count = self.get_required('count', int, 50)
+    count = self.get_required('count', int, 100)
 
     query = models.PostReference.query()
     if not start and not end:
@@ -805,11 +808,11 @@ class ListPostsHandler(BaseRpcHandler):
       end_key = ndb.Key(
           models.Shard._get_kind(), self.shard,
           models.PostReference._get_kind(), 2**62)
-    elif start and end:
+    elif not start and end:
       # Get a specific set of posts
       start_key = ndb.Key(
           models.Shard._get_kind(), self.shard,
-          models.PostReference._get_kind(), start)
+          models.PostReference._get_kind(), max(1, end - count))
       end_key = ndb.Key(
           models.Shard._get_kind(), self.shard,
           models.PostReference._get_kind(), end)
