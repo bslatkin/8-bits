@@ -67,11 +67,16 @@ bits.footer.FooterBar.prototype.enterDocument = function() {
   bits.footer.FooterBar.superClass_.enterDocument.call(this);
 
   this.nicknameEl_ = goog.dom.getElement('nickname-display');
-  this.editLink_ = goog.dom.getElement('nickname-change');
 
+  var editLink = goog.dom.getElement('nickname-change');
   this.eh_.listen(
-      this.editLink_, goog.events.EventType.CLICK,
+      editLink, goog.events.EventType.CLICK,
       this.handleClickEdit_);
+
+  var rosterLink = goog.dom.getElement('see-roster');
+  this.eh_.listen(
+      rosterLink, goog.events.EventType.CLICK,
+      this.handleClickGetRoster_);
 
   bits.events.PubSub.subscribe(
     this.shardId_, bits.events.EventType.SubmitPresenceChange,
@@ -94,6 +99,15 @@ bits.footer.FooterBar.prototype.handleClickEdit_ = function(e) {
 
   bits.events.PubSub.publish(
       this.shardId_, bits.events.EventType.ShowSettingsDialog);
+};
+
+
+bits.footer.FooterBar.prototype.handleClickGetRoster_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  bits.events.PubSub.publish(
+      this.shardId_, bits.events.EventType.RequestRoster);
 };
 
 

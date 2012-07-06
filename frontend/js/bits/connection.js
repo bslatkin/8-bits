@@ -245,7 +245,8 @@ bits.connection.Connection.prototype.handleRequestRosterSuccessful =
     shardId: this.shardId,
     body: responseJson.roster,
     postTimeMs: (new goog.date.DateTime()).getTime(),
-    archiveType: bits.posts.ArchiveType.ROSTER
+    archiveType: bits.posts.ArchiveType.ROSTER,
+    postId: 'system-message-' + this.getNextMessageId()
   }
   bits.events.PubSub.publish(
       this.shardId, bits.events.EventType.RosterReceived, postMap);
