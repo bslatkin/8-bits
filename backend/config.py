@@ -25,3 +25,6 @@ notify_queue = 'notify-posts'
 
 # How long posts stay alive before being deleted.
 ephemeral_lifetime_seconds = 20 # 86400 * 255
+
+# What URL prefix shortlinks should point to.
+short_url_prefix = 'http://8-bits.us/'

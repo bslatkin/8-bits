@@ -973,6 +973,7 @@ class ChatroomHandler(BaseUiHandler):
       'first_login': first_login,
       'nickname': nickname,
       'shard_id': shard_id,
+      'short_url_prefix': config.short_url_prefix,
     }
     context['params'] = json.dumps(context)
 

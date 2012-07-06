@@ -8,11 +8,11 @@
   height: 29px;
   background-color: #eee;
   line-height: 29px;
-  vertical-align: middle;
+  vertical-align: baseline;
 }
 
-.bits-footer-settings,
-.bits-footer-help {
+.bits-footer-settings-left,
+.bits-footer-settings-right {
   position: absolute;
   top: 0;
   line-height: 29px;
@@ -20,12 +20,15 @@
   padding: 0 8px;
 }
 
-.bits-footer-settings {
+.bits-footer-settings-left {
   left: 0;
 }
-
-.bits-footer-help {
+.bits-footer-settings-right {
   right: 0;
+}
+
+.bits-setting-link {
+  margin-right: 6px;
 }
 
 .footer-logo {

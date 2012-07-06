@@ -45,17 +45,23 @@
 </div>
 
 <div class="bits-footer-bar" id="footer-bar">
-  <div class="bits-footer-settings">
+  <div class="bits-footer-settings-left">
     <span id="nickname-display">{{nickname}}</span>
-    <a href="javascript:void(0)" id="nickname-change" class="small"
-        title="Update your look">edit</a>
+
+    <a href="javascript:void(0)" id="nickname-change"
+        class="bits-setting-link small" title="Update your look">edit</a>
+
+    <a href="javascript:void(0)" class="bits-setting-link" id="see-roster"
+        title="See who else is present">who's here?</a>
   </div>
 
-  <img src="/static/{{cache_buster}}/logo_wide.png" height="24" width="185"
-      alt="8-bits of ephemera" class="footer-logo">
+  <a href="/" target="_blank" title="About 8-bits of ephemera"><img src="/static/{{cache_buster}}/logo_wide.png" height="24" width="185"
+        alt="8-bits of ephemera" class="footer-logo" border="0"></a>
 
-  <div class="bits-footer-help">
-    <a href="/" target="_blank">about</a>
+  <div class="bits-footer-settings-right">
+    <span class="bits-footer-shorturl">
+      {{short_url_prefix}}{{shard_id}}
+    </span>
   </div>
 </div>
 
