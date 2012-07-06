@@ -85,6 +85,7 @@ bits.connection.Connection.prototype.handleConnect = function(event) {
     }
     this.setPresence();
     this.requestRoster();
+    this.requestOldPosts();
 
     this.channel = new goog.appengine.Channel(response.browserToken);
     var socket = this.channel.open({
@@ -235,7 +236,7 @@ bits.connection.Connection.prototype.handleRequestRosterSuccessful =
     function(event) {
   var responseJson = event.target.getResponseJson();
   this.logger_.info('Received roster for shardId="' + this.shardId +
-                    '",roster="' + responseJson.roster + '"');
+                    '", roster="' + responseJson.roster + '"');
   var postMap = {
     shardId: this.shardId,
     body: responseJson.roster,
@@ -244,6 +245,36 @@ bits.connection.Connection.prototype.handleRequestRosterSuccessful =
   }
   bits.events.PubSub.publish(
       this.shardId, bits.events.EventType.RosterReceived, postMap);
+};
+
+
+bits.connection.Connection.prototype.requestOldPosts = function(start, end) {
+  var params = new goog.Uri.QueryData();
+  start = start || 0;
+  end = end || 0;
+  params.add('shard', this.shardId);
+  params.add('start', start);
+  params.add('end', end);
+  this.xhrManager.send(
+    this.getNextMessageId(),
+    '/rpc/list_posts',
+    opt_method='POST',
+    opt_content=params.toString(),
+    null,
+    null,
+    goog.bind(this.handleRequestHistoricalPostsSuccessful, this, start, end));
+};
+
+
+bits.connection.Connection.prototype.handleRequestHistoricalPostsSuccessful =
+    function(start, end, event) {
+  var responseJson = event.target.getResponseJson();
+  this.logger_.info('Received historical posts for shardId="' + this.shardId +
+                    '", start="' + start + '", end="' + end + '"');
+  bits.events.PubSub.publish(
+      this.shardId,
+      bits.events.EventType.HistoricalPostsReceived,
+      responseJson.posts);
 };
 
 

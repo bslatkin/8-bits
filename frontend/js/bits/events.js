@@ -49,6 +49,11 @@ bits.events.EventType = {
   //   JSON for bits.posts.Post instance with postId and sequenceId both set.
   PostReceived: 'PostReceived',
 
+  // Historical posts received from the server side.
+  // Args:
+  //   List of JSON for bits.posts.Post instances.
+  HistoricalPostsReceived: 'HistoricalPostsReceived',
+
   // User submits a change to their presence settings.
   // Args:
   //  JSON dictionary with the nickname the user wants to have now.

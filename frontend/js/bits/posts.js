@@ -235,6 +235,9 @@ bits.posts.PostContainer = function(shardId, opt_archiveType) {
       this.shardId, bits.events.EventType.PostReceived,
       this.handlePostReceived, this);
   bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.HistoricalPostsReceived,
+      this.handleHistoricalPostsReceived, this);
+  bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.SubmittedPostSent,
       this.handlePostSubmitted, this);
   bits.events.PubSub.subscribe(

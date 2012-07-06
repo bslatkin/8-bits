@@ -799,10 +799,10 @@ class ListPostsHandler(BaseRpcHandler):
       # Get newest posts by doing a prefix scan.
       start_key = ndb.Key(
           models.Shard._get_kind(), self.shard,
-          models.PostReference._get_kind(), 0)
+          models.PostReference._get_kind(), 1)
       end_key = ndb.Key(
           models.Shard._get_kind(), self.shard,
-          models.PostReference._get_kind(), 2**63)
+          models.PostReference._get_kind(), 2**62)
     elif start and end:
       # Get a specific set of posts
       start_key = ndb.Key(
@@ -818,8 +818,11 @@ class ListPostsHandler(BaseRpcHandler):
     query = query.filter(models.PostReference.key >= start_key)
     query = query.filter(models.PostReference.key <= end_key)
 
-    ref_list = query.fetch(count, keys_only=True)
-    post_list = ndb.get_multi(ref_list)
+    ref_list = query.fetch(count)
+    post_kind = models.Post._get_kind()
+    post_key_list = [ndb.Key(post_kind, ref.post_id) for ref in ref_list]
+    post_list = ndb.get_multi(post_key_list)
+
     self.json_response['posts'] = marshal_posts(post_list)
 
 ################################################################################
