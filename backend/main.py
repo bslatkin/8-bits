@@ -544,12 +544,12 @@ def marshal_users(user_list):
   nicknames = [u.nickname for u in user_list]
 
   if len(user_list) == 1:
-    return '%s is here' % nicknames[0]
+    return '%s is here too' % nicknames[0]
 
   if len(user_list) == 2:
-    return '%s and %s are here' % (nicknames[0], nicknames[1])
+    return '%s and %s are here too' % (nicknames[0], nicknames[1])
 
-  return '%s, and %s are here' % (
+  return '%s, and %s are here too' % (
       ', '.join(nicknames[:-1]),
       nicknames[-1])
 
