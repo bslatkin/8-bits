@@ -117,6 +117,7 @@ bits.posts.Post.prototype.createDom = function() {
     case bits.posts.ArchiveType.USER_LOGIN:
     case bits.posts.ArchiveType.USER_LOGOUT:
     case bits.posts.ArchiveType.USER_UPDATE:
+      this.renderPresence(element);
       break;
 
     default:
@@ -136,7 +137,7 @@ bits.posts.Post.prototype.createDom = function() {
 
 
 bits.posts.Post.prototype.renderChat = function(element) {
-  // TODO: HTML escaping.
+  // TODO(bslatkin): HTML escaping.
   goog.dom.classes.add(element, goog.getCssName('bits-post-chat'));
 
   var nicknameDiv = this.dom_.createElement('span');
@@ -154,6 +155,18 @@ bits.posts.Post.prototype.renderChat = function(element) {
 
   element.appendChild(nicknameDiv);
   element.appendChild(separatorDiv);
+  element.appendChild(bodyDiv);
+};
+
+
+bits.posts.Post.prototype.renderPresence = function(element) {
+  // TODO: HTML escaping.
+  goog.dom.classes.add(element, goog.getCssName('bits-post-presence'));
+
+  var bodyDiv = this.dom_.createElement('span');
+  goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-presence-body'));
+  this.dom_.setTextContent(bodyDiv, this.body);
+
   element.appendChild(bodyDiv);
 };
 
