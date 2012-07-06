@@ -781,10 +781,12 @@ class ShowRosterHandler(BaseRpcHandler):
 class ListPostsHandler(BaseRpcHandler):
   """Handles retrieving posts for a shard.
 
+  If start and end are not supplied, then the most recent posts are fetched.
+
   Args:
     start: Sequence number to start searching. Inclusive.
     end: Sequence number to stop searching. Inclusive.
-    count: How many posts to fetch.
+    count: How many posts to fetch. Defaults to 50.
   """
 
   require_shard = True
@@ -817,6 +819,7 @@ class ListPostsHandler(BaseRpcHandler):
 
     query = query.filter(models.PostReference.key >= start_key)
     query = query.filter(models.PostReference.key <= end_key)
+    query = query.order(-models.PostReference.key)
 
     ref_list = query.fetch(count)
     post_kind = models.Post._get_kind()

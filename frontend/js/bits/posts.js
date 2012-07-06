@@ -303,6 +303,17 @@ bits.posts.PostContainer.prototype.handlePostReceived = function(postMap) {
 };
 
 
+bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
+    function(postMapList) {
+  this.logger_.info('Historical posts received from server');
+  var postList = [];
+  for (var i = 0, n = postMapList.length; i < n; i++) {
+    postList.push(new bits.posts.Post(postMapList[i]));
+  }
+  this.prependPosts(postList);
+};
+
+
 bits.posts.PostContainer.prototype.handleRosterReceived = function(postMap) {
   this.logger_.info('Received roster from server: ' +
                     'shardId="' + postMap.shardId +
@@ -312,7 +323,9 @@ bits.posts.PostContainer.prototype.handleRosterReceived = function(postMap) {
 
 
 bits.posts.PostContainer.prototype.prependPosts = function(postList) {
-  if (postList.length == 0) return;
+  if (postList.length == 0) {
+    return;
+  }
 
   // Sort in descending sequence order, newest to oldest.
   goog.array.sort(postList, function(a, b) {
@@ -334,7 +347,8 @@ bits.posts.PostContainer.prototype.prependPosts = function(postList) {
       var scrollHeightAfter = this.container.getElement().scrollHeight;
 
       // Keep the scrollbar in the exact same position after a historical
-      // post has been added.
+      // post has been added. This doesn't work if the scrollbar wasn't
+      // showing yet.
       this.container.getElement().scrollTop +=
           scrollHeightAfter - scrollHeightBefore;
     }

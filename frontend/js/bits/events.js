@@ -49,11 +49,6 @@ bits.events.EventType = {
   //   JSON for bits.posts.Post instance with postId and sequenceId both set.
   PostReceived: 'PostReceived',
 
-  // Historical posts received from the server side.
-  // Args:
-  //   List of JSON for bits.posts.Post instances.
-  HistoricalPostsReceived: 'HistoricalPostsReceived',
-
   // User submits a change to their presence settings.
   // Args:
   //  JSON dictionary with the nickname the user wants to have now.
@@ -77,7 +72,22 @@ bits.events.EventType = {
 
   // The server has provided the roster of users who are present.
   // No arguments.
-  RosterReceived: 'RosterReceived'
+  RosterReceived: 'RosterReceived',
+
+  // The user wants to see historical posts.
+  //
+  // If start and end are zero, then the most recent posts are fetched.
+  //
+  // Args:
+  //   start: What post sequence number to start fetching. Inclusive.
+  //   end: What post sequence number to stop fetching on. Inclusive.
+  //   count: How many posts to retrieve.
+  RequestHistoricalPosts: 'RequestHistoricalPosts',
+
+  // Historical posts received from the server side.
+  // Args:
+  //   List of JSON for bits.posts.Post instances.
+  HistoricalPostsReceived: 'HistoricalPostsReceived',
 };
 
 

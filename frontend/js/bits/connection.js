@@ -58,6 +58,10 @@ bits.connection.Connection = function(shardId, nickname) {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.RequestRoster,
       goog.bind(this.requestRoster, this));
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.RequestHistoricalPosts,
+      goog.bind(this.requestOldPosts, this));
+
 };
 
 
@@ -248,13 +252,16 @@ bits.connection.Connection.prototype.handleRequestRosterSuccessful =
 };
 
 
-bits.connection.Connection.prototype.requestOldPosts = function(start, end) {
+bits.connection.Connection.prototype.requestOldPosts =
+    function(start, end, count) {
   var params = new goog.Uri.QueryData();
   start = start || 0;
   end = end || 0;
+  count = count || 50;
   params.add('shard', this.shardId);
   params.add('start', start);
   params.add('end', end);
+  params.add('count', count);
   this.xhrManager.send(
     this.getNextMessageId(),
     '/rpc/list_posts',

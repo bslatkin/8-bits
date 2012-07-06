@@ -160,6 +160,7 @@
       });
 
       var postId = 5;
+      var historicalPostId = -1;
       goog.events.listen(
           goog.dom.getElement('send-message'), goog.events.EventType.CLICK,
           function(event) {
@@ -170,7 +171,7 @@
                 shardId: 5,
                 archiveType: 'chat',
                 nickname: 'From button',
-                body: 'This is fun',
+                body: 'This is fun ' + postId,
                 postTimeMs: (new goog.date.DateTime()).getTime(),
                 postId: 'post ' + (postId++)
             });
@@ -181,15 +182,19 @@
           goog.events.EventType.CLICK,
           function(event) {
             event.preventDefault();
-            container3.prependPosts([new bits.posts.Post({
-              shardId: 5,
-              archiveType: 'chat',
-              nickname: 'Historical',
-              body: 'Fake message',
-              postTimeMs: (new goog.date.DateTime()).getTime(),
-              sequenceId: postId,
-              postId: 'post ' + (postId++)
-            })]);
+            bits.events.PubSub.publish(
+              shardId, bits.events.EventType.HistoricalPostsReceived,
+              [
+                {
+                  shardId: 5,
+                  archiveType: 'chat',
+                  nickname: 'Historical',
+                  body: 'Fake message ' + historicalPostId,
+                  postTimeMs: (new goog.date.DateTime()).getTime(),
+                  sequenceId: historicalPostId,
+                  postId: 'post ' + (historicalPostId--)
+                }
+              ]);
           });
 
       goog.events.listen(
@@ -202,7 +207,7 @@
                 shardId: 5,
                 archiveType: 'user_login',
                 nickname: 'New user',
-                body: 'New user has logged in',
+                body: 'New user has logged in ' + postId,
                 postTimeMs: (new goog.date.DateTime()).getTime(),
                 postId: 'post ' + (postId++)
             });
@@ -218,7 +223,7 @@
                 shardId: 5,
                 archiveType: 'user_update',
                 nickname: 'Peanut',
-                body: 'New user is now known as Peanut',
+                body: 'New user is now known as Peanut ' + postId,
                 postTimeMs: (new goog.date.DateTime()).getTime(),
                 postId: 'post ' + (postId++)
             });
@@ -234,7 +239,7 @@
                 shardId: 5,
                 archiveType: 'user_logout',
                 nickname: 'Chili',
-                body: 'Chili has logged out',
+                body: 'Chili has logged out ' + postId,
                 postTimeMs: (new goog.date.DateTime()).getTime(),
                 postId: 'post ' + (postId++)
             });
