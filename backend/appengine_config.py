@@ -16,6 +16,10 @@
 
 """Environment script imported by every request automagically."""
 
+import logging
+## Useful to enable when testing in dev_appserver.
+logging.getLogger().setLevel(logging.DEBUG)
+
 from mapreduce import context
 from mapreduce.lib import key_range
 import ndb

@@ -18,8 +18,6 @@
 
 import datetime
 import logging
-## Useful to enable when testing in dev_appserver.
-logging.getLogger().setLevel(logging.DEBUG)
 import time
 import wsgiref.handlers
 

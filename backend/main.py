@@ -22,8 +22,6 @@ import datetime
 import hashlib
 import json
 import logging
-## Useful to enable when testing in dev_appserver.
-logging.getLogger().setLevel(logging.DEBUG)
 import os
 import time
 import traceback
@@ -506,7 +504,7 @@ def notify_posts(shard, post_list):
   login_record_list = get_present_users(shard)
   rpc_list = []
   for login_record in login_record_list:
-    logging.debug('Informing shard=%d, user=%r, nickname=%r about messages '
+    logging.debug('Informing shard=%r, user=%r, nickname=%r about messages '
                   'with sequence_numbers=%r', shard, login_record.user_id,
                   login_record.nickname, [p.sequence for p in post_list])
     browser_token = get_token(login_record.user_id)
@@ -781,10 +779,14 @@ class ShowRosterHandler(BaseRpcHandler):
 
 
 class ListPostsHandler(BaseRpcHandler):
-  """Handles retrieving posts for a shard."""
+  """Handles retrieving posts for a shard.
 
-  get_enabled = True
-  post_enabled = False
+  Args:
+    start: Sequence number to start searching. Inclusive.
+    end: Sequence number to stop searching. Inclusive.
+    count: How many posts to fetch.
+  """
+
   require_shard = True
 
   def handle(self):
@@ -792,32 +794,33 @@ class ListPostsHandler(BaseRpcHandler):
     end = self.get_required('end', int, 0)
     count = self.get_required('count', int, 50)
 
-    archive_type = self.get_required('type', str, default='')
-    if archive_type:
-      archive_enum = models.Post.ARCHIVE_MAPPING.get(archive_type)
-      if archive_enum is None:
-        raise BadParameterValueError(
-            '"%s" is not a valid post type' % archive_type)
-      query = models.Post.post_type_index.query()
-      extra = dict(archive_type=archive_enum)
+    query = models.PostReference.query()
+    if not start and not end:
+      # Get newest posts by doing a prefix scan.
+      start_key = ndb.Key(
+          models.Shard._get_kind(), self.shard,
+          models.PostReference._get_kind(), 0)
+      end_key = ndb.Key(
+          models.Shard._get_kind(), self.shard,
+          models.PostReference._get_kind(), 2**63)
+    elif start and end:
+      # Get a specific set of posts
+      start_key = ndb.Key(
+          models.Shard._get_kind(), self.shard,
+          models.PostReference._get_kind(), start)
+      end_key = ndb.Key(
+          models.Shard._get_kind(), self.shard,
+          models.PostReference._get_kind(), end)
     else:
-      query = models.Post.post_index.query()
-      extra = {}
+      # Should not happen
+      assert False
 
-    if start and end:
-      query.start(shard_id=self.shard, sequence=start, **extra)
-      query.end(shard_id=self.shard, sequence=end, **extra)
-    elif start:
-      query.start(shard_id=self.shard, sequence=start, **extra)
-      query.end(shard_id=self.shard, **extra)
-    elif end:
-      query.start(shard_id=self.shard, **extra)
-      query.end(shard_id=self.shard, sequence=end, **extra)
-    else:
-      query.prefix(shard_id=self.shard, **extra)
+    query = query.filter(models.PostReference.key >= start_key)
+    query = query.filter(models.PostReference.key <= end_key)
 
-    query.descending()
-    self.json_response['posts'] = marshal_posts(query.fetch(count))
+    ref_list = query.fetch(count, keys_only=True)
+    post_list = ndb.get_multi(ref_list)
+    self.json_response['posts'] = marshal_posts(post_list)
 
 ################################################################################
 # File-related handlers
