@@ -33,7 +33,7 @@
     <br><br>
 
     <p>
-      Here's one more container that receives its messages via pubsub events. There should be messages in here for the various receiving modes. Click the send buttons to see the auto-scroll-to-bottom behavior for new posts and the stay-in-place behavior for historical posts. If the scrollbar is not already at the bottom upon message receipt it should not scroll.
+      Here's one more container that receives its messages via pubsub events. There should be messages in here for the various receiving modes. Click the send buttons to see the auto-scroll-to-bottom behavior for new posts and the stay-in-place behavior for historical posts. If the scrollbar is not already at the bottom upon message receipt it should not scroll. Once there are enough messages to show a scroll bar, you can scroll all the way to the top and then even older messages should backfill.
     </p>
 
     <div style="height: 200px; width: 400px; border: 1px solid black;">
@@ -159,8 +159,8 @@
           postAttachment: '/dead-link/foo'
       });
 
-      var postId = 5;
-      var historicalPostId = -1;
+      var postId = 500;
+      var historicalPostId = 300;
       goog.events.listen(
           goog.dom.getElement('send-message'), goog.events.EventType.CLICK,
           function(event) {
@@ -243,6 +243,31 @@
                 postTimeMs: (new goog.date.DateTime()).getTime(),
                 postId: 'post ' + (postId++)
             });
+          });
+
+      bits.events.PubSub.subscribe(
+          this.shardId, bits.events.EventType.RequestHistoricalPosts,
+          function() {
+            // Return messages after 1 second to simulate network time.
+            window.setTimeout(function() {
+              var oldPosts = [];
+              for (var i = 0; i < 5; i++) {
+                oldPosts.push({
+                  shardId: 5,
+                  archiveType: 'chat',
+                  nickname: 'Scroll history',
+                  body: 'Fake message ' + historicalPostId,
+                  postTimeMs: (new goog.date.DateTime()).getTime(),
+                  sequenceId: historicalPostId,
+                  postId: 'post ' + (historicalPostId--)
+                });
+              }
+
+              bits.events.PubSub.publish(
+                shardId,
+                bits.events.EventType.HistoricalPostsReceived,
+                oldPosts);
+            }, 1000);
           });
     </script>
   </body>
