@@ -34,41 +34,59 @@ goog.require('bits.posts.Post');
 goog.require('bits.posts.PostContainer');
 
 
+/**
+ * Creates a new ChatBox.
+ * @param {string} Shard ID for this chatbox.
+ * @constructor
+ */
 bits.chatbox.ChatBox = function(shardId) {
   goog.base(this);
 
-  this.shardId = shardId;
-  this.postContainer = new bits.posts.PostContainer(shardId);
-  this.chatInput = new goog.ui.LabelInput(
+  /**
+   * @type {string}
+   * @private
+   */
+  this.shardId_ = shardId;
+
+  /**
+   * @type {bits.posts.PostContainer}
+   * @private
+   */
+  this.postContainer_ = new bits.posts.PostContainer(shardId);
+
+  /**
+   * @type {goog.ui.LabelInput}
+   * @private
+   */
+  this.chatInput_ = new goog.ui.LabelInput(
       'Type chat messages here');
-  this.splitPane = new goog.ui.SplitPane(
-        this.postContainer, this.chatInput,
+
+  /**
+   * @type {goog.ui.SplitPane}
+   * @private
+   */
+  this.splitPane_ = new goog.ui.SplitPane(
+        this.postContainer_,
+        this.chatInput_,
         goog.ui.SplitPane.Orientation.VERTICAL);
 
   /**
-   * Event handler for this object.
    * @type {goog.events.EventHandler}
    * @private
    */
   this.eh_ = new goog.events.EventHandler(this);
 
   /**
-   * Keyboard handler for this object. This object is created once the
-   * component's DOM element is known.
-   *
    * @type {goog.events.KeyHandler?}
    * @private
    */
   this.kh_ = null;
 
   /**
-   * For watching the size of the parent container.
    * @type {goog.dom.ViewportSizeMonitor}
    * @private
    */
   this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
-  this.eh_.listen(
-      this.sizeMonitor_, goog.events.EventType.RESIZE, this.resize_);
 }
 goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
 
@@ -88,7 +106,7 @@ bits.chatbox.ChatBox.INPUT_DEFAULT_HEIGHT = 100;
 
 
 /**
- * Decorates an existing HTML DIV element as a PostContainer.
+ * Decorates an existing HTML DIV element as a ChatBox.
  *
  * @param {HTMLElement} element The DIV element to decorate.
  */
@@ -98,14 +116,14 @@ bits.chatbox.ChatBox.prototype.decorateInternal = function(element) {
   var element = this.getElement();
 
   var postElem = goog.dom.getElementByClass('bits-post-container', element);
-  this.postContainer.decorate(postElem);
+  this.postContainer_.decorate(postElem);
 
   var inputElem = goog.dom.getElementByClass('bits-chat-input', element);
-  this.chatInput.decorate(inputElem);
+  this.chatInput_.decorate(inputElem);
 
-  this.splitPane.decorate(element);
-  this.splitPane.setContinuousResize(true);
-  this.splitPane.setHandleSize(bits.chatbox.ChatBox.HANDLE_HEIGHT);
+  this.splitPane_.decorate(element);
+  this.splitPane_.setContinuousResize(true);
+  this.splitPane_.setHandleSize(bits.chatbox.ChatBox.HANDLE_HEIGHT);
   this.setChatInputHeight_(bits.chatbox.ChatBox.INPUT_DEFAULT_HEIGHT);
 };
 
@@ -123,19 +141,20 @@ bits.chatbox.ChatBox.prototype.disposeInternal = function() {
 
 
 /**
- * Called when component's element is known to be in the document.
+ * Called when the component's is in the document.
  */
 bits.chatbox.ChatBox.prototype.enterDocument = function() {
   bits.chatbox.ChatBox.superClass_.enterDocument.call(this);
 
-  this.kh_ = new goog.events.KeyHandler(this.chatInput.getElement());
+  this.kh_ = new goog.events.KeyHandler(this.chatInput_.getElement());
   this.eh_.listen(this.kh_, goog.events.KeyHandler.EventType.KEY, this.onKey_);
+  this.eh_.listen(
+      this.sizeMonitor_, goog.events.EventType.RESIZE, this.resize_);
 };
 
 
 /**
- * Called when component's element is known to have been removed from the
- * document.
+ * Called when component's element is removed from the document.
  */
 bits.chatbox.ChatBox.prototype.exitDocument = function() {
   bits.chatbox.ChatBox.superClass_.exitDocument.call(this);
@@ -143,22 +162,22 @@ bits.chatbox.ChatBox.prototype.exitDocument = function() {
 
 
 /**
- * Fired when user presses a key while the DIV has focus.
- * @param {goog.events.Event} event The key event.
+ * Fired when user presses a key in the chatbox.
+ * @param {goog.events.Event} event Key event.
  * @private
  */
 bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
   if (event.keyCode == goog.events.KeyCodes.ENTER) {
-    var chatText = goog.dom.forms.getValue(this.chatInput.getElement());
+    var chatText = goog.dom.forms.getValue(this.chatInput_.getElement());
     bits.events.PubSub.publish(
-        this.shardId, bits.events.EventType.SubmitPost,
+        this.shardId_, bits.events.EventType.SubmitPost,
         {
           archiveType: 'chat',
           body: chatText
         });
 
-    // TODO: Filter out new lines, HTML, etc.
-    goog.dom.forms.setValue(this.chatInput.getElement(), '');
+    // TODO(bslatkin): Filter out new lines, HTML, etc.
+    goog.dom.forms.setValue(this.chatInput_.getElement(), '');
     event.preventDefault();
   }
 };
@@ -171,7 +190,7 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
  */
 bits.chatbox.ChatBox.prototype.getChatInputHeight_ = function() {
   var currentSize = goog.style.getBorderBoxSize(this.getElement());
-  var firstSize = this.splitPane.getFirstComponentSize();
+  var firstSize = this.splitPane_.getFirstComponentSize();
   return currentSize.height - firstSize - bits.chatbox.ChatBox.HANDLE_HEIGHT;
 };
 
@@ -179,21 +198,21 @@ bits.chatbox.ChatBox.prototype.getChatInputHeight_ = function() {
 /**
  * Sets the height of the chat input widget.
  * @param {number} height New height of the chat input.
- * private
+ * @private
  */
 bits.chatbox.ChatBox.prototype.setChatInputHeight_ = function(height) {
   var currentSize = goog.style.getBorderBoxSize(this.getElement());
-  var firstSize = this.splitPane.getFirstComponentSize();
+  var firstSize = this.splitPane_.getFirstComponentSize();
   var firstComponentNewHeight = currentSize.height - height -
       bits.chatbox.ChatBox.HANDLE_HEIGHT;
-  this.splitPane.setFirstComponentSize(firstComponentNewHeight);
+  this.splitPane_.setFirstComponentSize(firstComponentNewHeight);
 };
 
 
 /**
  * Resize this element to fill its parent container. Will keep the chatbox
  * part of the splitpane the same size.
- * private
+ * @private
  */
 bits.chatbox.ChatBox.prototype.resize_ = function() {
   var chatInputHeight = this.getChatInputHeight_();
