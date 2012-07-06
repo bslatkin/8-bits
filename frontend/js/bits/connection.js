@@ -55,6 +55,9 @@ bits.connection.Connection = function(shardId, nickname) {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.SubmitPresenceChange,
       goog.bind(this.handleSubmitPresenceChange, this));
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.RequestRoster,
+      goog.bind(this.requestRoster, this));
 };
 
 
@@ -81,6 +84,7 @@ bits.connection.Connection.prototype.handleConnect = function(event) {
       return;
     }
     this.setPresence();
+    this.requestRoster();
 
     this.channel = new goog.appengine.Channel(response.browserToken);
     var socket = this.channel.open({
@@ -210,6 +214,36 @@ bits.connection.Connection.prototype.handleSubmitPostSuccessful =
                     responseJson.postId + '"');
   bits.events.PubSub.publish(
       this.shardId, bits.events.EventType.SubmittedPostReceived, postMap);
+};
+
+
+bits.connection.Connection.prototype.requestRoster = function() {
+  var params = new goog.Uri.QueryData();
+  params.add('shard', this.shardId);
+  this.xhrManager.send(
+    this.getNextMessageId(),
+    '/rpc/show_roster',
+    opt_method='POST',
+    opt_content=params.toString(),
+    null,
+    null,
+    goog.bind(this.handleRequestRosterSuccessful, this));
+};
+
+
+bits.connection.Connection.prototype.handleRequestRosterSuccessful =
+    function(event) {
+  var responseJson = event.target.getResponseJson();
+  this.logger_.info('Received roster for shardId="' + this.shardId +
+                    '",roster="' + responseJson.roster + '"');
+  var postMap = {
+    shardId: this.shardId,
+    body: responseJson.roster,
+    postTimeMs: (new goog.date.DateTime()).getTime(),
+    archiveType: bits.posts.ArchiveType.ROSTER
+  }
+  bits.events.PubSub.publish(
+      this.shardId, bits.events.EventType.RosterReceived, postMap);
 };
 
 

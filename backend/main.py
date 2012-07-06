@@ -534,6 +534,26 @@ def invalidate_user_cache(shard):
   memcache.delete(shard_key)
 
 
+def marshal_users(user_list):
+  """Organizes a list of LoginRecords into a JSON-serializable list."""
+  if not user_list:
+    return 'Nobody else is here'
+
+  # Sort users present the shortest time first.
+  user_list.sort(key=lambda u: u.last_update_time, reverse=True)
+  nicknames = [u.nickname for u in user_list]
+
+  if len(user_list) == 1:
+    return '%s is here' % nicknames[0]
+
+  if len(user_list) == 2:
+    return '%s and %s are here' % (nicknames[0], nicknames[1])
+
+  return '%s, and %s are here' % (
+      ', '.join(nicknames[:-1]),
+      nicknames[-1])
+
+
 def get_present_users(shard):
   """Returns a list of present users for a shard in descending log-in order.
 
@@ -741,6 +761,23 @@ class PostHandler(BaseRpcHandler):
       user_id=login_record.user_id,
       body=body)
     self.json_response['postId'] = post_key.id()
+
+
+class ShowRosterHandler(BaseRpcHandler):
+  """Handles echoing the roster to a single user."""
+
+  require_shard = True
+
+  def handle(self):
+    user_list = get_present_users(self.shard)
+    adjusted_user_list = []
+    for user in user_list:
+      # Do not include ourselves in the roster.
+      if user.user_id == self.user_id:
+        continue
+      adjusted_user_list.append(user)
+
+    self.json_response['roster'] = marshal_users(adjusted_user_list)
 
 
 class ListPostsHandler(BaseRpcHandler):
@@ -958,6 +995,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/work/apply_posts', ApplyWorker),
   (r'/work/upload_end', EndUploadHandler),
   (r'/rpc/create_shard', CreateShardHandler),
+  (r'/rpc/show_roster', ShowRosterHandler),
   (r'/rpc/list_posts', ListPostsHandler),
   (r'/rpc/login', LoginHandler),
   (r'/rpc/post', PostHandler),

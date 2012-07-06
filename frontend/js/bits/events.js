@@ -64,7 +64,15 @@ bits.events.EventType = {
 
   // The user wants to see the settings dialog.
   // No arguments.
-  ShowSettingsDialog: 'ShowSettingsDialog'
+  ShowSettingsDialog: 'ShowSettingsDialog',
+
+  // The user wants to see the roster of users who are present.
+  // No arguments.
+  RequestRoster: 'RequestRoster',
+
+  // The server has provided the roster of users who are present.
+  // No arguments.
+  RosterReceived: 'RosterReceived'
 };
 
 

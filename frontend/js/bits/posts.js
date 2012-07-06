@@ -54,6 +54,7 @@ bits.posts.ArchiveType = {
   USER_LOGIN: 'user_login',
   USER_LOGOUT: 'user_logout',
   USER_UPDATE: 'user_update',
+  ROSTER: 'roster',
   UNKNOWN: 'unknown'
 };
 
@@ -117,6 +118,7 @@ bits.posts.Post.prototype.createDom = function() {
     case bits.posts.ArchiveType.USER_LOGIN:
     case bits.posts.ArchiveType.USER_LOGOUT:
     case bits.posts.ArchiveType.USER_UPDATE:
+    case bits.posts.ArchiveType.ROSTER:
       this.renderPresence(element);
       break;
 
@@ -126,7 +128,7 @@ bits.posts.Post.prototype.createDom = function() {
 
   var tooltip = new goog.ui.Tooltip(
       element,
-      'Posted: ' + this.postDateTime.toUsTimeString() + ', ' +
+      'Received at ' + this.postDateTime.toUsTimeString() + ', ' +
       (this.postDateTime.getMonth() + 1) + '/' +
       this.postDateTime.getDate() + '/' +
       this.postDateTime.getFullYear(),
@@ -238,6 +240,9 @@ bits.posts.PostContainer = function(shardId, opt_archiveType) {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.SubmittedPostReceived,
       this.handleSubmitPostSuccess, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.RosterReceived,
+      this.handleRosterReceived, this);
 
   // Keep track of the list of Posts we have already seen. Keys are IDs
   // unique to each post but separate from the sequence numbers because
@@ -281,7 +286,6 @@ function(postMap) {
                     'shardId="' + postMap.shardId +
                     '", postId="' + postMap.postId +
                     '", nickname="' + postMap.nickname + '"');
-  // TODO: Filter by archive type.
   this.addOrUpdatePost(new bits.posts.Post(postMap));
 };
 
@@ -292,7 +296,14 @@ bits.posts.PostContainer.prototype.handlePostReceived = function(postMap) {
                     '", postId="' + postMap.postId +
                     '", sequenceId="' + postMap.sequenceId +
                     '", nickname="' + postMap.nickname + '"');
-  // TODO: Filter by archive type.
+  this.addOrUpdatePost(new bits.posts.Post(postMap));
+};
+
+
+bits.posts.PostContainer.prototype.handleRosterReceived = function(postMap) {
+  this.logger_.info('Received roster from server: ' +
+                    'shardId="' + postMap.shardId +
+                    '", body="' + postMap.body + '"');
   this.addOrUpdatePost(new bits.posts.Post(postMap));
 };
 
