@@ -128,7 +128,7 @@ bits.posts.Post.prototype.createDom = function() {
 
   var tooltip = new goog.ui.Tooltip(
       element,
-      'Received at ' + this.postDateTime.toUsTimeString() + ', ' +
+      'Posted at ' + this.postDateTime.toUsTimeString() + ', ' +
       (this.postDateTime.getMonth() + 1) + '/' +
       this.postDateTime.getDate() + '/' +
       this.postDateTime.getFullYear(),

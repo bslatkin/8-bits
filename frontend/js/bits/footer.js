@@ -78,6 +78,11 @@ bits.footer.FooterBar.prototype.enterDocument = function() {
       rosterLink, goog.events.EventType.CLICK,
       this.handleClickGetRoster_);
 
+  var shortUrlLink = goog.dom.getElement('get-shorturl');
+  this.eh_.listen(
+      shortUrlLink, goog.events.EventType.CLICK,
+      this.handleShowShortUrl_);
+
   bits.events.PubSub.subscribe(
     this.shardId_, bits.events.EventType.SubmitPresenceChange,
     goog.bind(this.handlePresenceChange_, this));
@@ -108,6 +113,15 @@ bits.footer.FooterBar.prototype.handleClickGetRoster_ = function(e) {
 
   bits.events.PubSub.publish(
       this.shardId_, bits.events.EventType.RequestRoster);
+};
+
+
+bits.footer.FooterBar.prototype.handleShowShortUrl_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  bits.events.PubSub.publish(
+      this.shardId_, bits.events.EventType.ShowShortUrlDialog);
 };
 
 

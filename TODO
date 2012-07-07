@@ -2,13 +2,18 @@ v1 Polish:
 - Clean up code comments and style everywhere
 - Add a favicon static file
 - Fix up color scheme in chat
-- Add about link
 - Add privacy policy/13-yo opt-in to first-time join
 - Make splitpane collapse down to show all chat, not up
 
 -----
 
 v2 features:
-- Drag/drop image upload
 - Pasting URLs starts a new topic
 - Topic menu with auto-threading of chat
+- Topics dissipate after 15 minutes of no activity
+
+-----
+
+v3 features:
+- Read state on topics and non-topic chat
+- Drag/drop image upload

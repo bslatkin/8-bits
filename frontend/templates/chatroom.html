@@ -49,19 +49,18 @@
     <span id="nickname-display">{{nickname}}</span>
 
     <a href="javascript:void(0)" id="nickname-change"
-        class="bits-setting-link small" title="Update your look">edit</a>
-
-    <a href="javascript:void(0)" class="bits-setting-link" id="see-roster"
-        title="See who else is present">who's here?</a>
+        class="bits-setting-link small" title="Update your look">change</a>
   </div>
 
   <a href="/" target="_blank" title="About 8-bits of ephemera"><img src="/static/{{cache_buster}}/logo_wide.png" height="24" width="185"
         alt="8-bits of ephemera" class="footer-logo" border="0"></a>
 
   <div class="bits-footer-settings-right">
-    <span class="bits-footer-shorturl">
-      {{short_url_prefix}}{{shard_id}}
-    </span>
+    <a href="javascript:void(0)" class="bits-setting-link" id="see-roster"
+        title="See who else is present">who's here?</a>
+
+    <a href="javascript:void(0)" id="get-shorturl" class="bits-setting-link"
+        title="Shard this ephemera other people">share this</a>
   </div>
 </div>
 
@@ -72,6 +71,11 @@
     <input type="text" name="nickname"
         id="setting-nickname" class="title" value="{{nickname}}">
   </form>
+</div>
+
+<div class="bits-dialog" id="link-dialog">
+  <input type="text" name="nickname" id="link-shorturl" class="title"
+      value="{{short_url_prefix}}{{shard_id}}" readonly="readonly">
 </div>
 
 <script>

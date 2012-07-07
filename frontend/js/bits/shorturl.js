@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /**
- * @fileoverview Chatroom settings dialog.
+ * @fileoverview Dialog for copying a short URL for a chatroom.
  */
 
-goog.provide('bits.settings.SettingsDialog');
+goog.provide('bits.shorturl.ShortUrlDialog');
 
 goog.require('goog.dom');
 goog.require('goog.dom.forms');
@@ -24,42 +24,50 @@ goog.require('goog.dom.ViewportSizeMonitor');
 goog.require('goog.style');
 goog.require('goog.ui.Dialog');
 goog.require('goog.ui.Dialog.ButtonSet');
-goog.require('goog.ui.Dialog.DefaultButtonKeys');
 goog.require('goog.ui.Component');
 
 goog.require('bits.events');
 
 
-bits.settings.SettingsDialog = function(shardId) {
+/**
+ * Constructs the short URL dialog.
+ * @param {string} shardId Shard for this short URL dialog.
+ * @constructor
+ */
+bits.shorturl.ShortUrlDialog = function(shardId) {
   goog.base(this);
 
+  /**
+   * @type {string}
+   * @private
+   */
   this.shardId_ = shardId;
 
+  /**
+   * @type {goog.ui.Dialog}
+   * @private
+   */
   this.dialog_ = new goog.ui.Dialog();
-  this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK_CANCEL);
-  this.dialog_.setTitle('Update your look');
+  this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK);
+  this.dialog_.setTitle('Copy and paste the short URL to share it');
   this.dialog_.setEscapeToCancel(true);
   this.dialog_.setHasTitleCloseButton(false);
   this.dialog_.setDraggable(false);
   this.dialog_.setVisible(false);
 
-  this.nicknameEl_ = null;
-
   /**
-   * Event handler for this object.
    * @type {goog.events.EventHandler}
    * @private
    */
   this.eh_ = new goog.events.EventHandler(this);
 
   /**
-   * For watching the size of the parent container.
    * @type {goog.dom.ViewportSizeMonitor}
    * @private
    */
   this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
 }
-goog.inherits(bits.settings.SettingsDialog, goog.ui.Component);
+goog.inherits(bits.shorturl.ShortUrlDialog, goog.ui.Component);
 
 
 /**
@@ -67,16 +75,16 @@ goog.inherits(bits.settings.SettingsDialog, goog.ui.Component);
  *
  * @param {HTMLElement} element The DIV element to decorate.
  */
-bits.settings.SettingsDialog.prototype.decorateInternal = function(element) {
-  bits.settings.SettingsDialog.superClass_.decorateInternal.call(this, element);
+bits.shorturl.ShortUrlDialog.prototype.decorateInternal = function(element) {
+  bits.shorturl.ShortUrlDialog.superClass_.decorateInternal.call(this, element);
 };
 
 
 /**
  * Disposes of the component.
  */
-bits.settings.SettingsDialog.prototype.disposeInternal = function() {
-  bits.settings.SettingsDialog.superClass_.disposeInternal.call(this);
+bits.shorturl.ShortUrlDialog.prototype.disposeInternal = function() {
+  bits.shorturl.ShortUrlDialog.superClass_.disposeInternal.call(this);
   this.eh_.dispose();
 };
 
@@ -84,12 +92,10 @@ bits.settings.SettingsDialog.prototype.disposeInternal = function() {
 /**
  * Called when component's element is known to be in the document.
  */
-bits.settings.SettingsDialog.prototype.enterDocument = function() {
-  bits.settings.SettingsDialog.superClass_.enterDocument.call(this);
+bits.shorturl.ShortUrlDialog.prototype.enterDocument = function() {
+  bits.shorturl.ShortUrlDialog.superClass_.enterDocument.call(this);
 
   var element = this.getElement();
-  this.nicknameEl_ = goog.dom.getElement('setting-nickname', element);
-
   goog.style.setStyle(element, 'display', null);
   this.dialog_.getContentElement().appendChild(element);
 
@@ -97,13 +103,9 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
       this.sizeMonitor_, goog.events.EventType.RESIZE,
       goog.bind(this.dialog_.reposition, this.dialog_));
 
-  this.eh_.listen(
-      this.dialog_, goog.ui.Dialog.EventType.SELECT,
-      this.handleDialogSelect_);
-
   bits.events.PubSub.subscribe(
-      this.shardId_, bits.events.EventType.ShowSettingsDialog,
-      goog.bind(this.setVisible, this, true));
+      this.shardId_, bits.events.EventType.ShowShortUrlDialog,
+      goog.bind(this.setVisible_, this, true));
 };
 
 
@@ -111,32 +113,26 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
  * Called when component's element is known to have been removed from the
  * document.
  */
-bits.settings.SettingsDialog.prototype.exitDocument = function() {
-  bits.settings.SettingsDialog.superClass_.exitDocument.call(this);
+bits.shorturl.ShortUrlDialog.prototype.exitDocument = function() {
+  bits.shorturl.ShortUrlDialog.superClass_.exitDocument.call(this);
 
   goog.style.setStyle(this.getElement(), 'display', 'none');
   document.body.appendChild(this.getElement());
 };
 
 
-bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
-  if (e.key == goog.ui.Dialog.DefaultButtonKeys.OK) {
-    bits.events.PubSub.publish(
-        this.shardId_, bits.events.EventType.SubmitPresenceChange,
-        {
-          nickname: goog.dom.forms.getValue(this.nicknameEl_)
-        });
-  }
-};
-
-
-bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
+/**
+ * Sets if this dialog is visible or not.
+ * @param {boolean} isVisible Whether to make this dialog visible.
+ * @private
+ */
+bits.shorturl.ShortUrlDialog.prototype.setVisible_ = function(isVisible) {
   if (isVisible && this.dialog_.isVisible()) {
     return
   }
   this.dialog_.setVisible(isVisible);
   if (isVisible) {
     this.dialog_.reposition();
-    this.nicknameEl_.focus();
+    goog.dom.getElement('link-shorturl', this.getElement()).focus();
   }
 };

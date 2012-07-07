@@ -27,8 +27,11 @@
   right: 0;
 }
 
-.bits-setting-link {
+.bits-footer-settings-left .bits-setting-link {
   margin-right: 6px;
+}
+.bits-footer-settings-right .bits-setting-link {
+  margin-left: 6px;
 }
 
 .footer-logo {

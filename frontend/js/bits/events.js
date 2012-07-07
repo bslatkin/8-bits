@@ -66,6 +66,10 @@ bits.events.EventType = {
   // No arguments.
   ShowSettingsDialog: 'ShowSettingsDialog',
 
+  // The user wants to see the short URL dialog.
+  // No arguments.
+  ShowShortUrlDialog: 'ShowShortUrlDialog',
+
   // The user wants to see the roster of users who are present.
   // No arguments.
   RequestRoster: 'RequestRoster',

@@ -29,6 +29,7 @@ goog.require('bits.connection.Connection');
 goog.require('bits.chatbox.ChatBox');
 goog.require('bits.footer.FooterBar');
 goog.require('bits.settings.SettingsDialog');
+goog.require('bits.shorturl.ShortUrlDialog');
 
 
 bits.startup = function(params) {
@@ -54,6 +55,9 @@ bits.startup = function(params) {
 
   var settings = new bits.settings.SettingsDialog(shardId);
   settings.decorate(goog.dom.getElement('settings-dialog'));
+
+  var shortUrlDialog = new bits.shorturl.ShortUrlDialog(shardId);
+  shortUrlDialog.decorate(goog.dom.getElement('link-dialog'));
 
   // Now do initial actions.
   if (firstLogin) {
