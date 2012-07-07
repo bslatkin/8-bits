@@ -139,7 +139,6 @@ bits.posts.Post.prototype.createDom = function() {
 
 
 bits.posts.Post.prototype.renderChat = function(element) {
-  // TODO(bslatkin): HTML escaping.
   goog.dom.classes.add(element, goog.getCssName('bits-post-chat'));
 
   var nicknameDiv = this.dom_.createElement('span');
@@ -153,7 +152,16 @@ bits.posts.Post.prototype.renderChat = function(element) {
 
   var bodyDiv = this.dom_.createElement('span');
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-chat-body'));
+
+  // Make the supplied body text safe by escaping it as text content.
+  // Then apply filters to linkify it safely. We're very open to all kinds of
+  // crazy links here.
   this.dom_.setTextContent(bodyDiv, this.body);
+  var safeBody = this.dom_.getTextContent(bodyDiv);
+  safeBody = safeBody.replace(
+      /(http(s?):\/\/[^ '"\)\(]+)/g,
+      '<a href="$1" target="_blank">$1</a>');
+  bodyDiv.innerHTML = safeBody;
 
   element.appendChild(nicknameDiv);
   element.appendChild(separatorDiv);
@@ -162,7 +170,6 @@ bits.posts.Post.prototype.renderChat = function(element) {
 
 
 bits.posts.Post.prototype.renderPresence = function(element) {
-  // TODO: HTML escaping.
   goog.dom.classes.add(element, goog.getCssName('bits-post-presence'));
 
   var bodyDiv = this.dom_.createElement('span');
