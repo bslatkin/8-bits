@@ -1,16 +1,20 @@
 v1 Polish:
-- Clean up code comments and style everywhere
-- Add a favicon static file
 - Fix up color scheme in chat
 - Add privacy policy/13-yo opt-in to first-time join
-- Make splitpane collapse down to show all chat, not up
-- Enable SSL
-- robots.txt
+- Surface RPC errors
+- Clean up code comments and style everywhere
 - Domain setup:
   - default: https://www.8-bits.us/chat/asdfasdfsadasdf
   - default: 8-bits.us
   - redir: 8-bit.us, eight-bits.us, eight-bit.us,
            eightbits.us, eightbit.us, eight-bits.com
+- Redirect everything to SSL
+- http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+
+Bugs:
+- Put a limit on nickname max length
+- Nickname of empty string causes no presence update notification
+- Make splitpane collapse down to show all chat, not up
 
 -----
 

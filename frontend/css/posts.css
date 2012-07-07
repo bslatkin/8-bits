@@ -50,7 +50,6 @@
   display: block;
 }
 
-
 .bits-post-presence {
   line-height: 20px;
   height: 20px;  /* need height for strict overflow */
@@ -61,4 +60,6 @@
      the page to jump inconsistent heights on each newly added post line. */
   line-height: 20px;
   display: block;
+  float: left;
+  clear: both;
 }

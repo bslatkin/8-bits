@@ -207,6 +207,42 @@
        y1="681.71191"
        x2="261.6409"
        y2="715.22797" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3816"
+       id="linearGradient3084"
+       gradientUnits="userSpaceOnUse"
+       x1="314.76276"
+       y1="567.05219"
+       x2="314.76276"
+       y2="667.07971" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3816"
+       id="linearGradient3086"
+       gradientUnits="userSpaceOnUse"
+       x1="314.76276"
+       y1="567.05219"
+       x2="314.76276"
+       y2="667.07971" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3816"
+       id="linearGradient3088"
+       gradientUnits="userSpaceOnUse"
+       x1="314.76276"
+       y1="567.05219"
+       x2="314.76276"
+       y2="667.07971" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3816"
+       id="linearGradient3090"
+       gradientUnits="userSpaceOnUse"
+       x1="314.76276"
+       y1="567.05219"
+       x2="314.76276"
+       y2="667.07971" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -215,9 +251,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4182101"
+     inkscape:zoom="1.0717735"
      inkscape:cx="274.24258"
-     inkscape:cy="519.63907"
+     inkscape:cy="761.0628"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -426,5 +462,50 @@
            width="398.27631"
            id="rect3939" /></flowRegion><flowPara
          style="fill:url(#linearGradient3949);fill-opacity:1"
-         id="flowPara3941">Create your own</flowPara></flowRoot>  </g>
+         id="flowPara3941">Create your own</flowPara></flowRoot>    <path
+       inkscape:export-ydpi="51.217171"
+       inkscape:export-xdpi="51.217171"
+       inkscape:export-filename="/Users/bslatkin/Desktop/favicon.png"
+       transform="matrix(1.0564632,0,0,1.0564632,75.014561,-275.37743)"
+       d="m 228.2258,505.58798 a 26.612904,26.612904 0 1 1 -53.2258,0 26.612904,26.612904 0 1 1 53.2258,0 z"
+       sodipodi:ry="26.612904"
+       sodipodi:rx="26.612904"
+       sodipodi:cy="505.58798"
+       sodipodi:cx="201.6129"
+       id="path3058"
+       style="fill:#00d5d7;fill-opacity:1"
+       sodipodi:type="arc" />
+    <flowRoot
+       inkscape:export-ydpi="51.217171"
+       inkscape:export-xdpi="51.217171"
+       inkscape:export-filename="/Users/bslatkin/Desktop/favicon.png"
+       transform="translate(222.18855,-38.319531)"
+       style="font-size:42px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:American Typewriter;-inkscape-font-specification:American Typewriter Light"
+       id="flowRoot3060"
+       xml:space="preserve"><flowRegion
+         id="flowRegion3062"><rect
+           style="font-size:42px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:American Typewriter;-inkscape-font-specification:American Typewriter Light"
+           y="269.50504"
+           x="40"
+           height="182.85716"
+           width="422.85715"
+           id="rect3064" /></flowRegion><flowPara
+         id="flowPara3066">8</flowPara></flowRoot>    <flowRoot
+       inkscape:export-ydpi="51.217171"
+       inkscape:export-xdpi="51.217171"
+       transform="translate(71.57511,-336.3928)"
+       style="font-size:56px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:url(#linearGradient3090);fill-opacity:1;stroke:none;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter"
+       id="flowRoot3076"
+       xml:space="preserve"
+       inkscape:export-filename="/Users/bslatkin/Desktop/favicon.png"><flowRegion
+         style="fill:url(#linearGradient3086);fill-opacity:1"
+         id="flowRegion3078"><rect
+           style="font-size:56px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:url(#linearGradient3084);fill-opacity:1;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter"
+           y="552.36218"
+           x="214.51613"
+           height="101.6129"
+           width="351.61292"
+           id="rect3080" /></flowRegion><flowPara
+         style="fill:url(#linearGradient3088);fill-opacity:1"
+         id="flowPara3082">e</flowPara></flowRoot>  </g>
 </svg>
