@@ -1,8 +1,10 @@
 v1 Features:
 
 Polish:
+- Clean up code comments and style everywhere
 - Add a favicon static file
-- Fix up color scheme
+- Fix up color scheme in chat
+- Add about link
 - Add privacy policy/13-yo opt-in to first-time join
 - Make splitpane collapse down to show all chat, not up
 
