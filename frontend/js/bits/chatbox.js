@@ -172,8 +172,8 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
     bits.events.PubSub.publish(
         this.shardId_, bits.events.EventType.SubmitPost,
         {
-          archiveType: 'chat',
-          body: chatText
+          'archiveType': 'chat',
+          'body': chatText
         });
 
     // TODO(bslatkin): Filter out new lines, HTML, etc.
@@ -218,7 +218,7 @@ bits.chatbox.ChatBox.prototype.resize_ = function() {
   var chatInputHeight = this.getChatInputHeight_();
 
   var parentSize = goog.style.getBorderBoxSize(this.getElement().parentNode);
-  this.splitPane.setSize(
+  this.splitPane_.setSize(
       new goog.math.Size(parentSize.width, parentSize.height));
 
   // Keep the chat input the same height when the whole chatbox is resized.
