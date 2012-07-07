@@ -924,6 +924,13 @@ class LandingHandler(BaseUiHandler):
     self.render('landing.html')
 
 
+class TermsHandler(BaseUiHandler):
+  """Renders the terms of service page."""
+
+  def get(self):
+    self.render('terms.html')
+
+
 class CreateChatroomHandler(BaseUiHandler):
   """Creates a new chatroom URL and redirects the user to it."""
 
@@ -1008,11 +1015,11 @@ class WarmupHandler(BaseUiHandler):
 ROUTES = webapp.WSGIApplication([
   (r'/', LandingHandler),
   (r'/create', CreateChatroomHandler),
+  (r'/terms', TermsHandler),
   (r'/_ah/warmup', WarmupHandler),
   (r'/_ah/channel/([^/]+)/', ChannelPresenceHandler),
   (r'/admin/debug', DebugFormHandler),
   (r'/work/apply_posts', ApplyWorker),
-  (r'/work/upload_end', EndUploadHandler),
   (r'/rpc/create_shard', CreateShardHandler),
   (r'/rpc/show_roster', ShowRosterHandler),
   (r'/rpc/list_posts', ListPostsHandler),
@@ -1020,6 +1027,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
   # TODO(bslatkin): Reenable these
+  # (r'/work/upload_end', EndUploadHandler),
   # (r'/file/upload_start', StartUploadHandler),
   # (r'/file/upload_complete', CompleteUploadHandler),
   # (r'/file/download', DownloadFileHandler),

@@ -41,7 +41,8 @@
       <form action="/create" method="post" id="create-form">
         <div class="landing-create-image-c">
           <img class="landing-create-image" width="250" height="43"
-              alt="Create your own" src="/static/{{cache_buster}}/create.png">
+              title="Create your own" alt="Create your own"
+              src="/static/{{cache_buster}}/create.png">
         </div>
       </form>
     </div>
@@ -49,8 +50,10 @@
 </div>
 
 <div class="landing-footer">
-  <div class="landing-footer-message container">
-    {# TODO(bslatkin): Write some help text here; links to actual site #}
+  <div class="landing-footer-message container" align="right">
+    <a href="https://8-bits.googlecode.com/" target="_blank"
+        title="About 8-bits of ephemera">about</a>
+    <a href="/terms" target="_blank" title="Terms of service">terms</a>
   </div>
 </div>
 
