@@ -27,4 +27,4 @@ notify_queue = 'notify-posts'
 ephemeral_lifetime_seconds = 20 # 86400 * 255
 
 # What URL prefix shortlinks should point to.
-short_url_prefix = 'http://8-bits.us/'
+short_url_prefix = 'https://8-bits.us/c/'

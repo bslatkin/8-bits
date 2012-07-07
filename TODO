@@ -4,6 +4,13 @@ v1 Polish:
 - Fix up color scheme in chat
 - Add privacy policy/13-yo opt-in to first-time join
 - Make splitpane collapse down to show all chat, not up
+- Enable SSL
+- robots.txt
+- Domain setup:
+  - default: https://www.8-bits.us/chat/asdfasdfsadasdf
+  - default: 8-bits.us
+  - redir: 8-bit.us, eight-bits.us, eight-bit.us,
+           eightbits.us, eightbit.us, eight-bits.com
 
 -----
 

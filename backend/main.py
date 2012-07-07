@@ -944,7 +944,7 @@ class CreateChatroomHandler(BaseUiHandler):
       if shard_id:
         break
 
-    self.redirect('/' + shard_id)
+    self.redirect('/chat/' + shard_id)
 
 
 class ChatroomHandler(BaseUiHandler):
@@ -1020,7 +1020,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/file/upload_start', StartUploadHandler),
   (r'/file/upload_complete', CompleteUploadHandler),
   (r'/file/download', DownloadFileHandler),
-  (r'/([a-z0-9A-Z]+)', ChatroomHandler)
+  (r'/chat/([a-z0-9A-Z]+)', ChatroomHandler)
 ], debug=config.debug)
 
 

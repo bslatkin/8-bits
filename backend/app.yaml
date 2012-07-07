@@ -38,7 +38,21 @@ handlers:
 # Prefix static files with the current version number to bust caches on push.
 - url: /static/[0-9]+/(.+)
   static_files: static/\1
+  expiration: 90d
   upload: static
+  secure: always
+
+# Static files that need to be at a specific URL with no cache buster.
+- url: /robots\.txt
+  static_files: static/robots.txt
+  expiration: 1s
+  upload: static
+  secure: optional
+- url: /favicon\.ico
+  static_files: static/favicon.ico
+  expiration: 1d
+  upload: static
+  secure: optional
 
 # Task queues serving the user-facing app.
 - url: /work/.*
@@ -50,11 +64,6 @@ handlers:
   script: jobs.APP
   login: admin
 
-# Simple debug forms for messing with RPCs.
-- url: /admin/debug
-  script: main.APP
-  login: admin
-
 - url: /mapreduce(/.*)?
   script: mapreduce.main.APP
   login: admin
@@ -62,6 +71,8 @@ handlers:
 - url: /_ah/pipeline(/.*)?
   script: mapreduce.main.APP
   login: admin
+  secure: always
 
 - url: /.*
   script: main.APP
+  secure: always
