@@ -28,3 +28,4 @@ v2 features:
 v3 features:
 - Read state on topics and non-topic chat
 - Drag/drop image upload
+- New topic snippeting/preview based on OGP
