@@ -838,79 +838,81 @@ class ListPostsHandler(BaseRpcHandler):
 ################################################################################
 # File-related handlers
 
-class StartUploadHandler(BaseRpcHandler):
-  """Handles getting new upload URLs for files."""
-
-  get_enabled = True
-  post_enabled = False
-  require_shard = True
-
-  def handle(self):
-    # TODO(bslatkin): Verify the login is active and valid (max age).
-    return blobstore.create_upload_url('/work/upload_end')
-
-
-class EndUploadHandler(BaseRpcHandler,
-                       blobstore_handlers.BlobstoreUploadHandler):
-  """Handles completing a file upload."""
-
-  require_shard = True
-  raw_response = True
-
-  def handle(self):
-    upload_files = self.get_uploads('file')
-    blob_info = upload_files[0]
-    filename = cgi.escape(blob_info.filename)
-
-    # TODO(bslatkin): Verify the login is active and valid (max age).
-    login_record = models.LoginRecord.get_by_id(self.user_id)
-    post_key = insert_post(
-      self.shard,
-      archive_type=models.Post.FILE,
-      nickname=login_record.nickname,
-      user_id=login_record.user_id,
-      body='The file "%s" has been uploaded' % filename,
-      post_name=filename,
-      post_attachment=blob_info.key())
-
-    self.redirect('/file/upload_complete?shard=%d&post_id=%s' %
-                  (self.shard, post_key.id()))
-
-
-class CompleteUploadHandler(BaseRpcHandler):
-  """Echos the post ID of a completed file upload."""
-
-  get_enabled = True
-  post_enabled = False
-  require_shard = True
-
-  def handle(self):
-    self.json_response['postId'] = self.get_required('post_id', str)
-
-
-class DownloadFileHandler(BaseRpcHandler):
-  """Gives users access to a file for download."""
-
-  get_enabled = True
-  post_enabled = False
-  require_shard = True
-  raw_response = True
-
-  def handle(self):
-    post_id = self.get_required('post_id', str)
-    post = models.Post.get_by_id(post_id)
-
-    if not post:
-      raise NotAuthorizedError('Non-existent post')
-    if post.shard_id != self.shard:
-      raise NotAuthorizedError('Invalid shard ID')
-    if post.archive_type != models.Post.FILE:
-      raise NotAuthorizedError('Post type is not a file')
-
-    self.response.headers[blobstore.BLOB_KEY_HEADER] = str(
-        post.post_attachment.key())
-    # Use blob's default content-type.
-    del self.response.headers['Content-Type']
+# TODO(bslatkin): Reenable these.
+#
+# class StartUploadHandler(BaseRpcHandler):
+#   """Handles getting new upload URLs for files."""
+# 
+#   get_enabled = True
+#   post_enabled = False
+#   require_shard = True
+# 
+#   def handle(self):
+#     # TODO(bslatkin): Verify the login is active and valid (max age).
+#     return blobstore.create_upload_url('/work/upload_end')
+# 
+# 
+# class EndUploadHandler(BaseRpcHandler,
+#                        blobstore_handlers.BlobstoreUploadHandler):
+#   """Handles completing a file upload."""
+# 
+#   require_shard = True
+#   raw_response = True
+# 
+#   def handle(self):
+#     upload_files = self.get_uploads('file')
+#     blob_info = upload_files[0]
+#     filename = cgi.escape(blob_info.filename)
+# 
+#     # TODO(bslatkin): Verify the login is active and valid (max age).
+#     login_record = models.LoginRecord.get_by_id(self.user_id)
+#     post_key = insert_post(
+#       self.shard,
+#       archive_type=models.Post.FILE,
+#       nickname=login_record.nickname,
+#       user_id=login_record.user_id,
+#       body='The file "%s" has been uploaded' % filename,
+#       post_name=filename,
+#       post_attachment=blob_info.key())
+# 
+#     self.redirect('/file/upload_complete?shard=%d&post_id=%s' %
+#                   (self.shard, post_key.id()))
+# 
+# 
+# class CompleteUploadHandler(BaseRpcHandler):
+#   """Echos the post ID of a completed file upload."""
+# 
+#   get_enabled = True
+#   post_enabled = False
+#   require_shard = True
+# 
+#   def handle(self):
+#     self.json_response['postId'] = self.get_required('post_id', str)
+# 
+# 
+# class DownloadFileHandler(BaseRpcHandler):
+#   """Gives users access to a file for download."""
+# 
+#   get_enabled = True
+#   post_enabled = False
+#   require_shard = True
+#   raw_response = True
+# 
+#   def handle(self):
+#     post_id = self.get_required('post_id', str)
+#     post = models.Post.get_by_id(post_id)
+# 
+#     if not post:
+#       raise NotAuthorizedError('Non-existent post')
+#     if post.shard_id != self.shard:
+#       raise NotAuthorizedError('Invalid shard ID')
+#     if post.archive_type != models.Post.FILE:
+#       raise NotAuthorizedError('Post type is not a file')
+# 
+#     self.response.headers[blobstore.BLOB_KEY_HEADER] = str(
+#         post.post_attachment.key())
+#     # Use blob's default content-type.
+#     del self.response.headers['Content-Type']
 
 ################################################################################
 # UI handlers
@@ -977,7 +979,7 @@ class ChatroomHandler(BaseUiHandler):
       'first_login': first_login,
       'nickname': nickname,
       'shard_id': shard_id,
-      'short_url_prefix': config.short_url_prefix,
+      'short_url_prefix': self.request.host_url,
     }
     context['params'] = json.dumps(context)
 
@@ -1017,9 +1019,10 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/login', LoginHandler),
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
-  (r'/file/upload_start', StartUploadHandler),
-  (r'/file/upload_complete', CompleteUploadHandler),
-  (r'/file/download', DownloadFileHandler),
+  # TODO(bslatkin): Reenable these
+  # (r'/file/upload_start', StartUploadHandler),
+  # (r'/file/upload_complete', CompleteUploadHandler),
+  # (r'/file/download', DownloadFileHandler),
   (r'/chat/([a-z0-9A-Z]+)', ChatroomHandler)
 ], debug=config.debug)
 
