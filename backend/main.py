@@ -698,6 +698,10 @@ class PresenceHandler(BaseRpcHandler):
       login.put()
     ndb.transaction(txn)
 
+    # Invalidate the cache so the nickname will be updated next time
+    # someone requests the roster.
+    invalidate_user_cache(self.shard)
+
     message = None
     archive_type = models.Post.USER_LOGIN
     if last_nickname[0] is None:

@@ -30,12 +30,12 @@ goog.require('goog.ui.SplitPane');
 goog.require('goog.ui.SplitPane.Orientation');
 
 goog.require('bits.events');
-goog.require('bits.posts.Post');
 goog.require('bits.posts.PostContainer');
 
 
 /**
  * Creates a new ChatBox.
+ *
  * @param {string} Shard ID for this chatbox.
  * @constructor
  */

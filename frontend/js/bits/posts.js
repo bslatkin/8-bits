@@ -358,7 +358,6 @@ bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
   for (var i = 0, n = postMapList.length; i < n; i++) {
     postList.push(new bits.posts.Post(postMapList[i]));
   }
-  console.log(postList);
   this.prependPosts(postList);
 };
 
