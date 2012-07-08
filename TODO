@@ -2,18 +2,18 @@ v1 Polish:
 - Surface RPC errors
 - Clean up code comments and style everywhere
 - CSS parity for Firefox/IE9
-- Domain setup:
-  - default: https://www.8-bits.us/chat/asdfasdfsadasdf
-  - default: 8-bits.us
-  - redir: 8-bit.us, eight-bits.us, eight-bit.us,
-           eightbits.us, eightbit.us, eight-bits.com
-- Redirect everything to SSL
-- http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
 
 Bugs:
 - Put a limit on nickname max length
 - Nickname of empty string causes no presence update notification
 - Make splitpane collapse down to show all chat, not up
+
+v1 Production:
+- Domain setup:
+  - default: 8-bits.us
+  - redir: 8-bit.us, eight-bits.us, eight-bit.us,
+           eightbits.us, eightbit.us, eight-bits.com
+- http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
 
 -----
 

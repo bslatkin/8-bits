@@ -181,7 +181,7 @@ bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
       this.dialog_.setEscapeToCancel(false);
 
       var buttonSet = new goog.ui.Dialog.ButtonSet().
-          addButton(bits.settings.SettingsDialog.AGREE, true).
+          addButton(bits.settings.SettingsDialog.AGREE, false).
           addButton(bits.settings.SettingsDialog.DECLINE, false, true);
       this.dialog_.setButtonSet(buttonSet);
     } else {

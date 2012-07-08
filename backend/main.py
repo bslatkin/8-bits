@@ -123,6 +123,7 @@ class BaseUiHandler(webapp.RequestHandler):
 
     my_context = {
       'cache_buster': config.version_id,
+      'host_url': self.request.host_url,
       'js_mode': js_mode,
     }
     if context:
@@ -710,22 +711,19 @@ class PresenceHandler(BaseRpcHandler):
     # someone requests the roster.
     invalidate_user_cache(self.shard)
 
-    message = None
+    message = '%s has joined' % nickname
     archive_type = models.Post.USER_LOGIN
-    if last_nickname[0] is None:
-      message = '%s has joined' % nickname
-    elif last_nickname[0] != nickname:
+    if last_nickname[0] != nickname:
       message = '%s has changed their nickname to %s' % (
           last_nickname[0], nickname)
       archive_type = models.Post.USER_UPDATE
 
-    if message:
-      insert_post(
-          self.shard,
-          archive_type=archive_type,
-          nickname=nickname,
-          user_id=self.user_id,
-          body=message)
+    insert_post(
+        self.shard,
+        archive_type=archive_type,
+        nickname=nickname,
+        user_id=self.user_id,
+        body=message)
 
     logging.debug('Presence updated for user_id=%r in shard=%r',
                   self.user_id, self.shard)

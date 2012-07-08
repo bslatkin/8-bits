@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 
+{% block additional_meta %}
+
+<title>8-bits of ephemera</title>
+<meta name="description" content="Create a private stream with close friends. Each post is auto-deleted after ten days, fading like memories.">
+<meta property="og:image"
+    content="{{host_url}}/static/{{cache_buster}}/logo.png">
+{% endblock additional_meta %}
+
+
 {% block additional_css %}
 
 <link rel="stylesheet" href="/static/{{cache_buster}}/css/landing.css">
