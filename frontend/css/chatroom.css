@@ -5,6 +5,16 @@ html, body {
   height: 100%;
   width: 100%;
 }
+a:link,
+a:visited {
+  color: #00867F;
+  text-decoration: none;
+}
+a:hover,
+a:active {
+  color: #00867F;
+  text-decoration: underline;
+}
 
 .content-wrapper {
   display: block;

@@ -49,7 +49,6 @@ bits.shorturl.ShortUrlDialog = function(shardId) {
    */
   this.dialog_ = new goog.ui.Dialog();
   this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK);
-  this.dialog_.setTitle('Copy and paste the short URL to share it');
   this.dialog_.setEscapeToCancel(true);
   this.dialog_.setHasTitleCloseButton(false);
   this.dialog_.setDraggable(false);

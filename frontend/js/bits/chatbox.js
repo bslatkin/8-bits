@@ -95,7 +95,7 @@ goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
  * Thickness of the chatbox splitpane handle.
  * @type {number}
  */
-bits.chatbox.ChatBox.HANDLE_HEIGHT = 6;
+bits.chatbox.ChatBox.HANDLE_HEIGHT = 4;
 
 
 /**

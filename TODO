@@ -1,5 +1,4 @@
 v1 Polish:
-- Fix up color scheme in chat
 - Surface RPC errors
 - Clean up code comments and style everywhere
 - Domain setup:
@@ -21,6 +20,7 @@ v2 features:
 - Pasting URLs starts a new topic
 - Topic menu with auto-threading of chat
 - Topics dissipate after 15 minutes of no activity
+- Add Tweet/Facebook/G+ share buttons to "share this" dialog
 
 -----
 
