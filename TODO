@@ -4,8 +4,6 @@ v1 Polish:
 - CSS parity for Firefox/IE9
 
 Bugs:
-- Put a limit on nickname max length
-- Nickname of empty string causes no presence update notification
 - Make splitpane collapse down to show all chat, not up
 
 v1 Production:

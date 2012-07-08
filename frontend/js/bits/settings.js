@@ -156,9 +156,18 @@ bits.settings.SettingsDialog.prototype.exitDocument = function() {
 
 bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
   if (e.key == goog.ui.Dialog.DefaultButtonKeys.OK) {
+    var nickname = goog.dom.forms.getValue(this.nicknameEl_);
+
+    // TODO(bslatkin): Show a error message to users about invalid nicknames.
+    if (!nickname || nickname.length > 32) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     bits.events.PubSub.publish(
         this.shardId_, bits.events.EventType.SubmitPresenceChange,
-        goog.dom.forms.getValue(this.nicknameEl_),
+        nickname,
         !this.acceptedTerms_);  // Only send param on changes
     this.acceptedTerms_ = true;
   } else if (e.key == bits.settings.SettingsDialog.DECLINE.key) {
