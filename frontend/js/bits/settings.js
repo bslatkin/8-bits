@@ -192,5 +192,6 @@ bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
 
     this.dialog_.reposition();
     this.nicknameEl_.focus();
+    this.nicknameEl_.select();
   }
 };

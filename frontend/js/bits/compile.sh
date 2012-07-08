@@ -19,6 +19,7 @@ python ../../../closure/closure/bin/build/closurebuilder.py  \
 --root="." \
 --root="../../../closure" \
 --namespace="bits.startup" \
+--namespace="bits.landing" \
 --output_mode="compiled" \
 --compiler_jar="../../../closure-compiler.jar" \
 --output_file="compiled.js"

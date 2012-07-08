@@ -5,9 +5,8 @@
 import os
 import random
 
-
+# Run in debug mode. Raw JS locally, pretty-print exceptions.
 debug = True
-
 
 # The timestamp of the current deployment, or a cache buster locally.
 version_id = (

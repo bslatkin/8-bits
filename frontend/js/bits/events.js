@@ -51,7 +51,8 @@ bits.events.EventType = {
 
   // User submits a change to their presence settings.
   // Args:
-  //  JSON dictionary with the nickname the user wants to have now.
+  //  nickname: New nickname for the user.
+  //  acceptedTerms: User has accepted terms for the first time.
   SubmitPresenceChange: 'SubmitPresenceChange',
 
   // The last action resulted in a server-returned error.

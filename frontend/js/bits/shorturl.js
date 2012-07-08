@@ -132,6 +132,8 @@ bits.shorturl.ShortUrlDialog.prototype.setVisible_ = function(isVisible) {
   this.dialog_.setVisible(isVisible);
   if (isVisible) {
     this.dialog_.reposition();
-    goog.dom.getElement('link-shorturl', this.getElement()).focus();
+    var urlText = goog.dom.getElement('link-shorturl', this.getElement());
+    urlText.focus();
+    urlText.select();
   }
 };

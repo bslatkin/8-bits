@@ -125,6 +125,7 @@ bits.footer.FooterBar.prototype.handleShowShortUrl_ = function(e) {
 };
 
 
-bits.footer.FooterBar.prototype.handlePresenceChange_ = function(data) {
-  goog.dom.setTextContent(this.nicknameEl_, data.nickname);
+bits.footer.FooterBar.prototype.handlePresenceChange_ =
+    function(nickname, acceptedTerms) {
+  goog.dom.setTextContent(this.nicknameEl_, nickname);
 };

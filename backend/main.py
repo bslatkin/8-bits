@@ -117,7 +117,8 @@ class BaseUiHandler(webapp.RequestHandler):
   def render(self, template_name, context=None):
     """Renders the given template and context."""
     js_mode = 'compiled'
-    if self.request.environ.get('SERVER_SOFTWARE').startswith('Dev'):
+    if (config.debug and
+        self.request.environ.get('SERVER_SOFTWARE').startswith('Dev')):
       js_mode = self.request.get('js_mode', 'raw')
 
     my_context = {
@@ -577,26 +578,30 @@ def get_present_users(shard):
 
 def user_logged_in(shard, user_id):
   """Logs in a user to a shard. Always returns the current user ID."""
+  login_record = None
   if user_id:
     # Re-login the user if they somehow lost their browser state and
     # needed to reload the page. This assumes the cookie was okay.
     login_record = models.LoginRecord.get_by_id(user_id)
-    if not login_record or not login_record.online:
-      login_record = models.LoginRecord(
-        key=ndb.Key(models.LoginRecord._get_kind(), user_id),
-        shard_id=shard,
-        online=True)
-      login_record.put()
-      logging.debug('Re-logged-in user_id=%r to shard=%r',
+    if login_record and not login_record.online:
+      def txn():
+        login_record = models.LoginRecord.get_by_id(user_id)
+        assert login_record
+        login_record.online = True
+        login_record.put()
+
+      logging.debug('Re-logging-in user_id=%r to shard=%r',
                     login_record.user_id, shard)
-  else:
-    # User is logging in for the first time.
+      ndb.transaction(txn)
+
+  # User is logging in for the first time or somehow state was deleted.
+  if not login_record:
     login_record = models.LoginRecord(
       key=ndb.Key(models.LoginRecord._get_kind(), human_uuid()),
       shard_id=shard,
       online=True)
     login_record.put()
-    logging.debug('Logged-in user_id=%r to shard=%r',
+    logging.debug('Logged-in new user_id=%r to shard=%r',
                   login_record.user_id, shard)
 
   invalidate_user_cache(shard)

@@ -1,6 +1,7 @@
 v1 Polish:
 - Surface RPC errors
 - Clean up code comments and style everywhere
+- CSS parity for Firefox/IE9
 - Domain setup:
   - default: https://www.8-bits.us/chat/asdfasdfsadasdf
   - default: 8-bits.us
