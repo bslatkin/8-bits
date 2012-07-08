@@ -21,6 +21,7 @@ goog.provide('bits.settings.SettingsDialog');
 goog.require('goog.dom');
 goog.require('goog.dom.forms');
 goog.require('goog.dom.ViewportSizeMonitor');
+goog.require('goog.string');
 goog.require('goog.style');
 goog.require('goog.ui.Dialog');
 goog.require('goog.ui.Dialog.ButtonSet');
@@ -156,7 +157,8 @@ bits.settings.SettingsDialog.prototype.exitDocument = function() {
 
 bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
   if (e.key == goog.ui.Dialog.DefaultButtonKeys.OK) {
-    var nickname = goog.dom.forms.getValue(this.nicknameEl_);
+    var nickname = goog.string.trim(
+        goog.dom.forms.getValue(this.nicknameEl_));
 
     // TODO(bslatkin): Show a error message to users about invalid nicknames.
     if (!nickname || nickname.length > 32) {
