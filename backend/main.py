@@ -248,7 +248,8 @@ def enqueue_apply_task(shard, post_id=None):
     taskqueue.Task(
       url='/work/apply_posts',
       params=dict(shard=shard, post_id=post_id),
-      name='apply-%s-join-%s' % (shard, join_index)
+      name='apply-%s-join-%s' % (shard, join_index),
+      countdown=1
     ).add(config.apply_queue)
   except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
     logging.debug('Enqueued apply task for shard=%r but task already present',
@@ -348,7 +349,7 @@ def apply_posts(shard=None,
       logging.debug('apply_posts with no specific shard found no tasks')
       return
     params = task_list[0].extract_params()
-    shard = int(params['shard'])
+    shard = params['shard']
     logging.debug('apply_posts with no specific shard found shard=%r', shard)
 
   # Clear the dirty bit on this shard to start the time horizon.
@@ -370,58 +371,56 @@ def apply_posts(shard=None,
   unapplied_work = [w for w in work if w.sequence is None]
   new_sequence_numbers = []
 
-  if unapplied_work:
-    def txn():
-      shard_record = models.Shard.get_by_id(shard)
-      if shard == 1 and not shard_record:
-        # Auto-create the landing page shard if it doesn't exist.
-        shard_record = models.Shard(
-            key=ndb.Key(models.Shard._get_kind(), shard),
-            pretty_name='Landing chat')
-
-      # Clear any new sequence numbers that were allocated but were not
-      # applied due to a transaction rollback.
-      new_sequence_numbers[:] = []
-      new_sequence_numbers.extend(
-          xrange(shard_record.sequence_number,
-                 shard_record.sequence_number + len(unapplied_work)))
-      shard_record.sequence_number += max(1, len(unapplied_work))
-
-      # Write post references that point at the newly sequenced posts.
-      to_put = [shard_record]
-      for post, sequence in zip(unapplied_work, new_sequence_numbers):
-        to_put.append(models.PostReference(
-            id=sequence,
-            parent=shard_record.key,
-            post_id=post.post_id))
-      ndb.put_multi(to_put)
-
-    # Have this only attempt a transaction a single time. If the transaction
-    # fails the task queue will retry this task within 4 seconds. Because
-    # apply tasks are always named by the current Shard.sequence_number we
-    # can be reasonably sure that no other apply task for this shard will be
-    # running concurrently when this fails.
-    ndb.transaction(txn, retries=1)
-
-    sequence_numbers.extend(new_sequence_numbers)
-    for post, sequence in zip(unapplied_work, new_sequence_numbers):
-      post.sequence = sequence
-    ndb.put_multi(unapplied_work)
-    logging.debug('Applied %d posts for shard=%r, sequence_numbers=%r',
-                  len(unapplied_work), shard, sequence_numbers)
-  else:
-    if not insertion_post_id:
-      logging.debug('No post application to do for shard=%r')
+  # Double check if we think there should be work to apply but we didn't
+  # find any. This will force the apply task to retry immediately if the
+  # post task was not found. This can happen when the pull queue's consistency
+  # is behind.
+  if not unapplied_work and insertion_post_id:
+    post = models.Post.get_by_id(insertion_post_id)
+    if post and post.sequence:
+      logging.warning('No post application to do for shard=%r, but'
+                      'post_id=%r already applied; dropping this task',
+                      shard, insertion_post_id)
     else:
-      post = models.Post.get_by_id(insertion_post_id)
-      if post and post.sequence:
-        logging.warning('No post application to do for shard=%r, but'
-                        'post_id=%r already applied; dropping this task',
-                        shard, insertion_post_id)
-      else:
-        raise Error('No post application to do for shard=%r, but'
-                    'post_id=%r has not been applied; will retry' %
-                    (shard, insertion_post_id))
+      raise Error('No post application to do for shard=%r, but'
+                  'post_id=%r has not been applied; will retry' %
+                  (shard, insertion_post_id))
+
+  def txn():
+    shard_record = models.Shard.get_by_id(shard)
+    # TODO(bslatkin): Just drop this task entirely if this happens
+    assert shard_record
+
+    # Clear any new sequence numbers that were allocated but were not
+    # applied due to a transaction rollback.
+    new_sequence_numbers[:] = []
+    new_sequence_numbers.extend(
+        xrange(shard_record.sequence_number,
+               shard_record.sequence_number + len(unapplied_work)))
+    shard_record.sequence_number += max(1, len(unapplied_work))
+
+    # Write post references that point at the newly sequenced posts.
+    to_put = [shard_record]
+    for post, sequence in zip(unapplied_work, new_sequence_numbers):
+      to_put.append(models.PostReference(
+          id=sequence,
+          parent=shard_record.key,
+          post_id=post.post_id))
+    ndb.put_multi(to_put)
+
+  # Have this only attempt a transaction a single time. If the transaction
+  # fails the task queue will retry this task within 4 seconds. Because
+  # apply tasks are always named by the current Shard.sequence_number we
+  # can be reasonably sure that no other apply task for this shard will be
+  # running concurrently when this fails.
+  ndb.transaction(txn, retries=1)
+
+  sequence_numbers.extend(new_sequence_numbers)
+  for post, sequence in zip(unapplied_work, new_sequence_numbers):
+    post.sequence = sequence
+  ndb.put_multi(unapplied_work)
+  logging.debug('Applied %d posts for shard=%r, sequence_numbers=%r',
+                len(unapplied_work), shard, sequence_numbers)
 
   # Notify all logged in users of the new posts.
   futures = []
@@ -735,7 +734,6 @@ class ChannelPresenceHandler(webapp.RequestHandler):
   def post(self, action):
     if action.startswith('disconnected'):
       client_id = self.request.get('from')
-      logging.info('disconnected! %s', client_id)
       login_record = models.LoginRecord.get_by_id(client_id)
       if not login_record:
         logging.warning('Channel client_id=%r has no associated LoginRecord',
@@ -1023,6 +1021,17 @@ class WarmupHandler(BaseUiHandler):
 ################################################################################
 
 
+class DebugLoggingMiddleware(object):
+  """Sets the log level to debug on each request. Used in dev_appserver."""
+
+  def __init__(self, app):
+    self.app = app
+
+  def __call__(self, environ, start_response):
+    logging.getLogger().setLevel(logging.DEBUG)
+    return self.app(environ, start_response)
+
+
 ROUTES = webapp.WSGIApplication([
   (r'/', LandingHandler),
   (r'/create', CreateChatroomHandler),
@@ -1055,6 +1064,9 @@ SESSION_OPTS = {
 
 
 APP = middleware.SessionMiddleware(ROUTES, SESSION_OPTS)
+
+if config.debug:
+  APP = DebugLoggingMiddleware(APP)
 
 ## Enable appstats
 # APP = recording.appstats_wsgi_middleware(APP)
