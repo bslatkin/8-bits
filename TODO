@@ -1,7 +1,5 @@
 v1 Polish:
 - Fix up color scheme in chat
-- Add privacy policy agreement and 13-yo opt-in to first-time join
-- Add terms and about links to landing page
 - Surface RPC errors
 - Clean up code comments and style everywhere
 - Domain setup:

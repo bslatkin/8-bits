@@ -153,12 +153,17 @@ bits.connection.Connection.prototype.handleConnect_ = function(event) {
 
 /**
  * Update presence for this connection.
+ * @param {string=} opt_acceptedTerms User has just accepted the terms.
  * @private
  */
-bits.connection.Connection.prototype.setPresence_ = function() {
+bits.connection.Connection.prototype.setPresence_ =
+    function(opt_acceptedTerms) {
   var params = new goog.Uri.QueryData();
   params.add('shard', this.shardId_);
   params.add('nickname', this.nickname_);
+  if (opt_acceptedTerms) {
+    params.add('accepted_terms', 'true');
+  }
   this.xhrManager_.send(
       this.getNextMessageId_(),
       '/rpc/presence',
@@ -172,14 +177,14 @@ bits.connection.Connection.prototype.setPresence_ = function() {
 
 /**
  * Handles bits.events.EventType.SubmitPresenceChange requests.
- * @param {object} data Data for submitting a presence change.
+ * @param {string} nickname New nickname for the user.
+ * @param {boolean} acceptedTerms User has just accepted the terms of service.
  * @private
  */
 bits.connection.Connection.prototype.handleSubmitPresenceChange_ =
-    function(data) {
-  // TODO(bslatkin): Make 'data' param be just a string.
-  this.nickname_ = data['nickname'];
-  this.setPresence_();
+    function(nickname, acceptedTerms) {
+  this.nickname_ = nickname;
+  this.setPresence_(acceptedTerms);
 };
 
 

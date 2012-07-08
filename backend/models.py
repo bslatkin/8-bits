@@ -79,6 +79,8 @@ class LoginRecord(ndb.Model):
   last_update_time = ndb.DateTimeProperty(auto_now=True)
   nickname = ndb.TextProperty()
   browser_token = ndb.TextProperty()
+  # Zero means no terms accepted.
+  accepted_terms_version = ndb.IntegerProperty(default=0, indexed=False)
 
 
 class Post(ndb.Model):

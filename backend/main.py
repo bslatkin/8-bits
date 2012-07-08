@@ -688,6 +688,7 @@ class PresenceHandler(BaseRpcHandler):
 
   def handle(self):
     nickname = self.get_required('nickname', str, html_escape=True)
+    accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
 
     last_nickname = [None]
     def txn():
@@ -695,6 +696,8 @@ class PresenceHandler(BaseRpcHandler):
       login = models.LoginRecord.get_by_id(self.user_id)
       last_nickname[0] = login.nickname
       login.nickname = nickname
+      if accepted_terms:
+        login.accepted_terms_version = config.terms_version
       login.put()
     ndb.transaction(txn)
 
@@ -974,6 +977,7 @@ class ChatroomHandler(BaseUiHandler):
 
     nickname = 'Anonymous'
     first_login = True
+    must_accept_terms = True
     if 'shards' in self.session:
       user_id = self.session['shards'].get(shard_id)
       if user_id:
@@ -981,9 +985,13 @@ class ChatroomHandler(BaseUiHandler):
         if login_record.shard_id == shard_id:
           nickname = login_record.nickname
           first_login = False
+          must_accept_terms = bool(
+              login_record.accepted_terms_version !=
+              config.terms_version)
 
     context = {
       'first_login': first_login,
+      'must_accept_terms': must_accept_terms,
       'nickname': nickname,
       'shard_id': shard_id,
       'short_url_prefix': self.request.host_url,

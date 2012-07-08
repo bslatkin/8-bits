@@ -26,6 +26,13 @@
 }
 
 /* SettingsDialog. */
+#settings-dialog {
+  max-width: 350px;
+}
 #settings-dialog input[type="text"] {
   font-family: Monaco, andale mono, monospace, sans-serif;
+  max-width: 325px;
+}
+#settings-terms {
+  margin-top: 15px;
 }

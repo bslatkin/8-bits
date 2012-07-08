@@ -25,3 +25,6 @@ notify_queue = 'notify-posts'
 
 # How long posts stay alive before being deleted.
 ephemeral_lifetime_seconds = 86400 * 255
+
+# Current version of the terms of service
+terms_version = 1

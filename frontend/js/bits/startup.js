@@ -36,6 +36,7 @@ bits.startup = function(params) {
   var shardId = params.shard_id;
   var nickname = params.nickname;
   var firstLogin = params.first_login;
+  var mustAcceptTerms = params.must_accept_terms;
 
   var c = new goog.debug.Console();
   c.setCapturing(true);
@@ -53,14 +54,14 @@ bits.startup = function(params) {
   var footer = new bits.footer.FooterBar(shardId);
   footer.decorate(goog.dom.getElement('footer-bar'));
 
-  var settings = new bits.settings.SettingsDialog(shardId);
+  var settings = new bits.settings.SettingsDialog(shardId, !mustAcceptTerms);
   settings.decorate(goog.dom.getElement('settings-dialog'));
 
   var shortUrlDialog = new bits.shorturl.ShortUrlDialog(shardId);
   shortUrlDialog.decorate(goog.dom.getElement('link-dialog'));
 
   // Now do initial actions.
-  if (firstLogin) {
+  if (firstLogin || mustAcceptTerms) {
     settings.setVisible(true);
   }
 };

@@ -30,20 +30,33 @@ goog.require('goog.ui.Component');
 goog.require('bits.events');
 
 
-bits.settings.SettingsDialog = function(shardId) {
+bits.settings.SettingsDialog = function(shardId, acceptedTerms) {
   goog.base(this);
 
   this.shardId_ = shardId;
 
   this.dialog_ = new goog.ui.Dialog();
-  this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK_CANCEL);
-  this.dialog_.setTitle('Update your look');
-  this.dialog_.setEscapeToCancel(true);
   this.dialog_.setHasTitleCloseButton(false);
   this.dialog_.setDraggable(false);
   this.dialog_.setVisible(false);
 
+  /**
+   * @type {Element?}
+   * @private
+   */
   this.nicknameEl_ = null;
+
+  /**
+   * @type {Element?}
+   * @private
+   */
+  this.termsEl_ = null;
+
+  /**
+   * @type {boolean}
+   * private
+   */
+  this.acceptedTerms_ = acceptedTerms;
 
   /**
    * Event handler for this object.
@@ -88,7 +101,9 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
   bits.settings.SettingsDialog.superClass_.enterDocument.call(this);
 
   var element = this.getElement();
+
   this.nicknameEl_ = goog.dom.getElement('setting-nickname', element);
+  this.termsEl_ = goog.dom.getElement('settings-terms', element);
 
   goog.style.setStyle(element, 'display', null);
   this.dialog_.getContentElement().appendChild(element);
@@ -123,9 +138,9 @@ bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
   if (e.key == goog.ui.Dialog.DefaultButtonKeys.OK) {
     bits.events.PubSub.publish(
         this.shardId_, bits.events.EventType.SubmitPresenceChange,
-        {
-          nickname: goog.dom.forms.getValue(this.nicknameEl_)
-        });
+        goog.dom.forms.getValue(this.nicknameEl_),
+        !this.acceptedTerms_);  // Only send param on changes
+    this.acceptedTerms_ = true;
   }
 };
 
@@ -136,6 +151,17 @@ bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
   }
   this.dialog_.setVisible(isVisible);
   if (isVisible) {
+    if (!this.acceptedTerms_) {
+      goog.style.setStyle(this.termsEl_, 'display', null);
+      this.dialog_.setEscapeToCancel(false);
+      // TODO change to agree / decline buttons
+      this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK);
+    } else {
+      goog.style.setStyle(this.termsEl_, 'display', 'none');
+      this.dialog_.setEscapeToCancel(true);
+      this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK_CANCEL);
+    }
+
     this.dialog_.reposition();
     this.nicknameEl_.focus();
   }
