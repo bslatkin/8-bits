@@ -76,6 +76,26 @@ goog.inherits(bits.settings.SettingsDialog, goog.ui.Component);
 
 
 /**
+ * Accept the terms of service button.
+ * @type {!{key: string, caption: string}}
+ */
+bits.settings.SettingsDialog.AGREE = {
+  key: goog.ui.Dialog.DefaultButtonKeys.OK,
+  caption: 'Agree'
+};
+
+
+/**
+ * Decline the terms of service button.
+ * @type {!{key: string, caption: string}}
+ */
+bits.settings.SettingsDialog.DECLINE = {
+  key: 'decline',
+  caption: 'Decline'
+};
+
+
+/**
  * Decorates an existing HTML DIV element as a PostContainer.
  *
  * @param {HTMLElement} element The DIV element to decorate.
@@ -141,6 +161,11 @@ bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
         goog.dom.forms.getValue(this.nicknameEl_),
         !this.acceptedTerms_);  // Only send param on changes
     this.acceptedTerms_ = true;
+  } else if (e.key == bits.settings.SettingsDialog.DECLINE.key) {
+    // User has declined the terms of service.
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = '/';
   }
 };
 
@@ -154,8 +179,11 @@ bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
     if (!this.acceptedTerms_) {
       goog.style.setStyle(this.termsEl_, 'display', null);
       this.dialog_.setEscapeToCancel(false);
-      // TODO change to agree / decline buttons
-      this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK);
+
+      var buttonSet = new goog.ui.Dialog.ButtonSet().
+          addButton(bits.settings.SettingsDialog.AGREE, true).
+          addButton(bits.settings.SettingsDialog.DECLINE, false, true);
+      this.dialog_.setButtonSet(buttonSet);
     } else {
       goog.style.setStyle(this.termsEl_, 'display', 'none');
       this.dialog_.setEscapeToCancel(true);
