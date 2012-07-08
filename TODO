@@ -4,7 +4,6 @@ v1 Polish:
 - CSS parity for Firefox/IE9
 
 Bugs:
-- Do not allow blank chat!
 - Make splitpane collapse down to show all chat, not up
 
 v1 Production:

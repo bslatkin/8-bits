@@ -24,6 +24,7 @@ goog.require('goog.dom.forms');
 goog.require('goog.dom.ViewportSizeMonitor');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.math.Size');
+goog.require('goog.string');
 goog.require('goog.ui.Component');
 goog.require('goog.ui.LabelInput');
 goog.require('goog.ui.SplitPane');
@@ -168,7 +169,16 @@ bits.chatbox.ChatBox.prototype.exitDocument = function() {
  */
 bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
   if (event.keyCode == goog.events.KeyCodes.ENTER) {
-    var chatText = goog.dom.forms.getValue(this.chatInput_.getElement());
+    event.preventDefault();
+
+    var chatText = goog.string.trim(
+        goog.dom.forms.getValue(this.chatInput_.getElement()));
+
+    // TODO(bslatkin): Actually show a warning to the user about this.
+    if (!chatText || chatText > 4096) {
+      return;
+    }
+
     bits.events.PubSub.publish(
         this.shardId_, bits.events.EventType.SubmitPost,
         {
@@ -176,9 +186,7 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
           'body': chatText
         });
 
-    // TODO(bslatkin): Filter out new lines, HTML, etc.
     goog.dom.forms.setValue(this.chatInput_.getElement(), '');
-    event.preventDefault();
   }
 };
 
