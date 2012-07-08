@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <link rel="shortcut icon" href="/favicon.ico">
     {% block additional_meta %}{% endblock %}
 
-    <link rel="shortcut icon" href="/favicon.ico">
     <link rel="stylesheet" href="/static/{{cache_buster}}/css/screen.css"
         type="text/css" media="screen, projection">
     <link rel="stylesheet" href="/static/{{cache_buster}}/css/print.css"
@@ -14,8 +14,12 @@
       <link rel="stylesheet" href="/static/{{cache_buster}}/css/ie.css"
           type="text/css" media="screen, projection">
     <![endif]-->
-    <link rel="stylesheet" href="/static/{{cache_buster}}/css/common.css">
     {% block additional_css %}{% endblock %}
+
+    {% if js_mode == 'compiled' %}
+      <script type="text/javascript"
+          src="/static/{{cache_buster}}/compiled.js"></script>
+    {% endif %}
     {% block additional_js %}{% endblock %}
   </head>
   <body>

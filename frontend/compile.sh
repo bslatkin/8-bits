@@ -15,11 +15,19 @@
 # limitations under the License.
 
 # Generates a Closure compiled.js file for the bits.* namespaces.
-python ../../../closure/closure/bin/build/closurebuilder.py  \
---root="." \
---root="../../../closure" \
+python ../closure/closure/bin/build/closurebuilder.py  \
+--root="js/bits" \
+--root="../closure" \
 --namespace="bits.startup" \
 --namespace="bits.landing" \
 --output_mode="compiled" \
---compiler_jar="../../../closure-compiler.jar" \
---output_file="compiled.js"
+--compiler_jar="../closure-compiler.jar" \
+--output_file="js/bits/compiled.js"
+
+# TODO(bslatkin): Compile the CSS with something like:
+# find css -name '*.css' \
+# > -and -not -name 'compiled.css' \
+# > -and -not -name 'ie.css' \
+# > -and -not -name 'print.css' \
+# > -and -not -name 'screen.css' \
+# > | xargs cat > css/compiled.css

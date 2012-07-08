@@ -11,6 +11,7 @@
 
 {% block additional_css %}
 
+<link rel="stylesheet" href="/static/{{cache_buster}}/css/common.css">
 <link rel="stylesheet" href="/static/{{cache_buster}}/css/landing.css">
 
 {% endblock additional_css %}
@@ -24,9 +25,6 @@
   <script type="text/javascript">
     goog.require('bits.landing');
   </script>
-{% else %}
-  <script type="text/javascript"
-      src="/static/{{cache_buster}}/compiled.js"></script>
 {% endif %}
 
 {% endblock additional_js %}

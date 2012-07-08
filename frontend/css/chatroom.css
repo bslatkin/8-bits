@@ -1,9 +1,10 @@
+html,
 body {
-  background-color: #A2B3B3;
-}
-html, body {
   height: 100%;
   width: 100%;
+}
+body {
+  background-color: #A2B3B3;
 }
 a:link,
 a:visited {

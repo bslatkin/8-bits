@@ -4,6 +4,7 @@
 
 <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatbox.css">
 <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatroom.css">
+<link rel="stylesheet" href="/static/{{cache_buster}}/css/common.css">
 <link rel="stylesheet" href="/static/{{cache_buster}}/css/footer.css">
 <link rel="stylesheet" href="/static/{{cache_buster}}/css/posts.css">
 <link rel="stylesheet" href="/static/{{cache_buster}}/css/settings.css">
@@ -21,9 +22,6 @@
   <script type="text/javascript">
     goog.require('bits.startup');
   </script>
-{% else %}
-  <script type="text/javascript"
-      src="/static/{{cache_buster}}/compiled.js"></script>
 {% endif %}
 
 {% endblock additional_js %}
