@@ -729,21 +729,31 @@ class LoginHandler(BaseRpcHandler):
 class PresenceHandler(BaseRpcHandler):
   """Handles updating user presence."""
 
-  require_shard = True
-
   def handle(self):
+    shard = self.get_required('shard', str)
     nickname = self.get_required('nickname', str, '', html_escape=True)
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
 
+    if 'shards' not in self.session:
+      # First login with no cookie present.
+      self.session['shards'] = {}
+
+    user_id = self.session['shards'].get(shard) or human_uuid()
     last_nickname = [None]
-    user_connected = [False]
+    user_connected = [True]
+
     def txn():
-      login = models.LoginRecord.get_by_id(self.user_id)
+      login = models.LoginRecord.get_by_id(user_id)
+      if not login:
+        login = models.LoginRecord(
+          key=ndb.Key(models.LoginRecord._get_kind(), user_id),
+          shard_id=shard,
+          online=True)
 
       maybe_update_token(login)
 
-      if not only_active_users(login):
-        user_connected[0] = True
+      if only_active_users(login):
+        user_connected[0] = False
 
       if nickname:
         last_nickname[0] = login.nickname
@@ -753,16 +763,16 @@ class PresenceHandler(BaseRpcHandler):
         login.accepted_terms_version = config.terms_version
 
       login.put()
+
     ndb.transaction(txn)
 
     # Invalidate the cache so the nickname will be updated next time
     # someone requests the roster.
-    invalidate_user_cache(self.shard)
+    invalidate_user_cache(shard)
 
     message = None
     archive_type = None
 
-    self.json_response['browserToken'] = login.browser_token
 
     if last_nickname[0] is not None and last_nickname[0] != nickname:
       message = '%s has changed their nickname to %s' % (
@@ -781,6 +791,9 @@ class PresenceHandler(BaseRpcHandler):
 
     logging.debug('Presence updated for user_id=%r in shard=%r',
                   self.user_id, self.shard)
+
+    self.json_response['browserToken'] = login.browser_token
+    self.session.save()
 
 
 class ChannelPresenceHandler(webapp.RequestHandler):
