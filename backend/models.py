@@ -76,9 +76,11 @@ class LoginRecord(ndb.Model):
 
   shard_id = ndb.StringProperty(required=True)
   online = ndb.BooleanProperty(required=True)
+  creation_time = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
   last_update_time = ndb.DateTimeProperty(auto_now=True)
   nickname = ndb.TextProperty()
   browser_token = ndb.TextProperty()
+  browser_token_issue_time = ndb.DateTimeProperty(indexed=False)
   # Zero means no terms accepted.
   accepted_terms_version = ndb.IntegerProperty(default=0, indexed=False)
 

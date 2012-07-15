@@ -67,6 +67,7 @@ class PostError(Error):
 ################################################################################
 # Utility classes, functions.
 
+# TODO(bslatkin): Add XSRF protection to this class.
 class BaseUiHandler(webapp.RequestHandler):
   """Base handler for rendering UI."""
 
@@ -531,6 +532,7 @@ def invalidate_user_cache(shard):
   """Invalidates the present user cache for the given shard."""
   shard_key = 'users-shard-%s' % shard
   memcache.delete(shard_key)
+  # TODO(bslatkin): Consider refilling the cache in a background task.
 
 
 def marshal_users(user_list):
@@ -553,6 +555,39 @@ def marshal_users(user_list):
       nicknames[-1])
 
 
+def only_active_users(*login_record_list):
+  """Filters a list of users to only be those that are actually active."""
+  now = datetime.datetime.now()
+  oldest_time = (
+      now - datetime.timedelta(seconds=config.user_max_inactive_seconds))
+
+  result_list = []
+  for login_record in login_record_list:
+    if not login_record.online:
+      continue
+    if login_record.last_update_time < oldest_time:
+      continue
+
+    result_list.append(login_record)
+
+  return result_list
+
+
+def maybe_update_token(login_record):
+  """Assigns the user a new channel token if necessary."""
+  now = datetime.datetime.now()
+  oldest_token_time = (
+      now - datetime.timedelta(seconds=config.user_token_lifetime_seconds))
+
+  if (login_record.browser_token_issue_time and
+      login_record.browser_token_issue_time > oldest_token_time):
+    return False
+
+  login.browser_token = channel.create_channel(get_token(login.user_id))
+  login.browser_token_issue_time = now
+  return True
+
+
 def get_present_users(shard):
   """Returns a list of present users for a shard in descending log-in order.
 
@@ -572,7 +607,8 @@ def get_present_users(shard):
       .filter(models.LoginRecord.online == True)
       .order(-models.LoginRecord.last_update_time)
       .fetch(1000))
-  memcache.set(shard_key, user_list, 300)
+  user_list = only_active_users(*user_list)
+  memcache.set(shard_key, user_list, config.user_max_inactive_seconds)
   return user_list
 
 
@@ -612,10 +648,18 @@ def user_logged_out(shard, user_id):
   """Notifies other users that the given user has logged out of a shard."""
   def txn():
     login_record = models.LoginRecord.get_by_id(user_id)
+    if not login_record:
+        raise ndb.Rollback()
     login_record.online = False
     login_record.put()
     return login_record
+
   login_record = ndb.transaction(txn)
+
+  if not login_record:
+    logging.warning('Tried to log out user_id=%r from shard=%r, '
+                    'but LoginRecord did not exist', user_id, shard)
+    return
 
   insert_post(
       shard,
@@ -659,6 +703,7 @@ class CreateShardHandler(BaseRpcHandler):
     self.json_response['shardId'] = shard.shard_id
 
 
+# Roll this into the presence handler.
 class LoginHandler(BaseRpcHandler):
   """Handles user logins, logouts, and issuing session cookies."""
 
@@ -673,12 +718,7 @@ class LoginHandler(BaseRpcHandler):
     if mode.lower() == 'join':
       user_id = self.session['shards'].get(shard)
       user_id = user_logged_in(shard, user_id)
-
-      # Always issue a new browser channel ID for the user if their
-      # session is in good shape.
       self.session['shards'][shard] =  user_id
-      browser_token = channel.create_channel(get_token(user_id))
-      self.json_response['browserToken'] = browser_token
     elif mode.lower() == 'leave' and shard in self.session['shards']:
       user_id = self.session['shards'][shard]
       user_logged_out(shard, user_id)
@@ -692,17 +732,26 @@ class PresenceHandler(BaseRpcHandler):
   require_shard = True
 
   def handle(self):
-    nickname = self.get_required('nickname', str, html_escape=True)
+    nickname = self.get_required('nickname', str, '', html_escape=True)
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
 
     last_nickname = [None]
+    user_connected = [False]
     def txn():
-      # TODO(bslatkin): Verify the login is active and valid (max age).
       login = models.LoginRecord.get_by_id(self.user_id)
-      last_nickname[0] = login.nickname
-      login.nickname = nickname
+
+      maybe_update_token(login)
+
+      if not only_active_users(login):
+        user_connected[0] = True
+
+      if nickname:
+        last_nickname[0] = login.nickname
+        login.nickname = nickname
+
       if accepted_terms:
         login.accepted_terms_version = config.terms_version
+
       login.put()
     ndb.transaction(txn)
 
@@ -710,12 +759,18 @@ class PresenceHandler(BaseRpcHandler):
     # someone requests the roster.
     invalidate_user_cache(self.shard)
 
-    message = '%s has joined' % nickname
-    archive_type = models.Post.USER_LOGIN
-    if last_nickname[0] != nickname:
+    message = None
+    archive_type = None
+
+    self.json_response['browserToken'] = login.browser_token
+
+    if last_nickname[0] is not None and last_nickname[0] != nickname:
       message = '%s has changed their nickname to %s' % (
           last_nickname[0], nickname)
       archive_type = models.Post.USER_UPDATE
+    elif user_connected[0]:
+      message = '%s has joined' % nickname
+      archive_type = models.Post.USER_LOGIN
 
     insert_post(
         self.shard,
@@ -757,8 +812,10 @@ class PostHandler(BaseRpcHandler):
     body = self.get_required('body', str, html_escape=True)
     post_id = self.get_required('post_id', str)
 
-    # TODO(bslatkin): Verify the login is active and valid (max age).
     login_record = models.LoginRecord.get_by_id(self.user_id)
+    if not only_active_users(login_record):
+        raise NotAuthorizedError('Connection no longer valid, must relogin')
+
     post_key = insert_post(
       self.shard,
       post_id=post_id,
