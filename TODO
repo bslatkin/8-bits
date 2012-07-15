@@ -1,7 +1,19 @@
-v1 Polish:
+v1 initial testing changes:
+- Heartbeat every minute to check token validity
+- Auto-logout user when heartbeat doesn't come in after 3 minutes
+- Flash icon when new chat arrives
+- Do not show any chats until the user accepts the ToS and sets their nickname
+- Do not show initial presence notification to others before user accepts ToS
+- Break link line-wrapping
 - Surface RPC errors
+- gen204 handler on all event handlers and pubsub delivery
+
+v1 Polish:
 - Clean up code comments and style everywhere
 - CSS parity for Firefox/IE9
+- Play HTML5 sound when new chat arrives; put sound control in settings menu
+- Play sound on join and leave
+- Add a tutorial section on settings dialog on first join
 
 Bugs:
 - Make splitpane collapse down to show all chat, not up
