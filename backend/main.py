@@ -703,29 +703,6 @@ class CreateShardHandler(BaseRpcHandler):
     self.json_response['shardId'] = shard.shard_id
 
 
-# Roll this into the presence handler.
-class LoginHandler(BaseRpcHandler):
-  """Handles user logins, logouts, and issuing session cookies."""
-
-  def handle(self):
-    shard = self.get_required('shard', str)
-    mode = self.get_required('mode', str)
-
-    if 'shards' not in self.session:
-      # First login with no cookie present.
-      self.session['shards'] = {}
-
-    if mode.lower() == 'join':
-      user_id = self.session['shards'].get(shard)
-      user_id = user_logged_in(shard, user_id)
-      self.session['shards'][shard] =  user_id
-    elif mode.lower() == 'leave' and shard in self.session['shards']:
-      user_id = self.session['shards'][shard]
-      user_logged_out(shard, user_id)
-
-    self.session.save()
-
-
 class PresenceHandler(BaseRpcHandler):
   """Handles updating user presence."""
 
@@ -735,14 +712,19 @@ class PresenceHandler(BaseRpcHandler):
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
 
     if 'shards' not in self.session:
-      # First login with no cookie present.
+      # First login on any shard with no cookie present.
       self.session['shards'] = {}
 
-    user_id = self.session['shards'].get(shard) or human_uuid()
-    last_nickname = [None]
-    user_connected = [True]
+    user_id = self.session['shards'].get(shard)
+    if not user_id:
+      # First login to this shard.
+      user_id = human_uuid()
+      self.session['shards'][shard] = user_id
 
     def txn():
+      last_nickname = None
+      user_connected = True
+
       login = models.LoginRecord.get_by_id(user_id)
       if not login:
         login = models.LoginRecord(
@@ -753,18 +735,23 @@ class PresenceHandler(BaseRpcHandler):
       maybe_update_token(login)
 
       if only_active_users(login):
-        user_connected[0] = False
+        # This is a heartbeat presence check
+        user_connected = False
 
       if nickname:
-        last_nickname[0] = login.nickname
+        # This is a nickname change
+        last_nickname = login.nickname
         login.nickname = nickname
 
       if accepted_terms:
+        # This is a ToS acceptance
         login.accepted_terms_version = config.terms_version
 
       login.put()
 
-    ndb.transaction(txn)
+      return last_nickname, user_connected
+
+    last_nickname, user_connected = ndb.transaction(txn)
 
     # Invalidate the cache so the nickname will be updated next time
     # someone requests the roster.
@@ -773,24 +760,25 @@ class PresenceHandler(BaseRpcHandler):
     message = None
     archive_type = None
 
-
-    if last_nickname[0] is not None and last_nickname[0] != nickname:
+    if last_nickname is not None and last_nickname != nickname:
       message = '%s has changed their nickname to %s' % (
-          last_nickname[0], nickname)
+          last_nickname, nickname)
       archive_type = models.Post.USER_UPDATE
-    elif user_connected[0]:
+      logging.debug('User update user_id=%r to shard=%r', user_id, shard)
+    elif user_connected:
       message = '%s has joined' % nickname
       archive_type = models.Post.USER_LOGIN
+      logging.debug('User joined user_id=%r to shard=%r', user_id, shard)
+    else:
+      logging.debug('User presence user_id=%r to shard=%r', user_id, shard)
 
-    insert_post(
-        self.shard,
-        archive_type=archive_type,
-        nickname=nickname,
-        user_id=self.user_id,
-        body=message)
-
-    logging.debug('Presence updated for user_id=%r in shard=%r',
-                  self.user_id, self.shard)
+    if archive_type:
+      insert_post(
+          self.shard,
+          archive_type=archive_type,
+          nickname=nickname,
+          user_id=self.user_id,
+          body=message)
 
     self.json_response['browserToken'] = login.browser_token
     self.session.save()
@@ -1113,7 +1101,6 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/create_shard', CreateShardHandler),
   (r'/rpc/show_roster', ShowRosterHandler),
   (r'/rpc/list_posts', ListPostsHandler),
-  (r'/rpc/login', LoginHandler),
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
   # TODO(bslatkin): Reenable these
