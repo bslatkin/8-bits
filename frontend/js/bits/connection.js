@@ -25,6 +25,7 @@ goog.require('goog.json');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrManager');
 goog.require('goog.object');
+goog.require('goog.Timer');
 goog.require('goog.Uri');
 
 goog.require('bits.events');
@@ -44,6 +45,34 @@ bits.connection.Connection = function(shardId, nickname) {
   this.logger_ = goog.debug.Logger.getLogger('bits.connection.Connection');
 
   /**
+   * Event handler for this object.
+   * @type {goog.events.EventHandler}
+   * @private
+   */
+  this.eh_ = new goog.events.EventHandler(this);
+
+  /**
+   * @type {goog.net.XhrManager}
+   * @private
+   */
+  this.xhrManager_ = new goog.net.XhrManager();
+
+  this.eh_.listen(
+      this.xhrManager_, goog.net.EventType.ERROR, this.handleSendError_);
+  this.eh_.listen(
+      this.xhrManager_, goog.net.EventType.TIMEOUT, this.handleSendError_);
+
+  /**
+   * Timer used for heartbeat signals.
+   * @type {goog.Timer}
+   * @private
+   */
+  this.heartbeatTimer_ = new goog.Timer(10000);
+
+  this.eh_.listen(
+      this.heartbeatTimer_, goog.Timer.TICK, this.handleHeartbeat_);
+
+  /**
    * @type {string}
    * @private
    */
@@ -56,18 +85,11 @@ bits.connection.Connection = function(shardId, nickname) {
   this.nickname_ = nickname;
 
   /**
-   * @type {goog.net.XhrManager}
+   * The browser token currently being used for the channel.
+   * @type {string}
    * @private
    */
-  this.xhrManager_ = new goog.net.XhrManager();
-
-  goog.events.listen(
-      this.xhrManager_, goog.net.EventType.ERROR,
-      goog.bind(this.handleSendError_, this));
-
-  goog.events.listen(
-      this.xhrManager_, goog.net.EventType.TIMEOUT,
-      goog.bind(this.handleSendError_, this));
+  this.browserToken_ = null;
 
   /**
    * This is an external object goog.appengine.Channel.
@@ -106,54 +128,13 @@ bits.connection.Connection = function(shardId, nickname) {
  * Login this connection.
  */
 bits.connection.Connection.prototype.login = function() {
-  var params = new goog.Uri.QueryData();
-  params.add('shard', this.shardId_);
-  params.add('mode', 'join');
-  this.xhrManager_.send(
-      this.getNextMessageId_(),
-      '/rpc/login',
-      opt_method='POST',
-      opt_content=params.toString(),
-      null,
-      null,
-      goog.bind(this.handleConnect_, this));
-};
-
-
-/**
- * Handles when the connection is established.
- *
- * @param {goog.events.Event} event Connection event.
- * @private
- */
-bits.connection.Connection.prototype.handleConnect_ = function(event) {
-  if (event.target.isSuccess()) {
-    var response = event.target.getResponseJson();
-    if (!response.browserToken) {
-      this.logger_.severe('Could not find browser token!');
-      return;
-    }
-    this.setPresence_();
-    this.requestRoster_();
-    this.requestOldPosts_();
-
-    this.channel_ = new goog.appengine.Channel(response.browserToken);
-    var socket = this.channel_.open({
-      'onopen': goog.bind(this.handleChannelOpen_, this),
-      'onmessage': goog.bind(this.handleChannelMessage_, this),
-      'onerror': goog.bind(this.handleChannelError_, this),
-      'onclose': goog.bind(this.handleChannelClose_, this)
-    });
-  } else {
-    // TODO(bslatkin): Show an actual error message here.
-    this.logger_.severe('Could not connect!');
-  }
+  this.setPresence_();
 };
 
 
 /**
  * Update presence for this connection.
- * @param {string=} opt_acceptedTerms User has just accepted the terms.
+ * @param {boolean=} opt_acceptedTerms User has just accepted the terms.
  * @private
  */
 bits.connection.Connection.prototype.setPresence_ =
@@ -171,20 +152,7 @@ bits.connection.Connection.prototype.setPresence_ =
       opt_content=params.toString(),
       null,
       null,
-      goog.bind(this.handleSetPresence_, this));
-};
-
-
-/**
- * Handles bits.events.EventType.SubmitPresenceChange requests.
- * @param {string} nickname New nickname for the user.
- * @param {boolean} acceptedTerms User has just accepted the terms of service.
- * @private
- */
-bits.connection.Connection.prototype.handleSubmitPresenceChange_ =
-    function(nickname, acceptedTerms) {
-  this.nickname_ = nickname;
-  this.setPresence_(acceptedTerms);
+      goog.bind(this.handleSetPresenceComplete_, this));
 };
 
 
@@ -193,21 +161,86 @@ bits.connection.Connection.prototype.handleSubmitPresenceChange_ =
  * @param {goog.events.Event} event XHR response event.
  * @private
  */
-bits.connection.Connection.prototype.handleSetPresence_ = function(event) {
+bits.connection.Connection.prototype.handleSetPresenceComplete_ =
+    function(event) {
   if (!event.target.isSuccess()) {
-    // TODO(bslatkin): Show the error message.
-    this.logger_.severe('Could not set presence!');
+    // TODO(bslatkin): Retry RPC and eventually show error message.
+    this.logger_.severe('Presence RPC failed');
+    return;
   }
+
+  var response = event.target.getResponseJson();
+  if (!response.browserToken) {
+    // TODO(bslatkin): Render an error.
+    this.logger_.severe('Could not find browser token!');
+    return;
+  }
+
+  // This is a reconnection after the user has been disconnected for a
+  // while. Send an event so other components can take appropriate action,
+  // such as clearing out old posts since they're out of date.
+  var firstRequest = !this.browserToken_;
+  if (response.userConnected && !firstRequest) {
+    bits.events.PubSub.publish(
+        this.shardId_, bits.events.EventType.ConnectionReestablishing);
+  }
+
+  // The browser token will be refreshed periodically, in addition to being
+  // issued on the first presence request and relogin presence requests.
+  if (this.browserToken_ != response.browserToken || response.userConnected) {
+    if (this.channel_) {
+      // TODO(bslatkin): This doesn't work locally: this.channel_.close();
+      this.channel_ = null;
+    }
+
+    this.browserToken_ = response.browserToken;
+    this.channel_ = new goog.appengine.Channel(this.browserToken_);
+    var socket = this.channel_.open({
+      'onopen': goog.bind(this.handleChannelOpen_, this,
+                          response.userConnected),
+      'onmessage': goog.bind(this.handleChannelMessage_, this),
+      'onerror': goog.bind(this.handleChannelError_, this),
+      'onclose': goog.bind(this.handleChannelClose_, this)
+    });
+  }
+
+  // Starting this timer repeatedly has no effect, but we don't want to
+  // start it until we know the very first presence request was successful.
+  this.heartbeatTimer_.start();
 };
 
 
 /**
  * Handles when the channel opens.
+ * @param {boolean} userConnected True if the user has just reconnected for
+ *   the first time or is relogging in, False if this is just a token refresh.
  * @private
  */
-bits.connection.Connection.prototype.handleChannelOpen_ = function() {
-  this.logger_.info('Connection to shardId=' + this.shardId_ + ' now open.');
+bits.connection.Connection.prototype.handleChannelOpen_ =
+    function(userConnected) {
   // TODO(bslatkin): Don't let the user start chatting until this is open.
+  this.logger_.info('Connection to shardId=' + this.shardId_ + ' now open.');
+  this.requestOldPosts_();
+
+  // Only refresh the roster upon new connections. When the roster becomes an
+  // actual UI widget, then we can issue this request every time.
+  if (userConnected) {
+    this.requestRoster_();
+  }
+};
+
+
+/**
+ * Handles the periodic heartbeat timer, to keep this connection alive.
+ *
+ * Notably, this timer will go off when a computer wakes up from sleep,
+ * causing the connection to be reinitialized if it's been too long.
+ *
+ * @private
+ */
+bits.connection.Connection.prototype.handleHeartbeat_ = function() {
+  this.logger_.info('Connection heartbeat for shardId=' + this.shardId_);
+  this.setPresence_();
 };
 
 
@@ -281,6 +314,20 @@ bits.connection.Connection.prototype.getNextMessageId_ = function() {
   var messageId = this.nextMessageId_;
   this.nextMessageId_++;
   return messageId;
+};
+
+
+/**
+ * Handles bits.events.EventType.SubmitPresenceChange requests.
+ * @param {string} nickname New nickname for the user.
+ * @param {boolean} acceptedTerms User has just accepted the terms of service.
+ * @private
+ */
+bits.connection.Connection.prototype.handleSubmitPresenceChange_ =
+    function(nickname, acceptedTerms) {
+  this.logger_.info('Connection presence change for shardId=' + this.shardId_);
+  this.nickname_ = nickname;
+  this.setPresence_(acceptedTerms);
 };
 
 

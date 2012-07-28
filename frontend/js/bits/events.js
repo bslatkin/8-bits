@@ -92,7 +92,11 @@ bits.events.EventType = {
   // Historical posts received from the server side.
   // Args:
   //   List of JSON for bits.posts.Post instances.
-  HistoricalPostsReceived: 'HistoricalPostsReceived'
+  HistoricalPostsReceived: 'HistoricalPostsReceived',
+
+  // The user's connection to the server is being reestablished after a
+  // very long time being offline.
+  ConnectionReestablishing: 'ConnectionReestablishing'
 };
 
 

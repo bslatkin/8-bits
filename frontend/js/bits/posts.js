@@ -316,6 +316,8 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.RosterReceived,
       this.handleRosterReceived, this);
+  // TODO(bslatkin): Handle ConnectionReestablishing events and clear out
+  // all posts in the container when they happen.
 };
 
 

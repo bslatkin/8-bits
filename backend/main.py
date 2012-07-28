@@ -435,6 +435,10 @@ def apply_posts(shard=None,
   if dirty_bit(shard, check=True):
     futures.append(enqueue_apply_task(shard))
 
+  # TODO(bslatkin): Add shard heartbeat task to check for user presence and
+  # cause notification of user logouts if the channel API did not detect
+  # the user closing the connection.
+
   # Wait on all pending futures in case they raise errors.
   ndb.Future.wait_all(futures)
 
@@ -565,7 +569,8 @@ def only_active_users(*login_record_list):
   for login_record in login_record_list:
     if not login_record.online:
       continue
-    if login_record.last_update_time < oldest_time:
+    if (not login_record.last_update_time or
+        login_record.last_update_time < oldest_time):
       continue
 
     result_list.append(login_record)
@@ -574,7 +579,7 @@ def only_active_users(*login_record_list):
 
 
 def maybe_update_token(login_record):
-  """Assigns the user a new channel token if necessary."""
+  """Assigns the user a new channel token, returns if it was necessary."""
   now = datetime.datetime.now()
   oldest_token_time = (
       now - datetime.timedelta(seconds=config.user_token_lifetime_seconds))
@@ -583,8 +588,10 @@ def maybe_update_token(login_record):
       login_record.browser_token_issue_time > oldest_token_time):
     return False
 
-  login.browser_token = channel.create_channel(get_token(login.user_id))
-  login.browser_token_issue_time = now
+  login_record.browser_token = channel.create_channel(
+      get_token(login_record.user_id),
+      5 + config.user_token_lifetime_seconds // 60)  # 5 minutes of wiggle room
+  login_record.browser_token_issue_time = now
   return True
 
 
@@ -732,7 +739,9 @@ class PresenceHandler(BaseRpcHandler):
           shard_id=shard,
           online=True)
 
-      maybe_update_token(login)
+      if maybe_update_token(login):
+        logging.debug('Issuing new channel token to user_id=%r, shard=%r',
+                      user_id, shard)
 
       if only_active_users(login):
         # This is a heartbeat presence check
@@ -747,11 +756,12 @@ class PresenceHandler(BaseRpcHandler):
         # This is a ToS acceptance
         login.accepted_terms_version = config.terms_version
 
+      login.online = True
       login.put()
 
-      return last_nickname, user_connected
+      return last_nickname, user_connected, login.browser_token
 
-    last_nickname, user_connected = ndb.transaction(txn)
+    last_nickname, user_connected, browser_token = ndb.transaction(txn)
 
     # Invalidate the cache so the nickname will be updated next time
     # someone requests the roster.
@@ -760,27 +770,29 @@ class PresenceHandler(BaseRpcHandler):
     message = None
     archive_type = None
 
-    if last_nickname is not None and last_nickname != nickname:
+    if nickname and last_nickname and last_nickname != nickname:
       message = '%s has changed their nickname to %s' % (
           last_nickname, nickname)
       archive_type = models.Post.USER_UPDATE
-      logging.debug('User update user_id=%r to shard=%r', user_id, shard)
+      last_nickname = nickname
+      logging.debug('User update user_id=%r, shard=%r', user_id, shard)
     elif user_connected:
       message = '%s has joined' % nickname
       archive_type = models.Post.USER_LOGIN
-      logging.debug('User joined user_id=%r to shard=%r', user_id, shard)
+      logging.debug('User joined: user_id=%r, shard=%r', user_id, shard)
     else:
-      logging.debug('User presence user_id=%r to shard=%r', user_id, shard)
+      logging.debug('User heartbeat: user_id=%r to shard=%r', user_id, shard)
 
     if archive_type:
       insert_post(
-          self.shard,
+          shard,
           archive_type=archive_type,
-          nickname=nickname,
-          user_id=self.user_id,
+          nickname=last_nickname,
+          user_id=user_id,
           body=message)
 
-    self.json_response['browserToken'] = login.browser_token
+    self.json_response['userConnected'] = user_connected
+    self.json_response['browserToken'] = browser_token
     self.session.save()
 
 
@@ -1038,6 +1050,7 @@ class ChatroomHandler(BaseUiHandler):
     first_login = True
     must_accept_terms = True
     if 'shards' in self.session:
+      # TODO(bslatkin): Reuse presence code here.
       user_id = self.session['shards'].get(shard_id)
       if user_id:
         login_record = models.LoginRecord.get_by_id(user_id)
