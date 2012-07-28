@@ -1,5 +1,4 @@
 v1 initial testing changes:
-- Heartbeat every minute to check token validity
 - Auto-logout user when heartbeat doesn't come in after 3 minutes
 - Flash icon when new chat arrives
 - Do not show any chats until the user accepts the ToS and sets their nickname

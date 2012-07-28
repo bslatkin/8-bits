@@ -608,7 +608,6 @@ def get_present_users(shard):
   if user_list:
     return user_list
 
-  # TODO(bslatkin): Better serialization, paging for > 1000 users.
   user_list = (models.LoginRecord.query()
       .filter(models.LoginRecord.shard_id == shard)
       .filter(models.LoginRecord.online == True)
