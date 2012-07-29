@@ -1,8 +1,6 @@
 v1 initial testing changes:
 - Auto-logout user when heartbeat doesn't come in after 3 minutes
 - Flash icon when new chat arrives
-- Do not show any chats until the user accepts the ToS and sets their nickname
-- Do not show initial presence notification to others before user accepts ToS
 - Break link line-wrapping
 - Surface RPC errors
 - gen204 handler on all event handlers and pubsub delivery

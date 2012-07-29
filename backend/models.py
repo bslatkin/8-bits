@@ -78,7 +78,7 @@ class LoginRecord(ndb.Model):
   online = ndb.BooleanProperty(required=True)
   creation_time = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
   last_update_time = ndb.DateTimeProperty(auto_now=True)
-  nickname = ndb.TextProperty(default='Anonymous')
+  nickname = ndb.TextProperty()
   browser_token = ndb.TextProperty()
   browser_token_issue_time = ndb.DateTimeProperty(indexed=False)
   # Zero means no terms accepted.

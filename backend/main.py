@@ -773,7 +773,6 @@ class PresenceHandler(BaseRpcHandler):
       message = '%s has changed their nickname to %s' % (
           last_nickname, nickname)
       archive_type = models.Post.USER_UPDATE
-      last_nickname = nickname
       logging.debug('User update user_id=%r, shard=%r', user_id, shard)
     elif user_connected:
       message = '%s has joined' % nickname
@@ -786,7 +785,7 @@ class PresenceHandler(BaseRpcHandler):
       insert_post(
           shard,
           archive_type=archive_type,
-          nickname=last_nickname,
+          nickname=nickname,
           user_id=user_id,
           body=message)
 

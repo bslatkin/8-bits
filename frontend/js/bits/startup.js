@@ -46,7 +46,6 @@ bits.startup = function(params) {
 
   // Set up all the various UI components.
   var connection = new bits.connection.Connection(shardId, nickname);
-  connection.login();
 
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));
@@ -63,6 +62,8 @@ bits.startup = function(params) {
   // Now do initial actions.
   if (firstLogin || mustAcceptTerms) {
     settings.setVisible(true);
+  } else {
+    connection.login();
   }
 };
 
