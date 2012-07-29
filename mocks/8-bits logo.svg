@@ -243,6 +243,24 @@
        y1="567.05219"
        x2="314.76276"
        y2="667.07971" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3816"
+       id="linearGradient3147"
+       gradientUnits="userSpaceOnUse"
+       x1="314.76276"
+       y1="567.05219"
+       x2="314.76276"
+       y2="667.07971" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3816"
+       id="linearGradient3149"
+       gradientUnits="userSpaceOnUse"
+       x1="314.76276"
+       y1="567.05219"
+       x2="314.76276"
+       y2="667.07971" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -251,8 +269,8 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.0717735"
-     inkscape:cx="274.24258"
+     inkscape:zoom="2.0149341"
+     inkscape:cx="365.55654"
      inkscape:cy="761.0628"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -507,5 +525,50 @@
            width="351.61292"
            id="rect3080" /></flowRegion><flowPara
          style="fill:url(#linearGradient3088);fill-opacity:1"
-         id="flowPara3082">e</flowPara></flowRoot>  </g>
+         id="flowPara3082">e</flowPara></flowRoot>    <path
+       sodipodi:type="arc"
+       style="fill:#000000;fill-opacity:1"
+       id="path3127"
+       sodipodi:cx="201.6129"
+       sodipodi:cy="505.58798"
+       sodipodi:rx="26.612904"
+       sodipodi:ry="26.612904"
+       d="m 228.2258,505.58798 a 26.612904,26.612904 0 1 1 -53.2258,0 26.612904,26.612904 0 1 1 53.2258,0 z"
+       transform="matrix(1.0564632,0,0,1.0564632,206.57221,-276.31046)"
+       inkscape:export-filename="/Users/bslatkin/Desktop/favicon.png"
+       inkscape:export-xdpi="51.217171"
+       inkscape:export-ydpi="51.217171" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3129"
+       style="font-size:42px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#00d5d7;fill-opacity:1;stroke:none;font-family:American Typewriter;-inkscape-font-specification:American Typewriter Light"
+       transform="translate(353.7462,-39.252564)"
+       inkscape:export-filename="/Users/bslatkin/Desktop/favicon.png"
+       inkscape:export-xdpi="51.217171"
+       inkscape:export-ydpi="51.217171"><flowRegion
+         id="flowRegion3131"><rect
+           id="rect3133"
+           width="422.85715"
+           height="182.85716"
+           x="40"
+           y="269.50504"
+           style="font-size:42px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:American Typewriter;-inkscape-font-specification:American Typewriter Light;fill:#00d5d7" /></flowRegion><flowPara
+         id="flowPara3135">8</flowPara></flowRoot>    <flowRoot
+       inkscape:export-filename="/Users/bslatkin/Desktop/favicon.png"
+       xml:space="preserve"
+       id="flowRoot3137"
+       style="font-size:56px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#00d5d7;fill-opacity:1;stroke:none;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter"
+       transform="translate(203.13276,-337.32583)"
+       inkscape:export-xdpi="51.217171"
+       inkscape:export-ydpi="51.217171"><flowRegion
+         id="flowRegion3139"
+         style="fill:url(#linearGradient3147);fill-opacity:1"><rect
+           id="rect3141"
+           width="351.61292"
+           height="101.6129"
+           x="214.51613"
+           y="552.36218"
+           style="font-size:56px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#00d5d7;fill-opacity:1;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter" /></flowRegion><flowPara
+         id="flowPara3143"
+         style="fill:#00d5d7;fill-opacity:1">e</flowPara></flowRoot>  </g>
 </svg>

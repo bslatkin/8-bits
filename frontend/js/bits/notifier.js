@@ -20,10 +20,13 @@
 goog.provide('bits.notifier.Notifier');
 
 goog.require('goog.dom');
-goog.require('goog.events');
+goog.require('goog.dom.dataset');
 goog.require('goog.style');
+goog.require('goog.userAgent');
+goog.require('goog.Timer');
 
 goog.require('bits.events');
+goog.require('bits.posts.ArchiveType');
 
 
 /**
@@ -34,11 +37,60 @@ goog.require('bits.events');
 bits.notifier.Notifier = function(shardId) {
   goog.base(this);
 
+  /**
+   * @type {string}
+   * @private
+   */
   this.shardId_ = shardId;
 
-  bits.events.PubSub.subscribe(
-      this.shardId_, bits.events.EventType.ShowSettingsDialog);
+  var favEl = goog.dom.getElement('favicon');
 
+  /**
+   * @type {string}
+   * @private
+   */
+  this.normalFaviconUrl_ = favEl.getAttribute('href');
+
+  /**
+   * @type {string}
+   * @private
+   */
+  this.flashFaviconUrl_ = goog.dom.dataset.get(favEl, 'flashUrl');
+
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.active_ = true;
+
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.flashing_ = false;
+
+  /**
+   * @type {goog.events.EventHandler}
+   * @private
+   */
+  this.eh_ = new goog.events.EventHandler(this);
+
+  /**
+   * @type {goog.Timer}
+   * @private
+   */
+  this.flashTimer_ = new goog.Timer(2000);
+
+  this.eh_.listen(this.flashTimer_, goog.Timer.TICK, this.handleTimer_);
+
+  this.eh_.listen(window, goog.events.EventType.FOCUS,
+                  goog.bind(this.handleWindowFocus_, this, true));
+  this.eh_.listen(window, goog.events.EventType.BLUR,
+                  goog.bind(this.handleWindowFocus_, this, false));
+
+  bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.PostReceived,
+      this.handlePostReceived_, this);
 }
 goog.inherits(bits.notifier.Notifier, goog.Disposable);
 
@@ -49,11 +101,80 @@ goog.inherits(bits.notifier.Notifier, goog.Disposable);
 bits.notifier.Notifier.prototype.disposeInternal = function() {
   bits.notifier.Notifier.superClass_.disposeInternal.call(this);
   this.shardId_ = null;
+  // TODO(bslatkin): Unsubscribe from events.
 };
 
 
-bits.notifier.Notifier.prototype.handleClickEdit_ = function(e) {
-  bits.events.PubSub.publish(
-      this.shardId_, bits.events.EventType.ShowSettingsDialog);
+/**
+ * Sets the favicon's state.
+ * @param {boolean} flashing True if it should be flashing, false if not.
+ * @private
+ */
+bits.notifier.Notifier.prototype.setFlashing_ = function(flashing) {
+  var href = this.normalFaviconUrl_;
+  if (flashing) {
+    href = this.flashFaviconUrl_;
+  }
+
+  console.log('flashing ' + href);
+
+  var oldEl = goog.dom.getElement('favicon');
+  oldEl.href = href;
+
+  // goog.dom.removeNode(oldEl);
+  // oldEl.removeAttribute('id');
+  // oldEl = null;
+  // 
+  // var newEl = goog.dom.createElement('link');
+  // newEl.setAttribute('rel', 'shortcut icon');
+  // newEl.setAttribute('id', 'favicon');
+  // newEl.setAttribute('href', href);
+  // 
+  // var head = goog.dom.getElementsByTagNameAndClass('head')[0];
+  // goog.dom.appendChild(head, newEl);
+
+  this.flashing_ = flashing;
 };
 
+
+/**
+ * Handles when new posts are received.
+ * @param {object} postMap Post that was received.
+ * @private
+ */
+bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
+  if (this.active_) {
+    return;
+  }
+
+  if (postMap['archiveType'] == bits.posts.ArchiveType.CHAT &&
+      !this.flashTimer_.enabled) {
+    this.setFlashing_(true);
+    this.flashTimer_.start();
+  }
+};
+
+
+/**
+ * Handles when the window changes focus.
+ * @param {boolean} focused True if the window is now focused, false if it
+ *   has become unfocused.
+ * @private
+ */
+bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused) { 
+  this.active_ = focused;
+  if (this.active_) {
+    this.setFlashing_(false);
+    this.flashTimer_.stop();
+  }
+};
+
+
+/**
+ * Handles the flashing timer.
+ * @private
+ */
+bits.notifier.Notifier.prototype.handleTimer_ = function(e) {
+  this.setFlashing_(!this.flashing_);
+  // TODO: Make the flashing period shorter than the normal period.
+};
