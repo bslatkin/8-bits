@@ -292,13 +292,14 @@ def insert_post(shard, **kwargs):
     shard_id=shard,
     **kwargs)
 
+  @ndb.tasklet
   def txn():
-    if post_key.get(use_memcache=False, use_cache=False):
+    if (yield post_key.get_async(use_memcache=False, use_cache=False)):
       logging.warning('Post already exists for shard=%r, post_id=%r',
                       shard, post_id)
       raise ndb.Rollback()
 
-    post.put(use_memcache=False, use_cache=False)
+    yield post.put_async(use_memcache=False, use_cache=False)
 
     # Pull task that indicates the post to apply
     taskqueue.Task(
@@ -792,6 +793,10 @@ class PresenceHandler(BaseRpcHandler):
           nickname=nickname,
           user_id=user_id,
           body=message)
+    else:
+      # As long as users are heart-beating, we should be running a cleanup
+      # task for this shard.
+      enqueue_cleanup_task(shard)
 
     self.json_response['userConnected'] = user_connected
     self.json_response['browserToken'] = browser_token
@@ -832,6 +837,11 @@ class ShardCleanupHandler(BaseUiHandler):
 
     for user_id in (all_users_set - active_users_set):
       user_logged_out(shard, user_id)
+
+    # As long as there are still active users, continue to try to
+    # clean them up.
+    if active_users_set:
+      enqueue_cleanup_task(shard)
 
 
 class PostHandler(BaseRpcHandler):

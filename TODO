@@ -1,5 +1,6 @@
 v1 initial testing changes:
 - Surface RPC errors
+- Make the session cookie use localStorage so it's super sticky
 
 v1 Polish:
 - Clean up code comments and style everywhere
@@ -10,6 +11,9 @@ v1 Polish:
 
 Bugs:
 - Make splitpane collapse down to show all chat, not up
+- Double escaping in nickname:
+  - "Brett has changed their nickname to Brett &lt;&gt;"
+- You get background notified even about your own posts
 
 v1 Production:
 - SSL cert
