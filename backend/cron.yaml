@@ -4,6 +4,6 @@ cron:
   schedule: every 1 minutes
 
 - description: Delete old posts
-  url: /job/periodic?key=delete-posts
+  url: /jobs/periodic?key=delete-posts
   schedule: every day 11:00
   timezone: America/Los_Angeles

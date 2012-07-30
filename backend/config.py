@@ -33,7 +33,7 @@ user_max_inactive_seconds = 180
 shard_cleanup_period_seconds = 60
 
 # How long a token is alive before it should be replenished.
-user_token_lifetime_seconds = 1200
+user_token_lifetime_seconds = 110 * 60
 
 # Current version of the terms of service
 terms_version = 1
