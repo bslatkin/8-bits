@@ -22,7 +22,6 @@ goog.provide('bits.notifier.Notifier');
 goog.require('goog.dom');
 goog.require('goog.dom.dataset');
 goog.require('goog.style');
-goog.require('goog.userAgent');
 goog.require('goog.Timer');
 
 goog.require('bits.events');
@@ -79,20 +78,35 @@ bits.notifier.Notifier = function(shardId) {
    * @type {goog.Timer}
    * @private
    */
-  this.flashTimer_ = new goog.Timer(2000);
+  this.flashTimer_ = new goog.Timer(
+        bits.notifier.Notifier.FLASH_PERIOD_INVERTED);
 
   this.eh_.listen(this.flashTimer_, goog.Timer.TICK, this.handleTimer_);
 
   this.eh_.listen(window, goog.events.EventType.FOCUS,
-                  goog.bind(this.handleWindowFocus_, this, true));
+                  goog.bind(this.handleWindowFocus_, this, true), true);
   this.eh_.listen(window, goog.events.EventType.BLUR,
-                  goog.bind(this.handleWindowFocus_, this, false));
+                  goog.bind(this.handleWindowFocus_, this, false), true);
 
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.PostReceived,
       this.handlePostReceived_, this);
 }
 goog.inherits(bits.notifier.Notifier, goog.Disposable);
+
+
+/**
+ * Duration of the normal favicon when flashing.
+ * @type {number}
+ */
+bits.notifier.Notifier.FLASH_PERIOD_NORMAL = 2000;
+
+
+/**
+ * Duration of the inverted favicon when flashing.
+ * @type {number}
+ */
+bits.notifier.Notifier.FLASH_PERIOD_INVERTED = 1000;
 
 
 /**
@@ -116,22 +130,8 @@ bits.notifier.Notifier.prototype.setFlashing_ = function(flashing) {
     href = this.flashFaviconUrl_;
   }
 
-  console.log('flashing ' + href);
-
-  var oldEl = goog.dom.getElement('favicon');
-  oldEl.href = href;
-
-  // goog.dom.removeNode(oldEl);
-  // oldEl.removeAttribute('id');
-  // oldEl = null;
-  // 
-  // var newEl = goog.dom.createElement('link');
-  // newEl.setAttribute('rel', 'shortcut icon');
-  // newEl.setAttribute('id', 'favicon');
-  // newEl.setAttribute('href', href);
-  // 
-  // var head = goog.dom.getElementsByTagNameAndClass('head')[0];
-  // goog.dom.appendChild(head, newEl);
+  var el = goog.dom.getElement('favicon');
+  el.href = href;
 
   this.flashing_ = flashing;
 };
@@ -161,7 +161,7 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
  *   has become unfocused.
  * @private
  */
-bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused) { 
+bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused) {
   this.active_ = focused;
   if (this.active_) {
     this.setFlashing_(false);
@@ -175,6 +175,11 @@ bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused) {
  * @private
  */
 bits.notifier.Notifier.prototype.handleTimer_ = function(e) {
+  if (this.flashing_) {
+    this.flashTimer_.setInterval(bits.notifier.Notifier.FLASH_PERIOD_NORMAL);
+  } else {
+    this.flashTimer_.setInterval(bits.notifier.Notifier.FLASH_PERIOD_INVERTED);
+  }
+
   this.setFlashing_(!this.flashing_);
-  // TODO: Make the flashing period shorter than the normal period.
 };
