@@ -15,6 +15,7 @@ v1 Production:
 - SSL cert
 - http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
 - gen204 handler on all event handlers and pubsub delivery
+- Reload client window on new version push
 
 -----
 
