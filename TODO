@@ -1,6 +1,5 @@
 v1 initial testing changes:
 - Surface RPC errors
-- Make the session cookie use localStorage so it's super sticky
 
 v1 Polish:
 - Clean up code comments and style everywhere
