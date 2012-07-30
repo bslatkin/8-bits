@@ -1163,7 +1163,7 @@ ROUTES = webapp.WSGIApplication([
 SESSION_OPTS = {
   'session.type': 'cookie',
   'session.key': '8bits',
-  'session.expires': False,
+  'session.cookie_expires': False,
   'session.validate_key': config.session_validate_key,
   'session.encrypt_key': config.session_encrypt_key,
 }
