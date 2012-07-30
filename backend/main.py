@@ -267,22 +267,22 @@ def insert_post(shard, **kwargs):
   post_id = kwargs.pop('post_id', None)
   if not post_id:
     post_id = human_uuid()
-  post_key = ndb.Key(models.Post._get_kind(), post_id)
 
   if 'post_time' not in kwargs:
     kwargs['post_time'] = datetime.datetime.now()
 
+  post_key = ndb.Key(models.Post._get_kind(), post_id)
+  post = models.Post(
+    key=post_key,
+    shard_id=shard,
+    **kwargs)
+
   def txn():
-    post = post_key.get(use_memcache=False, use_cache=False)
-    if post:
+    if post_key.get(use_memcache=False, use_cache=False):
       logging.warning('Post already exists for shard=%r, post_id=%r',
                       shard, post_id)
       raise ndb.Rollback()
 
-    post = models.Post(
-      key=post_key,
-      shard_id=shard,
-      **kwargs)
     post.put(use_memcache=False, use_cache=False)
 
     # Pull task that indicates the post to apply
@@ -292,17 +292,9 @@ def insert_post(shard, **kwargs):
       params=dict(shard=shard, post_key=post_key.urlsafe()),
     ).add(config.pending_queue, transactional=True)
 
-    return post
-
-  try:
-    post = ndb.transaction(txn)
-  except Exception, e:
-    logging.warning('Could not insert post with kwargs=%r',
-                     kwargs, exc_info=True)
-    raise PostError(str(e))
-
   # Notify all users of the post.
   futures = []
+  futures.append(ndb.transaction_async(txn))
   futures.append(notify_posts(shard, [post]))
 
   # Set the dirty bit for this shard. This causes apply_posts to run a

@@ -163,7 +163,7 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
  */
 bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused) {
   this.active_ = focused;
-  if (this.active_) {
+  if (this.active_ && this.flashTimer_.enabled) {
     this.setFlashing_(false);
     this.flashTimer_.stop();
   }
