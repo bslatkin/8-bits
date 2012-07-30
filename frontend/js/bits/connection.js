@@ -67,7 +67,7 @@ bits.connection.Connection = function(shardId, nickname) {
    * @type {goog.Timer}
    * @private
    */
-  this.heartbeatTimer_ = new goog.Timer(10000);
+  this.heartbeatTimer_ = new goog.Timer(60000);
 
   this.eh_.listen(
       this.heartbeatTimer_, goog.Timer.TICK, this.handleHeartbeat_);
