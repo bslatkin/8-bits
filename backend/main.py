@@ -802,7 +802,6 @@ class ChannelPresenceHandler(webapp.RequestHandler):
   """Handles user disconnect presence notifications."""
 
   def post(self, action):
-    return
     if action.startswith('disconnected'):
       client_id = self.request.get('from')
       login_record = models.LoginRecord.get_by_id(client_id)
