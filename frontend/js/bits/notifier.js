@@ -180,7 +180,10 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
 
   // Don't notify for posts we recently sent ourselves.
   if (this.sentPosts_.contains(postMap['postId'])) {
-    this.sentPosts_.remove(postMap['postId']);
+    // Make sure memory doesn't get out of hand.
+    if (this.sentPosts_.getCount() > 1000) {
+      this.sentPosts_.clear();
+    }
     return;
   }
 
