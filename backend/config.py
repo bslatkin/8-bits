@@ -23,8 +23,8 @@ cleanup_queue = 'cleanup-shard'
 notify_queue = 'notify-posts'
 pending_queue = 'pending-posts'
 
-# How long posts stay alive before being deleted.
-ephemeral_lifetime_seconds = 86400 * 255
+# How long posts stay alive before being deleted. About 10 days.
+ephemeral_lifetime_seconds = 60 * 255
 
 # How long a user can be inactive (no heartbeat) before being logged out.
 user_max_inactive_seconds = 180
