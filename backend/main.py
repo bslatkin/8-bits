@@ -27,6 +27,7 @@ import time
 import traceback
 import uuid
 import wsgiref.handlers
+import xml.sax.saxutils
 
 from google.appengine.api import api_base_pb
 from google.appengine.api import apiproxy_stub_map
@@ -1097,7 +1098,7 @@ class ChatroomHandler(BaseUiHandler):
     context = {
       'first_login': first_login,
       'must_accept_terms': must_accept_terms,
-      'nickname': nickname,
+      'nickname': xml.sax.saxutils.unescape(nickname),
       'shard_id': shard_id,
       'short_url_prefix': self.request.host_url,
     }

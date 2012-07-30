@@ -25,6 +25,7 @@ goog.require('goog.json');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrManager');
 goog.require('goog.object');
+goog.require('goog.string');
 goog.require('goog.Timer');
 goog.require('goog.Uri');
 
@@ -356,6 +357,10 @@ bits.connection.Connection.prototype.handleSubmitPost_ = function(postMap) {
       null,
       null,
       goog.bind(this.handleSubmitPostSuccessful_, this, postMap));
+
+  // Simulate the HTML escaping the server side would have done.
+  postMap['nickname'] = goog.string.htmlEscape(postMap['nickname']);
+  postMap['body'] = goog.string.htmlEscape(postMap['body']);
 
   bits.events.PubSub.publish(
       this.shardId_, bits.events.EventType.SubmittedPostSent, postMap);

@@ -143,7 +143,7 @@ bits.posts.Post.prototype.renderChat = function(element) {
 
   var nicknameDiv = this.dom_.createElement('span');
   goog.dom.classes.add(nicknameDiv, goog.getCssName('bits-post-chat-nickname'));
-  this.dom_.setTextContent(nicknameDiv, this.nickname);
+  nicknameDiv.innerHTML = this.nickname;
 
   var separatorDiv = this.dom_.createElement('span');
   goog.dom.classes.add(separatorDiv,
@@ -153,15 +153,12 @@ bits.posts.Post.prototype.renderChat = function(element) {
   var bodyDiv = this.dom_.createElement('span');
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-chat-body'));
 
-  // Make the supplied body text safe by escaping it as text content.
-  // Then apply filters to linkify it safely. We're very open to all kinds of
-  // crazy links here.
-  this.dom_.setTextContent(bodyDiv, this.body);
-  var safeBody = this.dom_.getTextContent(bodyDiv);
-  safeBody = safeBody.replace(
+  // Apply filters to linkify it safely. The regex means we're very open to
+  // all kinds of crazy links here.
+  var rewritten = this.body.replace(
       /(http(s?):\/\/[^ '"\)\(]+)/g,
       '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>');
-  bodyDiv.innerHTML = safeBody;
+  bodyDiv.innerHTML = rewritten;
 
   element.appendChild(nicknameDiv);
   element.appendChild(separatorDiv);
@@ -174,7 +171,7 @@ bits.posts.Post.prototype.renderPresence = function(element) {
 
   var bodyDiv = this.dom_.createElement('span');
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-presence-body'));
-  this.dom_.setTextContent(bodyDiv, this.body);
+  bodyDiv.innerHTML = this.body;
 
   element.appendChild(bodyDiv);
 };

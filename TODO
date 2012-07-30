@@ -11,8 +11,6 @@ v1 Polish:
 
 Bugs:
 - Make splitpane collapse down to show all chat, not up
-- Double escaping in nickname:
-  - "Brett has changed their nickname to Brett &lt;&gt;"
 - You get background notified even about your own posts
 
 v1 Production:
