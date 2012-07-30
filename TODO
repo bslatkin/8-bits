@@ -1,8 +1,5 @@
 v1 initial testing changes:
-- Auto-logout user when heartbeat doesn't come in after 3 minutes
-- Break link line-wrapping
 - Surface RPC errors
-- gen204 handler on all event handlers and pubsub delivery
 
 v1 Polish:
 - Clean up code comments and style everywhere
@@ -20,6 +17,7 @@ v1 Production:
   - redir: 8-bit.us, eight-bits.us, eight-bit.us,
            eightbits.us, eightbit.us, eight-bits.com
 - http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+- gen204 handler on all event handlers and pubsub delivery
 
 -----
 

@@ -160,7 +160,7 @@ bits.posts.Post.prototype.renderChat = function(element) {
   var safeBody = this.dom_.getTextContent(bodyDiv);
   safeBody = safeBody.replace(
       /(http(s?):\/\/[^ '"\)\(]+)/g,
-      '<a href="$1" target="_blank">$1</a>');
+      '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>');
   bodyDiv.innerHTML = safeBody;
 
   element.appendChild(nicknameDiv);

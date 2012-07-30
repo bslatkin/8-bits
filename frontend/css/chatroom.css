@@ -6,13 +6,17 @@ body {
 body {
   background-color: #A2B3B3;
 }
-a:link,
-a:visited {
+a.bits-chatroom-link {
+  word-wrap: break-word;
+  word-break: break-all;
+}
+a.bits-chatroom-link:link,
+a.bits-chatroom-link:visited {
   color: #00867F;
   text-decoration: none;
 }
-a:hover,
-a:active {
+a.bits-chatroom-link:hover,
+a.bits-chatroom-link:active {
   color: #00867F;
   text-decoration: underline;
 }

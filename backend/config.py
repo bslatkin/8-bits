@@ -18,15 +18,19 @@ session_encrypt_key = 'asdf'
 session_validate_key = 'asdfasdf'
 
 # Queues
-pending_queue = 'pending-posts'
 apply_queue = 'apply-posts'
+cleanup_queue = 'cleanup-shard'
 notify_queue = 'notify-posts'
+pending_queue = 'pending-posts'
 
 # How long posts stay alive before being deleted.
 ephemeral_lifetime_seconds = 86400 * 255
 
 # How long a user can be inactive (no heartbeat) before being logged out.
-user_max_inactive_seconds = 300
+user_max_inactive_seconds = 180
+
+# How frequently the shard cleanup task should run.
+shard_cleanup_period_seconds = 60
 
 # How long a token is alive before it should be replenished.
 user_token_lifetime_seconds = 1200

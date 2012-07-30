@@ -257,6 +257,21 @@ def enqueue_apply_task(shard, post_id=None):
                   shard)
 
 
+def enqueue_cleanup_task(shard):
+  """Enqueues a task to invoke the ShardCleanupHandler periodically."""
+  try:
+    taskqueue.Task(
+      url='/work/cleanup',
+      params=dict(shard=shard),
+      name='cleanup-%s-time-%d' % (
+          shard, time.time() / config.shard_cleanup_period_seconds),
+      countdown=config.shard_cleanup_period_seconds
+    ).add(config.cleanup_queue)
+  except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
+    logging.debug('Enqueued cleanup task for shard=%r but task already present',
+                  shard)
+
+
 def insert_post(shard, **kwargs):
   """Inserts a post at the present time, returning its key.
 
@@ -427,12 +442,13 @@ def apply_posts(shard=None,
   if dirty_bit(shard, check=True):
     futures.append(enqueue_apply_task(shard))
 
-  # TODO(bslatkin): Add shard heartbeat task to check for user presence and
-  # cause notification of user logouts if the channel API did not detect
-  # the user closing the connection.
-
   # Wait on all pending futures in case they raise errors.
   ndb.Future.wait_all(futures)
+
+  # Add shard cleanup task to check for user presence and cause notification
+  # of user logouts if the channel API did not detect the user closing the
+  # connection.
+  enqueue_cleanup_task(shard)
 
 
 def marshal_posts(post_list):
@@ -456,14 +472,6 @@ def marshal_posts(post_list):
                           (post.shard_id, post.post_id)))
     out.append(post_dict)
   return out
-
-
-def _GetChannelServiceName():
-  """Gets the service name to use, based on if we're on the dev server."""
-  if os.environ.get('SERVER_SOFTWARE', '').startswith('Devel'):
-    return 'channel'
-  else:
-    return 'xmpp'
 
 
 @ndb.tasklet
@@ -587,7 +595,7 @@ def maybe_update_token(login_record):
   return True
 
 
-def get_present_users(shard):
+def get_present_users(shard, include_stale=False):
   """Returns a list of present users for a shard in descending log-in order.
 
   Notably, this query is going to be eventually consistent and miss the folks
@@ -605,8 +613,12 @@ def get_present_users(shard):
       .filter(models.LoginRecord.online == True)
       .order(-models.LoginRecord.last_update_time)
       .fetch(1000))
-  user_list = only_active_users(*user_list)
-  memcache.set(shard_key, user_list, config.user_max_inactive_seconds)
+
+  if not include_stale:
+    # Only cache this query for the case where we're pruning stale users.
+    user_list = only_active_users(*user_list)
+    memcache.set(shard_key, user_list, config.user_max_inactive_seconds)
+
   return user_list
 
 
@@ -790,6 +802,7 @@ class ChannelPresenceHandler(webapp.RequestHandler):
   """Handles user disconnect presence notifications."""
 
   def post(self, action):
+    return
     if action.startswith('disconnected'):
       client_id = self.request.get('from')
       login_record = models.LoginRecord.get_by_id(client_id)
@@ -799,6 +812,27 @@ class ChannelPresenceHandler(webapp.RequestHandler):
         return
 
       user_logged_out(login_record.shard_id, client_id)
+
+
+class ShardCleanupHandler(BaseUiHandler):
+  """Handles periodic cleanup requests for a specific shard.
+
+  This handler will run periodically (~minute) for all shards that have
+  active participants. It's meant to do state cleanup for the shard, such as
+  forcing logouts for users who have not heartbeated in N seconds.
+  """
+
+  def post(self):
+    shard = self.get_required('shard', str)
+
+    all_users_list = get_present_users(shard, include_stale=True)
+    active_users_list = only_active_users(*all_users_list)
+
+    all_users_set = set(u.user_id for u in all_users_list)
+    active_users_set = set(u.user_id for u in active_users_list)
+
+    for user_id in (all_users_set - active_users_set):
+      user_logged_out(shard, user_id)
 
 
 class PostHandler(BaseRpcHandler):
@@ -1101,6 +1135,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/_ah/channel/([^/]+)/', ChannelPresenceHandler),
   (r'/admin/debug', DebugFormHandler),
   (r'/work/apply_posts', ApplyWorker),
+  (r'/work/cleanup', ShardCleanupHandler),
   (r'/rpc/create_shard', CreateShardHandler),
   (r'/rpc/show_roster', ShowRosterHandler),
   (r'/rpc/list_posts', ListPostsHandler),
