@@ -29,8 +29,7 @@ goog.require('goog.pubsub.PubSub');
 bits.events.EventType = {
   // User submits a new Post that should be sent to the server side.
   // Args:
-  //   JSON for bits.posts.Post instance with keys sequenceId and
-  //   nickname unset, but postId already set to a valid UUID.
+  //   JSON for bits.posts.Post instance without any IDs.
   SubmitPost: 'SubmitPost',
 
   // User-submitted post was sent to the server side.

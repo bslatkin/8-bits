@@ -21,6 +21,7 @@ goog.provide('bits.notifier.Notifier');
 
 goog.require('goog.dom');
 goog.require('goog.dom.dataset');
+goog.require('goog.structs.Set');
 goog.require('goog.style');
 goog.require('goog.Timer');
 
@@ -69,6 +70,12 @@ bits.notifier.Notifier = function(shardId) {
   this.flashing_ = false;
 
   /**
+   * @type {goog.structs.Set}
+   * @private
+   */
+  this.sentPosts_ = new goog.structs.Set();
+
+  /**
    * @type {goog.events.EventHandler}
    * @private
    */
@@ -87,6 +94,10 @@ bits.notifier.Notifier = function(shardId) {
                   goog.bind(this.handleWindowFocus_, this, true), true);
   this.eh_.listen(window, goog.events.EventType.BLUR,
                   goog.bind(this.handleWindowFocus_, this, false), true);
+
+  bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.SubmittedPostSent,
+      this.handlePostSent_, this);
 
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.PostReceived,
@@ -138,6 +149,18 @@ bits.notifier.Notifier.prototype.setFlashing_ = function(flashing) {
 
 
 /**
+ * Handles when a new post is sent to the server side.
+ * @param {object} postMap Post that was received.
+ * @private
+ */
+bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
+  if (postMap['archiveType'] == bits.posts.ArchiveType.CHAT) {
+    this.sentPosts_.add(postMap['postId']);
+  }
+};
+
+
+/**
  * Handles when new posts are received.
  * @param {object} postMap Post that was received.
  * @private
@@ -147,11 +170,22 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
     return;
   }
 
-  if (postMap['archiveType'] == bits.posts.ArchiveType.CHAT &&
-      !this.flashTimer_.enabled) {
-    this.setFlashing_(true);
-    this.flashTimer_.start();
+  if (postMap['archiveType'] != bits.posts.ArchiveType.CHAT) {
+    return;
   }
+
+  if (this.flashTimer_.enabled) {
+    return;
+  }
+
+  // Don't notify for posts we recently sent ourselves.
+  if (this.sentPosts_.contains(postMap['postId'])) {
+    this.sentPosts_.remove(postMap['postId']);
+    return;
+  }
+
+  this.setFlashing_(true);
+  this.flashTimer_.start();
 };
 
 
