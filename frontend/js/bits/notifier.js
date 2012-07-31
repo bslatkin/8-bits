@@ -19,6 +19,7 @@
 
 goog.provide('bits.notifier.Notifier');
 
+goog.require('goog.debug.Logger');
 goog.require('goog.dom');
 goog.require('goog.dom.dataset');
 goog.require('goog.structs.Set');
@@ -36,6 +37,12 @@ goog.require('bits.posts.ArchiveType');
  */
 bits.notifier.Notifier = function(shardId) {
   goog.base(this);
+
+  /**
+   * @type {goog.debug.Logger}
+   * @private
+   */
+  this.logger_ = goog.debug.Logger.getLogger('bits.notifier.Notifier');
 
   /**
    * @type {string}
@@ -178,15 +185,19 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
     return;
   }
 
+  var postId = postMap['postId'];
+
   // Don't notify for posts we recently sent ourselves.
-  if (this.sentPosts_.contains(postMap['postId'])) {
+  if (this.sentPosts_.contains(postId)) {
     // Make sure memory doesn't get out of hand.
     if (this.sentPosts_.getCount() > 1000) {
       this.sentPosts_.clear();
     }
+    this.logger_.info('Notifier ignoring local postId=' + postId);
     return;
   }
 
+  this.logger_.info('Notifier signalling for postId=' + postId);
   this.setFlashing_(true);
   this.flashTimer_.start();
 };

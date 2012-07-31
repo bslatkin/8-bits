@@ -190,7 +190,9 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
   // issued on the first presence request and relogin presence requests.
   if (this.browserToken_ != response.browserToken || response.userConnected) {
     if (this.channel_) {
-      // TODO(bslatkin): This doesn't work locally: this.channel_.close();
+      if (this.channel_.close) {
+        this.channel_.close();
+      }
       this.channel_ = null;
     }
 
@@ -279,8 +281,9 @@ bits.connection.Connection.prototype.handleChannelMessage_ = function(event) {
  * @private
  */
 bits.connection.Connection.prototype.handleChannelError_ = function(event) {
-  this.logger_.severe('Channel error for shardId=' + this.shardId_ + ':' +
-                     event['data']);
+  this.logger_.severe('Channel error for shardId=' + this.shardId_ +
+                      ', code=' + event['code'] + ', description=' +
+                      event['description']);
   // TODO(bslatkin): Show the error to the user.
 };
 
