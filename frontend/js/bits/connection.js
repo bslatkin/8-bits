@@ -197,19 +197,29 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
     }
 
     this.browserToken_ = response.browserToken;
-    this.channel_ = new goog.appengine.Channel(this.browserToken_);
-    var socket = this.channel_.open({
-      'onopen': goog.bind(this.handleChannelOpen_, this,
-                          response.userConnected),
-      'onmessage': goog.bind(this.handleChannelMessage_, this),
-      'onerror': goog.bind(this.handleChannelError_, this),
-      'onclose': goog.bind(this.handleChannelClose_, this)
-    });
+    this.allocateChannel_(response.userConnected);
   }
 
   // Starting this timer repeatedly has no effect, but we don't want to
   // start it until we know the very first presence request was successful.
   this.heartbeatTimer_.start();
+};
+
+
+/**
+ * Allocates a new channel with the current browser token.
+ * @param {boolean} connected User was just connected for the first time in
+ *   a while and some initial setup actions should be taken.
+ * @private
+ */
+bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
+  this.channel_ = new goog.appengine.Channel(this.browserToken_);
+  var socket = this.channel_.open({
+    'onopen': goog.bind(this.handleChannelOpen_, this, connected),
+    'onmessage': goog.bind(this.handleChannelMessage_, this),
+    'onerror': goog.bind(this.handleChannelError_, this),
+    'onclose': goog.bind(this.handleChannelClose_, this)
+  });
 };
 
 
@@ -221,13 +231,12 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
  */
 bits.connection.Connection.prototype.handleChannelOpen_ =
     function(userConnected) {
-  // TODO(bslatkin): Don't let the user start chatting until this is open.
   this.logger_.info('Connection to shardId=' + this.shardId_ + ' now open.');
-  this.requestOldPosts_();
 
   // Only refresh the roster upon new connections. When the roster becomes an
   // actual UI widget, then we can issue this request every time.
   if (userConnected) {
+    this.requestOldPosts_();
     this.requestRoster_();
   }
 };
@@ -281,10 +290,13 @@ bits.connection.Connection.prototype.handleChannelMessage_ = function(event) {
  * @private
  */
 bits.connection.Connection.prototype.handleChannelError_ = function(event) {
+  // TODO(bslatkin): Show the error to the user.
   this.logger_.severe('Channel error for shardId=' + this.shardId_ +
                       ', code=' + event['code'] + ', description=' +
                       event['description']);
-  // TODO(bslatkin): Show the error to the user.
+  // Reallocate the channel on errors, per
+  //   http://stackoverflow.com/questions/10729842
+  this.allocateChannel_(false);
 };
 
 
