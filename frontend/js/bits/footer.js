@@ -42,7 +42,7 @@ goog.inherits(bits.footer.FooterBar, goog.ui.Component);
 
 
 /**
- * Decorates an existing HTML DIV element as a PostContainer.
+ * Decorates an existing HTML DIV element as a FooterBar.
  *
  * @param {HTMLElement} element The DIV element to decorate.
  */
