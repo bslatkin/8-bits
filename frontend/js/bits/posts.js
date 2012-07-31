@@ -49,7 +49,6 @@ goog.require('bits.events');
 /* Must stay in sync with Python models.Post.ARCHIVE_TYPES */
 bits.posts.ArchiveType = {
   CHAT: 'chat',
-  NEWS: 'news',
   FILE: 'file',
   USER_LOGIN: 'user_login',
   USER_LOGOUT: 'user_logout',
@@ -107,9 +106,6 @@ bits.posts.Post.prototype.createDom = function() {
   switch (this.archiveType) {
     case bits.posts.ArchiveType.CHAT:
       this.renderChat(element);
-      break;
-
-    case bits.posts.ArchiveType.NEWS:
       break;
 
     case bits.posts.ArchiveType.FILE:

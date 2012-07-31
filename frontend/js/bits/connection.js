@@ -189,13 +189,6 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
   // The browser token will be refreshed periodically, in addition to being
   // issued on the first presence request and relogin presence requests.
   if (this.browserToken_ != response.browserToken || response.userConnected) {
-    if (this.channel_) {
-      if (this.channel_.close) {
-        this.channel_.close();
-      }
-      this.channel_ = null;
-    }
-
     this.browserToken_ = response.browserToken;
     this.allocateChannel_(response.userConnected);
   }
@@ -213,6 +206,12 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
  * @private
  */
 bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
+  if (this.channel_) {
+    if (this.channel_.close) {
+      this.channel_.close();
+    }
+  }
+
   this.channel_ = new goog.appengine.Channel(this.browserToken_);
   var socket = this.channel_.open({
     'onopen': goog.bind(this.handleChannelOpen_, this, connected),

@@ -862,6 +862,9 @@ class PostHandler(BaseRpcHandler):
     body = self.get_required('body', str, html_escape=True)
     post_id = self.get_required('post_id', str)
 
+    # TODO(bslatkin): If this gets old data from the cache the user could
+    # show up as not active. Hit the DB directly after this failure so the
+    # user has a second (slower) chance.
     login_record = models.LoginRecord.get_by_id(self.user_id)
     if not only_active_users(login_record):
         raise NotAuthorizedError('Connection no longer valid, must relogin')

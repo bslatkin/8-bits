@@ -18,11 +18,14 @@
 
 - Post: Root entity for a single user post. Inserts quickly into a separate
       entity group. Put in order in a Shard by PostReference entities.
+
 - LoginRecord: Record of a user who's logged in. Periodically cleaned up
     if the user has not been active for some number of hours.
+
 - Shard: Root entity for a single chat room.
-  - PostReference: Reference to a Post entity that's periodically written
-      under the Shard whenever fan-in occurs.
+
+  - PostReference (child): Reference to a Post entity that's periodically
+      written under the Shard whenever fan-in occurs.
 """
 
 import datetime
@@ -85,6 +88,26 @@ class LoginRecord(ndb.Model):
   accepted_terms_version = ndb.IntegerProperty(default=0, indexed=False)
 
 
+class ReadState(ndb.Model):
+  """User's read state for a specific topic.
+
+  Parent is the LoginRecord. ID is 1 for overall chat, or the sequence ID
+  of the TOPIC_START event that this corresponds to.
+  """
+
+  @classmethod
+  def _get_kind(cls):
+    return 'RS'
+
+  @property
+  def first_read_sequence(self):
+    return self.key.id
+
+  first_read_time = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
+  last_read_sequence = ndb.IntegerProperty(indexed=False)
+  last_read_time = ndb.DateTimeProperty(auto_now=True, indexed=False)
+
+
 class Post(ndb.Model):
   """Archived post.
 
@@ -100,35 +123,39 @@ class Post(ndb.Model):
   USER_LOGOUT = 11
   USER_UPDATE = 12
   CHAT = 20
-  NEWS = 30
   FILE = 40
+  TOPIC_START = 50
+  TOPIC_CHANGE = 51
 
   ARCHIVE_TYPES = frozenset([
     USER_LOGIN,
     USER_LOGOUT,
     USER_UPDATE,
     CHAT,
-    NEWS,
     FILE,
+    TOPIC_CHANGE,
   ])
   ARCHIVE_MAPPING = {
     'chat': CHAT,
-    'news': NEWS,
     'file': FILE,
     'user_login': USER_LOGIN,
     'user_logout': USER_LOGOUT,
     'user_update': USER_UPDATE,
+    'topic_start': TOPIC_START,
+    'topic_change': TOPIC_CHANGE,
   }
   ARCHIVE_REVERSE_MAPPING = dict((v, k) for k, v in ARCHIVE_MAPPING.items())
 
   # Allowed post types directly from users.
-  ALLOWED_ARCHIVES = frozenset([CHAT, NEWS, FILE])
+  # TODO(bslatkin): Add file once it's ready.
+  ALLOWED_ARCHIVES = frozenset([CHAT])
 
-  archive_type = ndb.IntegerProperty(required=True, choices=ARCHIVE_TYPES)
+  archive_type = ndb.IntegerProperty(
+      required=True, indexed=False, choices=ARCHIVE_TYPES)
   nickname = ndb.TextProperty(required=True)
   user_id = ndb.TextProperty(required=True)
   body = ndb.TextProperty(required=True)  # chat, news post, file description
-  post_name = ndb.TextProperty()  # eg, filename, news post title
+  post_name = ndb.TextProperty()  # eg, filename, news post title, topic url
   post_attachment = ndb.BlobKeyProperty(indexed=False)  # the file
   post_time = ndb.DateTimeProperty(indexed=False)
 
