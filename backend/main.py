@@ -570,9 +570,12 @@ def only_active_users(*login_record_list):
   result_list = []
   for login_record in login_record_list:
     if not login_record.online:
+      logging.debug('User is no longer online: %r', login_record)
       continue
+
     if (not login_record.last_update_time or
         login_record.last_update_time < oldest_time):
+      logging.debug('User update time too far in past: %r', login_record)
       continue
 
     result_list.append(login_record)
