@@ -744,8 +744,7 @@ class PresenceHandler(BaseRpcHandler):
       if not login:
         login = models.LoginRecord(
           key=ndb.Key(models.LoginRecord._get_kind(), user_id),
-          shard_id=shard,
-          online=True)
+          shard_id=shard)
 
       if maybe_update_token(login):
         logging.debug('Issuing new channel token to user_id=%r, shard=%r',
@@ -756,7 +755,9 @@ class PresenceHandler(BaseRpcHandler):
         user_connected = False
 
       if nickname:
-        # This is a nickname change
+        # This is a potential nickname change. Right now the client always
+        # sends the nickname on every request, so we need to check for the
+        # difference to detect a rename.
         last_nickname = login.nickname
         login.nickname = nickname
 

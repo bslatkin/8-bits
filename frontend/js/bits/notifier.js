@@ -182,6 +182,7 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
     return;
   }
 
+  // TODO(bslatkin): Notify about people who have just joined.
   if (postMap['archiveType'] != bits.posts.ArchiveType.CHAT) {
     return;
   }
