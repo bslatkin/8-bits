@@ -151,6 +151,11 @@ bits.notifier.Notifier.prototype.setFlashing_ = function(flashing) {
   var el = goog.dom.getElement('favicon');
   el.href = href;
 
+  // Remove and re-add to the document to make this work with Firefox.
+  var parent = el.parentNode;
+  goog.dom.removeNode(el);
+  goog.dom.appendChild(parent, el);
+
   this.flashing_ = flashing;
 };
 

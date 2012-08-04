@@ -178,17 +178,18 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
   }
 
   // This is a reconnection after the user has been disconnected for a
-  // while. Send an event so other components can take appropriate action,
-  // such as clearing out old posts since they're out of date.
-  var firstRequest = !this.browserToken_;
-  if (response.userConnected && !firstRequest) {
+  // while. This could be a page reload or a first time load. Send an event so
+  // other components can take appropriate action, such as clearing out old
+  // posts since they're out of date.
+  var firstRequest = !this.browserToken_ || response.userConnected;
+  if (firstRequest) {
     bits.events.PubSub.publish(
         this.shardId_, bits.events.EventType.ConnectionReestablishing);
   }
 
   // The browser token will be refreshed periodically, in addition to being
   // issued on the first presence request and relogin presence requests.
-  if (this.browserToken_ != response.browserToken || response.userConnected) {
+  if (this.browserToken_ != response.browserToken || firstRequest) {
     if (this.channel_) {
       if (this.channel_.close) {
         this.channel_.close();
@@ -197,7 +198,7 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
     }
 
     this.browserToken_ = response.browserToken;
-    this.allocateChannel_(response.userConnected);
+    this.allocateChannel_(firstRequest);
   }
 
   // Starting this timer repeatedly has no effect, but we don't want to

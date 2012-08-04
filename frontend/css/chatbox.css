@@ -36,9 +36,10 @@
   overflow: hidden;
   position: absolute;
   border: 0;
-  padding: 0 3px;
+  padding: 0;
   margin: 0;
 }
+
 
 .label-input-label {
   color: graytext;
@@ -48,9 +49,9 @@
   border: 0;
   width: 100%;
   height: 100%;
-  padding: 0;
+  padding: 0 2px;
   margin: 0;
-  overflow: auto;
+  overflow: hidden;  /* Don't show a scrollbar */
   resize: none;  /* Disable webkit textarea resize control */
   outline: none;  /* Remove focus ring */
   font-family: Monaco, andale mono, monospace, sans-serif;

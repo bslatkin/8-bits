@@ -275,7 +275,8 @@ bits.posts.PostContainer.prototype.decorateInternal = function(element) {
   var elem = this.getElement();
   this.container.decorate(elem);
   goog.style.setUnselectable(elem, false, goog.userAgent.GECKO);
-  new goog.ui.ContainerScroller(this.container);
+  var scroller = new goog.ui.ContainerScroller(this.container);
+  this.registerDisposable(scroller);
 };
 
 
