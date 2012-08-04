@@ -6,6 +6,7 @@
   padding: 3px;
   position: absolute;
   border-radius: 3px;
+  z-index: 100;
 }
 .modal-dialog-bg {
   background: #666;

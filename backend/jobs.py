@@ -69,6 +69,8 @@ class DeleteOldPostsPipeline(pipeline.Pipeline):
     now = time.time()
     before_timestamp_seconds = now - lifetime_seconds
 
+    # TODO(bslatkin): Also clean up old PostRecord entities, etc.
+
     yield mapreduce_pipeline.MapperPipeline(
         'Delete old posts',
         'jobs.DeleteOldPostsMapper.map',

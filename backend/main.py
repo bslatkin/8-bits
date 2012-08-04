@@ -942,7 +942,11 @@ class ListPostsHandler(BaseRpcHandler):
     ref_list = query.fetch(count)
     post_kind = models.Post._get_kind()
     post_key_list = [ndb.Key(post_kind, ref.post_id) for ref in ref_list]
-    post_list = ndb.get_multi(post_key_list)
+    # PostReference entities may point to non-existent Post entities once the
+    # cleanup job has run. Filter them out here. The client side won't try to
+    # scan for posts previous to the last one that's actually found, so this
+    # filtering is okay.
+    post_list = [p for p in ndb.get_multi(post_key_list) if p is not None]
 
     self.json_response['posts'] = marshal_posts(post_list)
 
