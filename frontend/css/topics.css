@@ -1,0 +1,24 @@
+.bits-topic-menu {
+  width: 100%;
+}
+.bits-topic {
+  height: 75px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+.bits-topic-title-c {
+  height: 25px;
+  line-height: 25px;
+}
+.bits-topic.goog-control-hover {
+  border: 1px solid #999;
+  background-color: #eee;
+}
+.bits-topic-description {
+  width: 100%;
+  height: 50px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  white-space: wrap;
+}

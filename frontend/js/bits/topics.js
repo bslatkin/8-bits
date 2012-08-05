@@ -89,37 +89,34 @@ bits.topics.Topic.prototype.createDom = function() {
   var element = this.dom_.createElement('div');
   goog.dom.classes.add(element, goog.getCssName('bits-topic'));
 
+  var containerEl = this.dom_.createElement('div');
+  goog.dom.classes.add(containerEl, goog.getCssName('bits-topic-title-c'));
+
   var nicknameEl = this.dom_.createElement('span');
   goog.dom.classes.add(nicknameEl, goog.getCssName('bits-topic-nickname'));
   nicknameEl.innerHTML = this.createdNickname_;
 
+  var separatorEl = this.dom_.createElement('span');
+  goog.dom.classes.add(separatorEl, goog.getCssName('bits-topic-separator'));
+  this.dom_.setTextContent(separatorEl, ': ');
+
   var titleEl = this.dom_.createElement('a');
   goog.dom.classes.add(titleEl, goog.getCssName('bits-topic-title'));
   titleEl.href = this.url_;
-  var rewritten = this.url_.replace(
-      /http(s?):\/\/(www\.)?([^ '"\)\(]+)/g,
-      '$3');
-  titleEl.innerText = rewritten;
+  titleEl.setAttribute('target', '_blank');
+  titleEl.innerText = this.url_.replace(
+      /http(s?):\/\/(www\.)?([^ '"\)\(]+)/g, '$3');
 
-  // nicknameDiv.innerHTML = this.nickname;
-  // 
-  // var separatorDiv = this.dom_.createElement('span');
-  // goog.dom.classes.add(separatorDiv,
-  //                      goog.getCssName('bits-post-chat-separator'));
-  // this.dom_.setTextContent(separatorDiv, ': ');
-  // 
-  // var bodyDiv = this.dom_.createElement('span');
-  // goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-chat-body'));
-  // 
-  // // Apply filters to linkify it safely. The regex means we're very open to
-  // // all kinds of crazy links here.
-  // var rewritten = this.body.replace(
-  //     /(http(s?):\/\/[^ '"\)\(]+)/g,
-  //     '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>');
-  // bodyDiv.innerHTML = rewritten;
+  containerEl.appendChild(nicknameEl);
+  containerEl.appendChild(separatorEl);
+  containerEl.appendChild(titleEl);
 
-  element.appendChild(nicknameEl);
-  element.appendChild(titleEl);
+  var descriptionEl = this.dom_.createElement('div');
+  goog.dom.classes.add(descriptionEl, goog.getCssName('bits-topic-description'));
+  descriptionEl.innerHTML = this.description_;
+
+  element.appendChild(containerEl);
+  element.appendChild(descriptionEl);
   this.decorateInternal(element);
 };
 
@@ -131,6 +128,10 @@ bits.topics.Topic.prototype.createDom = function() {
  */
 bits.topics.Topic.prototype.decorateInternal = function(element) {
   bits.topics.Topic.superClass_.decorateInternal.call(this, element);
+
+  var elem = this.getElement();
+  elem.tabIndex = 0;
+  this.setAllowTextSelection(true);
 };
 
 
@@ -188,6 +189,14 @@ bits.topics.TopicMenu = function(shardId) {
   this.eh_ = new goog.events.EventHandler(this);
 }
 goog.inherits(bits.topics.TopicMenu, goog.ui.Control);
+
+
+/**
+ * Creates an initial DOM representation for the component.
+ */
+bits.topics.TopicMenu.prototype.createDom = function() {
+  this.decorateInternal(this.dom_.createDom('div', 'bits-topic-menu'));
+};
 
 
 /**

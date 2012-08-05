@@ -5,6 +5,9 @@
   <link rel="stylesheet" href="/static/1/css/topics.css">
 
   <style type="text/css" media="screen">
+  .topic-test-container {
+    width: 700px;
+  }
   </style>
 
   <script src="/js/closure/goog/base.js"></script>
@@ -13,10 +16,13 @@
     goog.require('bits.topics.TopicMenu');
     goog.require('goog.debug.Console');
   </script>
+
 </head>
 <body>
 
-<div id="topic-menu"></div>
+<div class="topic-test-container">
+<div id="topic-menu" class="bits-topic-menu"></div>
+</div>
 
 <script>
 var c = new goog.debug.Console();
@@ -31,7 +37,9 @@ menu.addChild(new bits.topics.Topic({
   shardId: shardId,
   createdNickname: 'brett',
   url: 'http://example.com/my-url',
-  description: 'Here is something funny I found',
+  description: 'Here is something funny I found with really long topic text ' +
+               'that will wrap to the next line and stuff. This needs to be ' +
+               'long or else it will not take up enough space',
   updateTimeMs: 1344204556782
 }), true);
 </script>
