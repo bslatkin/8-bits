@@ -409,8 +409,8 @@ bits.connection.Connection.prototype.handleSubmitPostSuccessful_ =
  *
  * @param {string} message Error message to show
  * @param {boolean=} opt_ignorable When true, it means the error message can
- *   be ignored, not shown to the user, and the caller will retry. If false,
- *   then this connection should be destroyed immediately.
+ *   be ignored and the caller will retry. If false, then this connection
+ *   should be destroyed immediately.
  * @return {boolean} True if the caller can retry, regardless of whether or
  *   not it was ignorable. Callers should not retry if this returns false.
  */
@@ -420,16 +420,14 @@ bits.connection.Connection.prototype.reportError_ =
   var fatal = this.numErrors_ > 5 || !opt_ignorable;
   this.logger_.severe(message + ', ignorable=' + !!opt_ignorable +
                       ', numErrors=' + this.numErrors_ + ', fatal=' + fatal);
-  if (!fatal) {
-    return true;
+
+  if (fatal) {
+    // Show the user a link to reload this page.
+    message +=
+        '<br>Fatal error: ' +
+        '<a href="javascript:window.location=window.location">' +
+        'Click here to reload</a>';
   }
-
-  // Kill the event handler so nothing fires for this connection again.
-  this.eh_.removeAll();
-
-  // Show the user a link to reload this page.
-  message = 'Fatal error. <a href="javascript:window.location=window.location">' +
-      'Click here to reload</a>. Detail: ' + message;
 
   var postMap = {
       'shardId': this.shardId_,
@@ -440,6 +438,13 @@ bits.connection.Connection.prototype.reportError_ =
   };
   bits.events.PubSub.publish(
       this.shardId_, bits.events.EventType.ServerError, postMap);
+
+  if (!fatal) {
+    return true;
+  }
+
+  // Kill the event handler so nothing fires for this connection again.
+  this.eh_.removeAll();
 
   // Kill the pubsub system so all new user actions do nothing.
   bits.events.PubSub.clear();
