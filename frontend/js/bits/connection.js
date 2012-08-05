@@ -534,7 +534,6 @@ bits.connection.Connection.prototype.requestOldPosts_ =
   var end = opt_end || 0;
   var count = opt_count || 100;
   params.add('shard', this.shardId_);
-  params.add('type', bits.posts.ArchiveType.CHAT);
   params.add('start', start);
   params.add('end', end);
   params.add('count', count);

@@ -26,6 +26,16 @@
 
   - PostReference (child): Reference to a Post entity that's periodically
       written under the Shard whenever fan-in occurs.
+
+
+How do topics work?
+Post: Used as a reference point for the topic with the topic_start event.
+PostReference: Used to look up topic start events in sequence
+
+post the posts to the normal shard, but then replicate the post references
+over to an alternate shard that is the topic. then when querying for posts
+you just query for them on an alternate root shard
+
 """
 
 import datetime
@@ -55,8 +65,15 @@ class Shard(ndb.Model):
 
   pretty_name = ndb.StringProperty(default='')
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
-  update_time = ndb.DateTimeProperty(auto_now=True)
-  sequence_number = ndb.IntegerProperty(indexed=False, default=1)
+  update_time = ndb.DateTimeProperty(auto_now=True, indexed=False)
+  sequence_number = ndb.IntegerProperty(default=1, indexed=False)
+
+  # Current topic being discussed. Will be unset when there is no topic.
+  current_topic = ndb.StringProperty(indexed=False)
+
+  # Reference to the owning shard from which this shard's data is replicated.
+  # Only set when this is a child topic.
+  # root_shard = ndb.KeyProperty(kind='S')
 
   @property
   def shard_id(self):
@@ -123,7 +140,6 @@ class Post(ndb.Model):
   USER_LOGOUT = 11
   USER_UPDATE = 12
   CHAT = 20
-  FILE = 40
   TOPIC_START = 50
   TOPIC_CHANGE = 51
 
@@ -132,12 +148,10 @@ class Post(ndb.Model):
     USER_LOGOUT,
     USER_UPDATE,
     CHAT,
-    FILE,
     TOPIC_CHANGE,
   ])
   ARCHIVE_MAPPING = {
     'chat': CHAT,
-    'file': FILE,
     'user_login': USER_LOGIN,
     'user_logout': USER_LOGOUT,
     'user_update': USER_UPDATE,
@@ -147,7 +161,6 @@ class Post(ndb.Model):
   ARCHIVE_REVERSE_MAPPING = dict((v, k) for k, v in ARCHIVE_MAPPING.items())
 
   # Allowed post types directly from users.
-  # TODO(bslatkin): Add file once it's ready.
   ALLOWED_ARCHIVES = frozenset([CHAT])
 
   archive_type = ndb.IntegerProperty(
@@ -157,18 +170,28 @@ class Post(ndb.Model):
   body = ndb.TextProperty(required=True)  # chat, topic intro
   post_time = ndb.DateTimeProperty(indexed=False)
 
-  # Which Shard this happened on and in what order.
-  shard_id = ndb.StringProperty(required=True, indexed=False)
-  sequence = ndb.IntegerProperty(indexed=False)
-
-  # For topics, a count of child comments that belong to this topic and the
-  # last time a comment was left.
-  comment_count = ndb.IntegerProperty(indexed=False)
-  last_comment_time = ndb.DateTimeProperty(indexed=False)
-
   @property
   def post_id(self):
     return self.key.id()
+
+
+class Receipt(ndb.Model):
+  """TODO
+
+  parent is the Post
+  ID is the shard to which the post was written
+  used to make sure we don't duplicate writes
+  """
+
+  @classmethod
+  def _get_kind(cls):
+    return 'R'
+
+  @property
+  def post_id(self):
+    return self.key.parent().id()
+
+  sequence = ndb.IntegerProperty(indexed=False)
 
 
 class PostReference(ndb.Model):
@@ -194,6 +217,3 @@ class PostReference(ndb.Model):
 
   # The key name of the Post that has this sequence number. Usually a UUID.
   post_id = ndb.TextProperty()
-
-  # Type of archive this is.
-  archive_type = ndb.IntegerProperty(choices=Post.ARCHIVE_TYPES)

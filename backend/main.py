@@ -273,6 +273,16 @@ def enqueue_cleanup_task(shard):
                   shard)
 
 
+def enqueue_post_task(shard, post_ids):
+  """TODO
+  """
+  taskqueue.Task(
+    method='PULL',
+    tag=str(shard),
+    params=dict(shard=shard, post_ids=post_ids),
+  ).add(config.pending_queue, transactional=ndb.in_transaction())
+
+
 def insert_post(shard, **kwargs):
   """Inserts a post at the present time, returning its key.
 
@@ -290,7 +300,6 @@ def insert_post(shard, **kwargs):
   post_key = ndb.Key(models.Post._get_kind(), post_id)
   post = models.Post(
     key=post_key,
-    shard_id=shard,
     **kwargs)
 
   @ndb.tasklet
@@ -303,11 +312,7 @@ def insert_post(shard, **kwargs):
     yield post.put_async(use_memcache=False, use_cache=False)
 
     # Pull task that indicates the post to apply
-    taskqueue.Task(
-      method='PULL',
-      tag=str(shard),
-      params=dict(shard=shard, post_key=post_key.urlsafe()),
-    ).add(config.pending_queue, transactional=True)
+    enqueue_post_task(shard, [post_id])
 
   # Notify all users of the post.
   futures = []
@@ -320,7 +325,7 @@ def insert_post(shard, **kwargs):
   dirty_bit(shard, set=True)
 
   # Enqueue an apply task to sequence and notify the new post.
-  futures.append(enqueue_apply_task(shard, post_id=post_key.id()))
+  futures.append(enqueue_apply_task(shard, post_id=post_id))
 
   # Wait on futures in case they raise errors.
   ndb.Future.wait_all(futures)
@@ -369,25 +374,39 @@ def apply_posts(shard=None,
   task_list.extend(
       queue.lease_tasks_by_tag(lease_seconds, max_tasks, tag=str(shard)))
 
-  work_key_list = []
+  receipt_key_list = []
   for task in task_list:
     params = task.extract_params()
-    work_key_list.append(ndb.Key(urlsafe=params['post_key']))
-  work = ndb.get_multi(work_key_list)
+    post_id_list = params['post_ids']
+    if not isinstance(post_id_list, list):
+      post_id_list = [post_id_list]
+
+    for post_id in post_id_list:
+      receipt_key = ndb.Key(
+          models.Post._get_kind(), post_id,
+          models.Receipt._get_kind(), shard)
+      receipt_key_list.append(receipt_key)
+
+  receipt_list = ndb.get_multi(receipt_key_list)
 
   # Some tasks may be in the pull queue that were already put in sequence.
   # So ignore these and only apply the new ones.
-  sequence_numbers = [w.sequence for w in work if w.sequence is not None]
-  unapplied_work = [w for w in work if w.sequence is None]
-  new_sequence_numbers = []
+  unapplied_receipts = [
+      models.Receipt(key=k)
+      for k, r in zip(receipt_key_list, receipt_list)
+      if r is None]
+  unapplied_post_ids = [r.post_id for r in unapplied_receipts]
 
   # Double check if we think there should be work to apply but we didn't
   # find any. This will force the apply task to retry immediately if the
   # post task was not found. This can happen when the pull queue's consistency
   # is behind.
-  if not unapplied_work and insertion_post_id:
-    post = models.Post.get_by_id(insertion_post_id)
-    if post and post.sequence:
+  if not unapplied_receipts and insertion_post_id:
+    receipt_key = ndb.Key(
+        models.Post._get_kind(), insertion_post_id,
+        models.Receipt._get_kind(), shard)
+    receipt = receipt_key.get()
+    if receipt:
       logging.warning('No post application to do for shard=%r, but'
                       'post_id=%r already applied; dropping this task',
                       shard, insertion_post_id)
@@ -397,45 +416,60 @@ def apply_posts(shard=None,
                   (shard, insertion_post_id))
 
   def txn():
-    shard_record = models.Shard.get_by_id(shard)
+    shard_record = models.Shard.get_by_id(
+        shard, use_cache=False, use_memcache=False)
     # TODO(bslatkin): Just drop this task entirely if this happens
     assert shard_record
 
-    # Clear any new sequence numbers that were allocated but were not
-    # applied due to a transaction rollback.
-    new_sequence_numbers[:] = []
-    new_sequence_numbers.extend(
+    new_sequence_numbers = list(
         xrange(shard_record.sequence_number,
-               shard_record.sequence_number + len(unapplied_work)))
-    shard_record.sequence_number += max(1, len(unapplied_work))
+               shard_record.sequence_number + len(unapplied_receipts)))
+    shard_record.sequence_number += max(1, len(unapplied_receipts))
 
     # Write post references that point at the newly sequenced posts.
     to_put = [shard_record]
-    for post, sequence in zip(unapplied_work, new_sequence_numbers):
+    for receipt, sequence in zip(unapplied_receipts, new_sequence_numbers):
       to_put.append(models.PostReference(
           id=sequence,
           parent=shard_record.key,
-          post_id=post.post_id,
-          archive_type=post.archive_type))
+          post_id=receipt.post_id))
+      # Update the receipt entity here; it will be written outside this
+      # transaction, since these receipts may span multiple entity groups.
+      receipt.sequence = sequence
+
+    # Enqueue replica posts transactionally, to make sure everything definitely
+    # will get copied over to the replica shard.
+    if shard_record.current_topic:
+      enqueue_post_task(shard_record.current_topic, unapplied_post_ids)
+
     ndb.put_multi(to_put)
+
+    return shard_record.current_topic, new_sequence_numbers
 
   # Have this only attempt a transaction a single time. If the transaction
   # fails the task queue will retry this task within 4 seconds. Because
   # apply tasks are always named by the current Shard.sequence_number we
   # can be reasonably sure that no other apply task for this shard will be
   # running concurrently when this fails.
-  ndb.transaction(txn, retries=1)
+  replica_shard, new_sequence_numbers = ndb.transaction(txn, retries=1)
 
-  sequence_numbers.extend(new_sequence_numbers)
-  for post, sequence in zip(unapplied_work, new_sequence_numbers):
-    post.sequence = sequence
-  ndb.put_multi(unapplied_work)
   logging.debug('Applied %d posts for shard=%r, sequence_numbers=%r',
-                len(unapplied_work), shard, sequence_numbers)
+                len(unapplied_receipts), shard, new_sequence_numbers)
+
+  futures = []
+
+  # Save receipts for all the posts.
+  futures.extend(ndb.put_multi_async(unapplied_receipts))
 
   # Notify all logged in users of the new posts.
-  futures = []
-  futures.append(notify_posts(shard, work))
+  futures.append(notify_posts(shard, unapplied_post_ids,
+                              sequence_numbers=new_sequence_numbers))
+
+  # Replicate posts to a topic shard.
+  if replica_shard:
+    logging.debug('Replicating source shard=%r to replica shard=%r',
+                  shard, replica_shard)
+    futures.append(enqueue_apply_task(replica_shard))
 
   # Success! Delete the tasks from this queue.
   queue.delete_tasks(task_list)
@@ -454,18 +488,18 @@ def apply_posts(shard=None,
   enqueue_cleanup_task(shard)
 
 
-def marshal_posts(post_list):
+def marshal_posts(shard, post_list):
   """Organizes a list of posts into a JSON-serializable list."""
   out = []
   for post in post_list:
     post_dict = dict(
-      shardId=post.shard_id,
+      shardId=shard,
       archiveType=models.Post.ARCHIVE_REVERSE_MAPPING[post.archive_type],
       nickname=post.nickname,
       body=post.body,
       postTimeMs=int(
           models.datetime_to_stamp_seconds(post.post_time) * 1000),
-      sequenceId=post.sequence,
+      sequenceId=getattr(post, 'sequence', None),
       postId=post.post_id)
     out.append(post_dict)
   return out
@@ -495,13 +529,30 @@ def send_message_async(client_id, message):
 
 
 @ndb.tasklet
-def notify_posts(shard, post_list):
-  """Notifies logged-in users of a set of new posts."""
+def notify_posts(shard, post_list, sequence_numbers=None):
+  """Notifies logged-in users of a set of new posts.
+
+  When the post_list is a list of strings, then it's assumed these are the IDs
+  of Posts that must be fetched prior to notification.
+
+  TODO sequence numbers
+  """
   if not post_list:
     return
 
+  if isinstance(post_list[0], basestring):
+    post_keys = [ndb.Key(models.Post._get_kind(), post_id)
+                 for post_id in post_list]
+    post_list = yield ndb.get_multi_async(post_keys)
+
+  if not sequence_numbers:
+    sequence_numbers = [None] * len(post_list)
+
+  for post, sequence in zip(post_list, sequence_numbers):
+    post.sequence = sequence
+
   posts_json = json.dumps({
-    'posts': marshal_posts(post_list),
+    'posts': marshal_posts(shard, post_list),
   })
 
   login_record_list = get_present_users(shard)
@@ -509,7 +560,7 @@ def notify_posts(shard, post_list):
   for login_record in login_record_list:
     logging.debug('Informing shard=%r, user=%r, nickname=%r about messages '
                   'with sequence_numbers=%r', shard, login_record.user_id,
-                  login_record.nickname, [p.sequence for p in post_list])
+                  login_record.nickname, sequence_numbers)
     browser_token = get_token(login_record.user_id)
     rpc_list.append(send_message_async(browser_token, posts_json))
 
@@ -907,18 +958,11 @@ class ListPostsHandler(BaseRpcHandler):
   require_shard = True
 
   def handle(self):
-    archive_type = self.get_required('type', str)
-    archive_enum = models.Post.ARCHIVE_MAPPING.get(archive_type)
-    if archive_enum not in models.Post.ALLOWED_ARCHIVES:
-      raise BadParameterValueError(
-          '"%s" is not a valid post type' % archive_type)
-
     start = self.get_required('start', int, 0)
     end = self.get_required('end', int, 0)
     count = self.get_required('count', int, 100)
 
     query = models.PostReference.query()
-    query = query.filter(models.PostReference.archive_type == archive_enum)
 
     if not start and not end:
       # Get newest posts by doing a prefix scan.
@@ -946,14 +990,20 @@ class ListPostsHandler(BaseRpcHandler):
 
     ref_list = query.fetch(count)
     post_kind = models.Post._get_kind()
-    post_key_list = [ndb.Key(post_kind, ref.post_id) for ref in ref_list]
-    # PostReference entities may point to non-existent Post entities once the
-    # cleanup job has run. Filter them out here. The client side won't try to
-    # scan for posts previous to the last one that's actually found, so this
-    # filtering is okay.
-    post_list = [p for p in ndb.get_multi(post_key_list) if p is not None]
 
-    self.json_response['posts'] = marshal_posts(post_list)
+    post_key_list = [ndb.Key(post_kind, ref.post_id) for ref in ref_list]
+    post_list = ndb.get_multi(post_key_list)
+    for post, ref in zip(post_list, ref_list):
+      # PostReference entities may point to non-existent Post entities once the
+      # cleanup job has run. Filter them out here. The client side won't try to
+      # scan for posts previous to the last one that's actually found, so this
+      # filtering is okay.
+      if not post:
+        continue
+
+      post.sequence = ref.sequence
+
+    self.json_response['posts'] = marshal_posts(self.shard, post_list)
 
 
 class ReadStateHandler(BaseRpcHandler):
