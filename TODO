@@ -1,6 +1,3 @@
-v1 initial testing changes:
-- Surface RPC errors
-
 v1 Polish:
 - Clean up code comments and style everywhere
 - CSS parity for Firefox/IE9
@@ -8,7 +5,6 @@ v1 Polish:
 Bugs:
 - Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
-- Periodically get userConnected/reestablished-connection messages even though it was just a normal heartbeat request: Informing shard='x', user='y', nickname=u'b' about messages with sequence_numbers=[None]
 
 v1 Production:
 - SSL cert

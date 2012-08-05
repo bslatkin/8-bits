@@ -49,13 +49,12 @@ goog.require('bits.events');
 /* Must stay in sync with Python models.Post.ARCHIVE_TYPES */
 bits.posts.ArchiveType = {
   CHAT: 'chat',
-  NEWS: 'news',
-  FILE: 'file',
+  ERROR: 'error',
+  ROSTER: 'roster',
+  UNKNOWN: 'unknown',
   USER_LOGIN: 'user_login',
   USER_LOGOUT: 'user_logout',
-  USER_UPDATE: 'user_update',
-  ROSTER: 'roster',
-  UNKNOWN: 'unknown'
+  USER_UPDATE: 'user_update'
 };
 
 
@@ -109,17 +108,15 @@ bits.posts.Post.prototype.createDom = function() {
       this.renderChat(element);
       break;
 
-    case bits.posts.ArchiveType.NEWS:
-      break;
-
-    case bits.posts.ArchiveType.FILE:
-      break;
-
     case bits.posts.ArchiveType.USER_LOGIN:
     case bits.posts.ArchiveType.USER_LOGOUT:
     case bits.posts.ArchiveType.USER_UPDATE:
     case bits.posts.ArchiveType.ROSTER:
       this.renderPresence(element);
+      break;
+
+    case bits.posts.ArchiveType.ERROR:
+      this.renderError(element);
       break;
 
     default:
@@ -177,6 +174,17 @@ bits.posts.Post.prototype.renderPresence = function(element) {
 };
 
 
+bits.posts.Post.prototype.renderError = function(element) {
+  goog.dom.classes.add(element, goog.getCssName('bits-post-error'));
+
+  var bodyDiv = this.dom_.createElement('span');
+  goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-error-body'));
+  bodyDiv.innerHTML = this.body;
+
+  element.appendChild(bodyDiv);
+};
+
+
 /**
  * Decorates an existing HTML DIV element as a Post.
  *
@@ -184,8 +192,6 @@ bits.posts.Post.prototype.renderPresence = function(element) {
  */
 bits.posts.Post.prototype.decorateInternal = function(element) {
   bits.posts.Post.superClass_.decorateInternal.call(this, element);
-
-  // TODO: Make it unfocusable for key input.
 
   var elem = this.getElement();
   elem.tabIndex = 0;
@@ -227,8 +233,9 @@ bits.posts.Post.prototype.exitDocument = function() {
 bits.posts.PostContainer = function(shardId) {
   goog.base(this);
 
-  this.logger_ = goog.debug.Logger.getLogger('bits.posts.PostContainer');
-  this.shardId = shardId
+  this.logger_ = goog.debug.Logger.getLogger(
+      'bits.posts.PostContainer:' + shardId);
+  this.shardId = shardId;
 
   // Keep track of the list of Posts we have already seen. Keys are IDs
   // unique to each post but separate from the sequence numbers because
@@ -314,6 +321,9 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.RosterReceived,
       this.handleRosterReceived, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.ServerError,
+      this.handleServerError, this);
   // TODO(bslatkin): Handle ConnectionReestablishing events and clear out
   // all posts in the container when they happen.
 };
@@ -333,7 +343,6 @@ bits.posts.PostContainer.prototype.handlePostSubmitted = function(postMap) {
                     'shardId="' + postMap.shardId +
                     '", postId="' + postMap.postId +
                     '", nickname="' + postMap.nickname + '"');
-  // TODO: Filter by archive type.
   this.addOrUpdatePost(new bits.posts.Post(postMap));
 };
 
@@ -373,6 +382,12 @@ bits.posts.PostContainer.prototype.handleRosterReceived = function(postMap) {
   this.logger_.info('Received roster from server: ' +
                     'shardId="' + postMap.shardId +
                     '", body="' + postMap.body + '"');
+  this.addOrUpdatePost(new bits.posts.Post(postMap));
+};
+
+
+bits.posts.PostContainer.prototype.handleServerError = function(postMap) {
+  this.logger_.info('Received server error: ' + postMap.body);
   this.addOrUpdatePost(new bits.posts.Post(postMap));
 };
 

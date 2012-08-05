@@ -54,12 +54,7 @@ bits.events.EventType = {
   //  acceptedTerms: User has accepted terms for the first time.
   SubmitPresenceChange: 'SubmitPresenceChange',
 
-  // The last action resulted in a server-returned error.
-  // Args:
-  //   Originating bits.events.EventType that led to this server-returned error.
-  //   Error class that occurred.
-  //   Error message of the error.
-  //   Traceback from the server-side error.
+  // The last action resulted in a server-returned error that is fatal.
   ServerError: 'ServerError',
 
   // The user wants to see the settings dialog.
@@ -113,12 +108,22 @@ bits.events.PubSub.setup = function() {
     bits.events.PubSub.logger_ =
         goog.debug.Logger.getLogger('bits.events.PubSub');
   }
-}
+};
+
+
+/**
+ * Clear all pubsub event handlers that are registered globally.
+ */
+bits.events.PubSub.clear = function() {
+  bits.events.PubSub.setup();
+
+  bits.events.PubSub.bridge_.clear();
+};
 
 
 bits.events.PubSub.getRealTopic_ = function(shardId, eventType) {
   return '' + shardId + '-' + eventType;
-}
+};
 
 
 bits.events.PubSub.publish = function(shardId, eventType, var_args) {
@@ -135,7 +140,7 @@ bits.events.PubSub.publish = function(shardId, eventType, var_args) {
   bits.events.PubSub.logger_.info(
       'Publish event: eventType=' + eventType + ', shardId=' + shardId);
   bits.events.PubSub.bridge_.publish.apply(bits.events.PubSub.bridge_, args);
-}
+};
 
 
 bits.events.PubSub.subscribe = function(shardId, eventType, fn, opt_context) {
@@ -148,4 +153,4 @@ bits.events.PubSub.subscribe = function(shardId, eventType, fn, opt_context) {
   }
   var topic = bits.events.PubSub.getRealTopic_(shardId, eventType);
   bits.events.PubSub.bridge_.subscribe(topic, fn, opt_context);
-}
+};
