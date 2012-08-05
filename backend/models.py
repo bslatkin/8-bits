@@ -57,23 +57,29 @@ def datetime_to_stamp_seconds(when):
 ################################################################################
 
 class Shard(ndb.Model):
-  """Core reference to a single community."""
+  """Core reference to a single community.
+
+  TODO explain root shards versus topic shards
+  """
 
   @classmethod
   def _get_kind(cls):
     return 'S'
 
-  pretty_name = ndb.StringProperty(default='')
+  pretty_name = ndb.TextProperty(default='')
+  description = ndb.TextProperty(default='')
+
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
-  update_time = ndb.DateTimeProperty(auto_now=True, indexed=False)
+  update_time = ndb.DateTimeProperty(auto_now=True)
   sequence_number = ndb.IntegerProperty(default=1, indexed=False)
 
-  # Current topic being discussed. Will be unset when there is no topic.
+  # Current topic being discussed. This is the shard ID of that topic. Will
+  # be unset when there is no current topic.
   current_topic = ndb.StringProperty(indexed=False)
 
-  # Reference to the owning shard from which this shard's data is replicated.
-  # Only set when this is a child topic.
-  # root_shard = ndb.KeyProperty(kind='S')
+  # Shard that owns this topic shard. Will be unset for root shards.
+  # TODO(bslatkin): Don't allow users to login to shards that have a root.
+  root_shard = ndb.StringProperty()
 
   @property
   def shard_id(self):
@@ -108,8 +114,9 @@ class LoginRecord(ndb.Model):
 class ReadState(ndb.Model):
   """User's read state for a specific topic.
 
-  Parent is the LoginRecord. ID is the sequence ID of the TOPIC_START event
-  that this corresponds to.
+  Parent is the LoginRecord. ID is the Shard for which this is the read
+  state. Must be the same as LoginRecord.shard_id unless the Shard is a topic
+  shard.
   """
 
   @classmethod
@@ -117,7 +124,7 @@ class ReadState(ndb.Model):
     return 'RS'
 
   @property
-  def first_read_sequence(self):
+  def shard_id(self):
     return self.key.id
 
   first_read_time = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
