@@ -11,13 +11,7 @@ indexes:
 # For fetching historical PostReferences from newest to oldest.
 - kind: PR
   properties:
-  - name: 
-  - name: __key__
-    direction: desc
-
-# For fetching historical PostReferences from newest to oldest.
-- kind: PR
-  properties:
+  - name: archive_type
   - name: __key__
     direction: desc
 

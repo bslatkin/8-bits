@@ -50,6 +50,8 @@ bits.posts.ArchiveType = {
   CHAT: 'chat',
   ERROR: 'error',
   ROSTER: 'roster',
+  TOPIC_START: 'topic_start',
+  TOPIC_CHANGE: 'topic_change',
   UNKNOWN: 'unknown',
   USER_LOGIN: 'user_login',
   USER_LOGOUT: 'user_logout',
@@ -110,11 +112,6 @@ bits.posts.Post = function(postMap) {
    * @type {string}
    */
   this.sequenceId = postMap.sequenceId || null;
-
-  /**
-   * @type {string}
-   */
-  this.postName = postMap.postName || null;
 
   /**
    * @type {string}

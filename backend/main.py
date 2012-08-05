@@ -69,8 +69,8 @@ class PostError(Error):
 # Utility classes, functions.
 
 # TODO(bslatkin): Add XSRF protection to this class.
-class BaseUiHandler(webapp.RequestHandler):
-  """Base handler for rendering UI."""
+class BaseHandler(webapp.RequestHandler):
+  """Base handler for handling web requests."""
 
   # Allow requests with the GET verb.
   get_enabled = True
@@ -135,7 +135,7 @@ class BaseUiHandler(webapp.RequestHandler):
       template.render('templates/' + template_name, my_context))
 
 
-class BaseRpcHandler(BaseUiHandler):
+class BaseRpcHandler(BaseHandler):
   """Base handler for turning responses into JSON.
 
   Sub-classes should override the handle() method and stuff their response
@@ -156,7 +156,7 @@ class BaseRpcHandler(BaseUiHandler):
   require_shard = False
 
   # Do not write the output JSON or content-type to the response.
-  raw_response = False  # TODO(bslatkin): Refactor this to use BaseUiHandler
+  raw_response = False  # TODO(bslatkin): Refactor this to use BaseHandler
 
   def handle_request(self, *args):
     self.session = self.request.environ['beaker.session']
@@ -415,7 +415,8 @@ def apply_posts(shard=None,
       to_put.append(models.PostReference(
           id=sequence,
           parent=shard_record.key,
-          post_id=post.post_id))
+          post_id=post.post_id,
+          archive_type=post.archive_type))
     ndb.put_multi(to_put)
 
   # Have this only attempt a transaction a single time. If the transaction
@@ -466,12 +467,6 @@ def marshal_posts(post_list):
           models.datetime_to_stamp_seconds(post.post_time) * 1000),
       sequenceId=post.sequence,
       postId=post.post_id)
-    if post.post_name:
-      post_dict.update(dict(postName=post.post_name))
-    if post.post_attachment:
-      post_dict.update(dict(
-          postAttachment='/file/download?shard=%d&post_id=%s' %
-                          (post.shard_id, post.post_id)))
     out.append(post_dict)
   return out
 
@@ -704,7 +699,7 @@ def get_token(user_id):
 ################################################################################
 # Workers
 
-class ApplyWorker(webapp.RequestHandler):
+class ApplyWorker(BaseHandler):
   """Applies pending posts."""
 
   def post(self):
@@ -714,6 +709,32 @@ class ApplyWorker(webapp.RequestHandler):
 
   def get(self):
     apply_posts()
+
+
+class ShardCleanupHandler(BaseHandler):
+  """Handles periodic cleanup requests for a specific shard.
+
+  This handler will run periodically (~minute) for all shards that have
+  active participants. It's meant to do state cleanup for the shard, such as
+  forcing logouts for users who have not heartbeated in N seconds.
+  """
+
+  def post(self):
+    shard = self.get_required('shard', str)
+
+    all_users_list = get_present_users(shard, include_stale=True)
+    active_users_list = only_active_users(*all_users_list)
+
+    all_users_set = set(u.user_id for u in all_users_list)
+    active_users_set = set(u.user_id for u in active_users_list)
+
+    for user_id in (all_users_set - active_users_set):
+      user_logged_out(shard, user_id)
+
+    # As long as there are still active users, continue to try to
+    # clean them up.
+    if active_users_set:
+      enqueue_cleanup_task(shard)
 
 ################################################################################
 # RPC handlers
@@ -818,32 +839,6 @@ class PresenceHandler(BaseRpcHandler):
     self.session.save()
 
 
-class ShardCleanupHandler(BaseUiHandler):
-  """Handles periodic cleanup requests for a specific shard.
-
-  This handler will run periodically (~minute) for all shards that have
-  active participants. It's meant to do state cleanup for the shard, such as
-  forcing logouts for users who have not heartbeated in N seconds.
-  """
-
-  def post(self):
-    shard = self.get_required('shard', str)
-
-    all_users_list = get_present_users(shard, include_stale=True)
-    active_users_list = only_active_users(*all_users_list)
-
-    all_users_set = set(u.user_id for u in all_users_list)
-    active_users_set = set(u.user_id for u in active_users_list)
-
-    for user_id in (all_users_set - active_users_set):
-      user_logged_out(shard, user_id)
-
-    # As long as there are still active users, continue to try to
-    # clean them up.
-    if active_users_set:
-      enqueue_cleanup_task(shard)
-
-
 class PostHandler(BaseRpcHandler):
   """Handles users making new posts."""
 
@@ -904,16 +899,27 @@ class ListPostsHandler(BaseRpcHandler):
     start: Sequence number to start searching. Inclusive.
     end: Sequence number to stop searching. Inclusive.
     count: How many posts to fetch. Defaults to 100.
+
+  Returns:
+    posts: List of marshaled posts.
   """
 
   require_shard = True
 
   def handle(self):
+    archive_type = self.get_required('type', str)
+    archive_enum = models.Post.ARCHIVE_MAPPING.get(archive_type)
+    if archive_enum not in models.Post.ALLOWED_ARCHIVES:
+      raise BadParameterValueError(
+          '"%s" is not a valid post type' % archive_type)
+
     start = self.get_required('start', int, 0)
     end = self.get_required('end', int, 0)
     count = self.get_required('count', int, 100)
 
     query = models.PostReference.query()
+    query = query.filter(models.PostReference.archive_type == archive_enum)
+
     if not start and not end:
       # Get newest posts by doing a prefix scan.
       start_key = ndb.Key(
@@ -949,103 +955,43 @@ class ListPostsHandler(BaseRpcHandler):
 
     self.json_response['posts'] = marshal_posts(post_list)
 
-################################################################################
-# File-related handlers
 
-# TODO(bslatkin): Reenable these.
-#
-# class StartUploadHandler(BaseRpcHandler):
-#   """Handles getting new upload URLs for files."""
-# 
-#   get_enabled = True
-#   post_enabled = False
-#   require_shard = True
-# 
-#   def handle(self):
-#     # TODO(bslatkin): Verify the login is active and valid (max age).
-#     return blobstore.create_upload_url('/work/upload_end')
-# 
-# 
-# class EndUploadHandler(BaseRpcHandler,
-#                        blobstore_handlers.BlobstoreUploadHandler):
-#   """Handles completing a file upload."""
-# 
-#   require_shard = True
-#   raw_response = True
-# 
-#   def handle(self):
-#     upload_files = self.get_uploads('file')
-#     blob_info = upload_files[0]
-#     filename = cgi.escape(blob_info.filename)
-# 
-#     # TODO(bslatkin): Verify the login is active and valid (max age).
-#     login_record = models.LoginRecord.get_by_id(self.user_id)
-#     post_key = insert_post(
-#       self.shard,
-#       archive_type=models.Post.FILE,
-#       nickname=login_record.nickname,
-#       user_id=login_record.user_id,
-#       body='The file "%s" has been uploaded' % filename,
-#       post_name=filename,
-#       post_attachment=blob_info.key())
-# 
-#     self.redirect('/file/upload_complete?shard=%d&post_id=%s' %
-#                   (self.shard, post_key.id()))
-# 
-# 
-# class CompleteUploadHandler(BaseRpcHandler):
-#   """Echos the post ID of a completed file upload."""
-# 
-#   get_enabled = True
-#   post_enabled = False
-#   require_shard = True
-# 
-#   def handle(self):
-#     self.json_response['postId'] = self.get_required('post_id', str)
-# 
-# 
-# class DownloadFileHandler(BaseRpcHandler):
-#   """Gives users access to a file for download."""
-# 
-#   get_enabled = True
-#   post_enabled = False
-#   require_shard = True
-#   raw_response = True
-# 
-#   def handle(self):
-#     post_id = self.get_required('post_id', str)
-#     post = models.Post.get_by_id(post_id)
-# 
-#     if not post:
-#       raise NotAuthorizedError('Non-existent post')
-#     if post.shard_id != self.shard:
-#       raise NotAuthorizedError('Invalid shard ID')
-#     if post.archive_type != models.Post.FILE:
-#       raise NotAuthorizedError('Post type is not a file')
-# 
-#     self.response.headers[blobstore.BLOB_KEY_HEADER] = str(
-#         post.post_attachment.key())
-#     # Use blob's default content-type.
-#     del self.response.headers['Content-Type']
+class ReadStateHandler(BaseRpcHandler):
+  """Handles interactions with read state for a user.
+
+  Args:
+    topic: Sequence ID of the topic being interacted with.
+    position: Optional. Sequence ID to set the read state to. When not supplied
+      the position will just be read.
+
+  Returns:
+    position: Sequence ID at which this user is presently. Will return 0 if
+      the position is unknown.
+  """
+
+  require_shard = True
+
+  def handle(self):
+    pass
 
 ################################################################################
 # UI handlers
 
-class LandingHandler(BaseUiHandler):
+class LandingHandler(BaseHandler):
   """Renders the landing page."""
 
   def get(self):
     self.render('landing.html')
 
 
-class TermsHandler(BaseUiHandler):
+class TermsHandler(BaseHandler):
   """Renders the terms of service page."""
 
   def get(self):
     self.render('terms.html')
 
 
-class CreateChatroomHandler(BaseUiHandler):
+class CreateChatroomHandler(BaseHandler):
   """Creates a new chatroom URL and redirects the user to it."""
 
   def post(self):
@@ -1070,7 +1016,7 @@ class CreateChatroomHandler(BaseUiHandler):
     self.redirect('/chat/' + shard_id)
 
 
-class ChatroomHandler(BaseUiHandler):
+class ChatroomHandler(BaseHandler):
   """Renders a specific chatroom with the given shard ID."""
 
   def handle_request(self, shard_id):
@@ -1113,24 +1059,13 @@ class ChatroomHandler(BaseUiHandler):
     self.render('chatroom.html', context)
 
 
-class DebugFormHandler(BaseUiHandler):
-  """Serves the debug form for admins."""
-
-  def get(self):
-    context = {
-      'upload_file_path': blobstore.create_upload_url('/work/upload_end'),
-    }
-    self.render('debug_forms.html', context)
-
-
-class WarmupHandler(BaseUiHandler):
+class WarmupHandler(BaseHandler):
   """Handles warm-up requests by doing nothing."""
 
   def get(self):
     pass
 
 ################################################################################
-
 
 class DebugLoggingMiddleware(object):
   """Sets the log level to debug on each request. Used in dev_appserver."""
@@ -1148,7 +1083,6 @@ ROUTES = webapp.WSGIApplication([
   (r'/create', CreateChatroomHandler),
   (r'/terms', TermsHandler),
   (r'/_ah/warmup', WarmupHandler),
-  (r'/admin/debug', DebugFormHandler),
   (r'/work/apply_posts', ApplyWorker),
   (r'/work/cleanup', ShardCleanupHandler),
   (r'/rpc/create_shard', CreateShardHandler),
@@ -1156,11 +1090,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/list_posts', ListPostsHandler),
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
-  # TODO(bslatkin): Reenable these
-  # (r'/work/upload_end', EndUploadHandler),
-  # (r'/file/upload_start', StartUploadHandler),
-  # (r'/file/upload_complete', CompleteUploadHandler),
-  # (r'/file/download', DownloadFileHandler),
+  (r'/rpc/read_state', ReadStateHandler),
   (r'/chat/([a-z0-9A-Z]+)', ChatroomHandler)
 ], debug=config.debug)
 

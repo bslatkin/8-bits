@@ -69,7 +69,10 @@ class DeleteOldPostsPipeline(pipeline.Pipeline):
     now = time.time()
     before_timestamp_seconds = now - lifetime_seconds
 
-    # TODO(bslatkin): Also clean up old PostRecord entities, etc.
+    # TODO(bslatkin): Also clean up old PostRecord entities, Shards,
+    # LoginRecords; anything with an update time. But do not delete Posts or
+    # PostRecords being used for Topics until they have been inactive for
+    # more than 30 days.
 
     yield mapreduce_pipeline.MapperPipeline(
         'Delete old posts',

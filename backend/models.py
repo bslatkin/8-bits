@@ -91,8 +91,8 @@ class LoginRecord(ndb.Model):
 class ReadState(ndb.Model):
   """User's read state for a specific topic.
 
-  Parent is the LoginRecord. ID is 1 for overall chat, or the sequence ID
-  of the TOPIC_START event that this corresponds to.
+  Parent is the LoginRecord. ID is the sequence ID of the TOPIC_START event
+  that this corresponds to.
   """
 
   @classmethod
@@ -154,14 +154,17 @@ class Post(ndb.Model):
       required=True, indexed=False, choices=ARCHIVE_TYPES)
   nickname = ndb.TextProperty(required=True)
   user_id = ndb.TextProperty(required=True)
-  body = ndb.TextProperty(required=True)  # chat, news post, file description
-  post_name = ndb.TextProperty()  # eg, filename, news post title, topic url
-  post_attachment = ndb.BlobKeyProperty(indexed=False)  # the file
+  body = ndb.TextProperty(required=True)  # chat, topic intro
   post_time = ndb.DateTimeProperty(indexed=False)
 
   # Which Shard this happened on and in what order.
   shard_id = ndb.StringProperty(required=True, indexed=False)
   sequence = ndb.IntegerProperty(indexed=False)
+
+  # For topics, a count of child comments that belong to this topic and the
+  # last time a comment was left.
+  comment_count = ndb.IntegerProperty(indexed=False)
+  last_comment_time = ndb.DateTimeProperty(indexed=False)
 
   @property
   def post_id(self):
@@ -191,3 +194,6 @@ class PostReference(ndb.Model):
 
   # The key name of the Post that has this sequence number. Usually a UUID.
   post_id = ndb.TextProperty()
+
+  # Type of archive this is.
+  archive_type = ndb.IntegerProperty(choices=Post.ARCHIVE_TYPES)
