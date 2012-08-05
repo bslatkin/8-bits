@@ -583,13 +583,23 @@ def only_active_users(*login_record_list):
   return result_list
 
 
-def maybe_update_token(login_record):
-  """Assigns the user a new channel token, returns if it was necessary."""
+def maybe_update_token(login_record, force=False):
+  """Assigns the user a new channel token if needed.
+
+  Args:
+    login_record: Record for the user.
+    force: Optional. When True, always update the user's token. This is used
+      when the token is known to be bad on the client side.
+
+  Returns:
+    True if a new token was issued.
+  """
   now = datetime.datetime.now()
   oldest_token_time = (
       now - datetime.timedelta(seconds=config.user_token_lifetime_seconds))
 
-  if (login_record.browser_token_issue_time and
+  if not force and (
+      login_record.browser_token_issue_time and
       login_record.browser_token_issue_time > oldest_token_time):
     return False
 
@@ -725,6 +735,7 @@ class PresenceHandler(BaseRpcHandler):
     shard = self.get_required('shard', str)
     nickname = self.get_required('nickname', str, '', html_escape=True)
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
+    retrying = self.get_required('retrying', str, '') == 'true'
 
     if 'shards' not in self.session:
       # First login on any shard with no cookie present.
@@ -749,9 +760,9 @@ class PresenceHandler(BaseRpcHandler):
         # This is a heartbeat presence check
         user_connected = False
 
-      if maybe_update_token(login):
-        logging.debug('Issuing new channel token to user_id=%r, shard=%r',
-                      user_id, shard)
+      if maybe_update_token(login, force=retrying):
+        logging.debug('Issuing channel token: user_id=%r, shard=%r, force=%r',
+                      user_id, shard, retrying)
 
       if nickname:
         # This is a potential nickname change. Right now the client always

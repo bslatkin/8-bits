@@ -152,6 +152,9 @@ bits.connection.Connection.prototype.setPresence_ =
   if (opt_acceptedTerms) {
     params.add('accepted_terms', 'true');
   }
+  if (this.numErrors_ > 0) {
+    params.add('retrying', 'true');
+  }
   this.xhrManager_.send(
       this.getNextMessageId_(),
       '/rpc/presence',
@@ -192,14 +195,8 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
 
   // The browser token will be refreshed periodically, in addition to being
   // issued on the first presence request and relogin presence requests.
-  if (this.browserToken_ != response.browserToken || firstRequest) {
-    if (this.channel_) {
-      if (this.channel_.close) {
-        this.channel_.close();
-      }
-      this.channel_ = null;
-    }
-
+  if (this.browserToken_ != response.browserToken ||
+      firstRequest || !this.channel_) {
     this.browserToken_ = response.browserToken;
     this.allocateChannel_(firstRequest);
   }
@@ -300,9 +297,18 @@ bits.connection.Connection.prototype.handleChannelError_ = function(event) {
       'Could not establish channel: code=' + event['code'] +
       ', description=' + event['description'], true);
   if (retry) {
-    // Reallocate the channel on errors, per
+    // Reallocate the channel on errors, per:
     //   http://stackoverflow.com/questions/10729842
-    this.allocateChannel_(false);
+    if (this.channel_) {
+      if (this.channel_.close) {
+        this.channel_.close();
+      }
+      this.channel_ = null;
+    }
+
+    // This will also cause a new channel token to be issued if this
+    // fails more than once.
+    this.setPresence_();
   }
 };
 
