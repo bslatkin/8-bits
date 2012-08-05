@@ -195,7 +195,21 @@ goog.inherits(bits.topics.TopicMenu, goog.ui.Control);
  * Creates an initial DOM representation for the component.
  */
 bits.topics.TopicMenu.prototype.createDom = function() {
-  this.decorateInternal(this.dom_.createDom('div', 'bits-topic-menu'));
+  var element = this.dom_.createDom('div', 'bits-topic-menu');
+
+  // create the pop-over div that will hover below when this is popped open
+  // make that div scrollable
+  // children go in that div by default, whatever gets selected goes back
+  // in that div, and then the div is resorted by update time
+  // default state is the no topic selected with help message on how to start
+  // a topic.
+  // main component has a topic under it and also a down arrow to indicate
+  // that you can expand it. if you click anywhere on the item it will cause
+  // the menu to open. click off anywhere and it will close.
+  // click on a child and they will swap, the menu will close, and then a
+  // topic change will fire.
+
+  this.decorateInternal();
 };
 
 
