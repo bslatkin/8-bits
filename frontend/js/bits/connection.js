@@ -320,12 +320,16 @@ bits.connection.Connection.prototype.handleChannelClose_ = function(event) {
 
 /**
  * Handles when the sending an RPC has an error.
+ *
+ * This logs detailed information about the Xhr. It's still up to functions
+ * that make Xhrs to properly do retries and calls to reportError_.
+ *
  * @param {object} event XHR error event.
  * @private
  */
 bits.connection.Connection.prototype.handleSendError_ = function(event) {
-  this.reportError_('Could not send message to handler: ' +
-                    event.target.getLastUri());
+  this.logger_.severe('Could not send message to handler: ' +
+                      event.xhrIo.getLastUri());
 };
 
 
@@ -478,6 +482,13 @@ bits.connection.Connection.prototype.requestRoster_ = function() {
  */
 bits.connection.Connection.prototype.handleRequestRosterSuccessful_ =
     function(event) {
+  if (!event.target.isSuccess()) {
+    if (this.reportError_('Could not get roster', true)) {
+      this.requestRoster_();
+    }
+    return;
+  }
+
   var responseJson = event.target.getResponseJson();
   this.logger_.info('Received roster: ' + responseJson['roster']);
   var postMap = {
