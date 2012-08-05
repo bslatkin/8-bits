@@ -15,6 +15,6 @@
 # limitations under the License.
 
 # Generates a Closure deps.js file for the bits.* namespaces.
-python ../../../closure/closure/bin/build/depswriter.py  \
---root_with_prefix=". ../../bits" \
---output_file="deps.js"
+python ../closure/closure/bin/build/depswriter.py  \
+--root_with_prefix="js/bits ../../bits" \
+--output_file="js/bits/deps.js"
