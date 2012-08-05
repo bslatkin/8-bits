@@ -1,12 +1,11 @@
 application: 8-bits-live
-version: push-07-30-a
+version: push-08-04-a
 runtime: python27
 api_version: 1
 threadsafe: true
 
 
 inbound_services:
-- channel_presence
 - warmup
 
 

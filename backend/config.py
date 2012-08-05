@@ -27,13 +27,13 @@ pending_queue = 'pending-posts'
 ephemeral_lifetime_seconds = 60 * 255
 
 # How long a user can be inactive (no heartbeat) before being logged out.
-user_max_inactive_seconds = 180
+user_max_inactive_seconds = 90
 
 # How frequently the shard cleanup task should run.
 shard_cleanup_period_seconds = 60
 
 # How long a token is alive before it should be replenished.
-user_token_lifetime_seconds = 110 * 60
+user_token_lifetime_seconds =  6 * 60 * 60  # 6 hours
 
 # Current version of the terms of service
 terms_version = 1

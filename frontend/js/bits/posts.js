@@ -13,9 +13,7 @@
 // limitations under the License.
 
 /**
- * @fileoverview Contains a set of views of posts, allowing for more posts
- *   to be looked up in the post history when the top of the scroll region
- *   has been accessed by the user.
+ * @fileoverview Represents posts and a container of posts.
  */
 
 goog.provide('bits.posts.ArchiveType');
@@ -32,9 +30,6 @@ goog.require('goog.dom.classes');
 goog.require('goog.events');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventType');
-goog.require('goog.events.KeyCodes');
-goog.require('goog.events.KeyHandler');
-goog.require('goog.events.KeyHandler.EventType');
 goog.require('goog.pubsub.PubSub');
 goog.require('goog.ui.Container');
 goog.require('goog.ui.ContainerScroller');
@@ -46,15 +41,19 @@ goog.require('goog.structs.Map');
 goog.require('bits.events');
 
 
-/* Must stay in sync with Python models.Post.ARCHIVE_TYPES */
+/**
+ * Must stay in sync with Python models.Post.ARCHIVE_TYPES
+ *
+ * @enum {string}
+ */
 bits.posts.ArchiveType = {
   CHAT: 'chat',
-  FILE: 'file',
+  ERROR: 'error',
+  ROSTER: 'roster',
+  UNKNOWN: 'unknown',
   USER_LOGIN: 'user_login',
   USER_LOGOUT: 'user_logout',
-  USER_UPDATE: 'user_update',
-  ROSTER: 'roster',
-  UNKNOWN: 'unknown'
+  USER_UPDATE: 'user_update'
 };
 
 
@@ -62,36 +61,65 @@ bits.posts.ArchiveType = {
  * A post to display.
  *
  * @param {object} postMap the map of post attributes.
- * @param {goog.ui.ControlRenderer=} opt_renderer Renderer used to render.
- * @param {goog.dom.DomHelper=} opt_domHelper DOM helper to use.
- *
- * @extends {goog.ui.Component}
+ * @extends {goog.ui.Control}
  * @constructor
  */
-bits.posts.Post = function(postMap, opt_renderer, opt_domHelper) {
-  goog.base(this, opt_renderer, opt_domHelper);
+bits.posts.Post = function(postMap) {
+  goog.base(this);
 
+  /**
+   * @type {string}
+   */
   this.shardId = postMap.shardId || null;
+
+  /**
+   * @type {bits.posts.ArchiveType}
+   */
   this.archiveType = postMap.archiveType || bits.posts.ArchiveType.UNKNOWN;
+
+  /**
+   * @type {string}
+   */
   this.nickname = postMap.nickname || null;
+
+  /**
+   * @type {string}
+   */
   this.body = postMap.body || null;
+
+  /**
+   * @type {number?}
+   */
   this.postTimeMs = postMap.postTimeMs || null;
+
+  /**
+   * @type {goog.date.DateTime}
+   */
   this.postDateTime = null;
   if (this.postTimeMs) {
     this.postDateTime = new goog.date.DateTime();
     this.postDateTime.setTime(this.postTimeMs);
   }
-  this.postId = postMap.postId || null;
-  this.sequenceId = postMap.sequenceId || null;
-  this.postName = postMap.postName || null;
-  this.postAttachment = postMap.postAttachment || null;
 
   /**
-   * Event handler for this object.
-   * @type {goog.events.EventHandler}
-   * @private
+   * @type {string}
    */
-  this.eh_ = new goog.events.EventHandler(this);
+  this.postId = postMap.postId || null;
+
+  /**
+   * @type {string}
+   */
+  this.sequenceId = postMap.sequenceId || null;
+
+  /**
+   * @type {string}
+   */
+  this.postName = postMap.postName || null;
+
+  /**
+   * @type {string}
+   */
+  this.postAttachment = postMap.postAttachment || null;
 };
 goog.inherits(bits.posts.Post, goog.ui.Control);
 
@@ -108,14 +136,15 @@ bits.posts.Post.prototype.createDom = function() {
       this.renderChat(element);
       break;
 
-    case bits.posts.ArchiveType.FILE:
-      break;
-
     case bits.posts.ArchiveType.USER_LOGIN:
     case bits.posts.ArchiveType.USER_LOGOUT:
     case bits.posts.ArchiveType.USER_UPDATE:
     case bits.posts.ArchiveType.ROSTER:
       this.renderPresence(element);
+      break;
+
+    case bits.posts.ArchiveType.ERROR:
+      this.renderError(element);
       break;
 
     default:
@@ -134,6 +163,10 @@ bits.posts.Post.prototype.createDom = function() {
 };
 
 
+/**
+ * Render a chat message as a post.
+ * @param {Element} element HTML element to decorate.
+ */
 bits.posts.Post.prototype.renderChat = function(element) {
   goog.dom.classes.add(element, goog.getCssName('bits-post-chat'));
 
@@ -162,11 +195,30 @@ bits.posts.Post.prototype.renderChat = function(element) {
 };
 
 
+/**
+ * Render a presence message as a post.
+ * @param {Element} element HTML element to decorate.
+ */
 bits.posts.Post.prototype.renderPresence = function(element) {
   goog.dom.classes.add(element, goog.getCssName('bits-post-presence'));
 
   var bodyDiv = this.dom_.createElement('span');
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-presence-body'));
+  bodyDiv.innerHTML = this.body;
+
+  element.appendChild(bodyDiv);
+};
+
+
+/**
+ * Render an error message as a post.
+ * @param {Element} element HTML element to decorate.
+ */
+bits.posts.Post.prototype.renderError = function(element) {
+  goog.dom.classes.add(element, goog.getCssName('bits-post-error'));
+
+  var bodyDiv = this.dom_.createElement('span');
+  goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-error-body'));
   bodyDiv.innerHTML = this.body;
 
   element.appendChild(bodyDiv);
@@ -181,8 +233,6 @@ bits.posts.Post.prototype.renderPresence = function(element) {
 bits.posts.Post.prototype.decorateInternal = function(element) {
   bits.posts.Post.superClass_.decorateInternal.call(this, element);
 
-  // TODO: Make it unfocusable for key input.
-
   var elem = this.getElement();
   elem.tabIndex = 0;
   this.setAllowTextSelection(true);
@@ -194,7 +244,6 @@ bits.posts.Post.prototype.decorateInternal = function(element) {
  */
 bits.posts.Post.prototype.disposeInternal = function() {
   bits.posts.Post.superClass_.disposeInternal.call(this);
-  this.eh_.dispose();
 };
 
 
@@ -218,33 +267,49 @@ bits.posts.Post.prototype.exitDocument = function() {
 /**
  * Contains multiple Post instances in a scrollable, self-populating view.
  *
+ * @param {string} shardId ID of the shard this is for.
+ * @extends {goog.ui.Component}
  * @constructor
  */
 bits.posts.PostContainer = function(shardId) {
   goog.base(this);
 
-  this.logger_ = goog.debug.Logger.getLogger('bits.posts.PostContainer');
-  this.shardId = shardId
+  this.logger_ = goog.debug.Logger.getLogger(
+      'bits.posts.PostContainer:' + shardId);
 
-  // Keep track of the list of Posts we have already seen. Keys are IDs
-  // unique to each post but separate from the sequence numbers because
-  // IDs have no ordering. When a user posts a message they will insert the
-  // Post into their own PostContainer immediately after it's received by the
-  // server side. Then when the post comes through over the channel the Post's
-  // sequence number (thus far missing/unassigned) will be updated to match
-  // the server's assignment.
+  /**
+   * @type {string}
+   */
+  this.shardId = shardId;
+
+  /**
+   * Keep track of the list of Posts we have already seen. Keys are IDs
+   * unique to each post but separate from the sequence numbers because
+   * IDs have no ordering. When a user posts a message they will insert the
+   * Post into their own PostContainer immediately after it's received by the
+   * server side. Then when the post comes through over the channel the Post's
+   * sequence number (thus far missing/unassigned) will be updated to match
+   * the server's assignment.
+   *
+   * @type {goog.structs.Map}
+   */
   this.postIdMap = new goog.structs.Map();
 
-  // Lowest sequence number that is present in this container.
+  /**
+   * Lowest sequence number that is present in this container.
+   * @type {number?}
+   */
   this.lowestSequenceId = null;
 
   /**
-   * Event handler for this object.
    * @type {goog.events.EventHandler}
    * @private
    */
   this.eh_ = new goog.events.EventHandler(this);
 
+  /**
+   * @type {goog.ui.Container}
+   */
   this.container = new goog.ui.Container();
   this.container.setFocusableChildrenAllowed(false);
   this.container.setFocusable(true);
@@ -271,7 +336,8 @@ bits.posts.PostContainer.prototype.decorateInternal = function(element) {
   var elem = this.getElement();
   this.container.decorate(elem);
   goog.style.setUnselectable(elem, false, goog.userAgent.GECKO);
-  new goog.ui.ContainerScroller(this.container);
+  var scroller = new goog.ui.ContainerScroller(this.container);
+  this.registerDisposable(scroller);
 };
 
 
@@ -300,15 +366,20 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.HistoricalPostsReceived,
       this.handleHistoricalPostsReceived, this);
+
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.SubmittedPostSent,
-      this.handlePostSubmitted, this);
+      this.handlePostReceived, this);
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.SubmittedPostReceived,
-      this.handleSubmitPostSuccess, this);
+      this.handlePostReceived, this);
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.RosterReceived,
-      this.handleRosterReceived, this);
+      this.handlePostReceived, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.ServerError,
+      this.handlePostReceived, this);
+
   // TODO(bslatkin): Handle ConnectionReestablishing events and clear out
   // all posts in the container when they happen.
 };
@@ -323,39 +394,21 @@ bits.posts.PostContainer.prototype.exitDocument = function() {
 };
 
 
-bits.posts.PostContainer.prototype.handlePostSubmitted = function(postMap) {
-  this.logger_.info('User-submitted post sent: ' +
-                    'shardId="' + postMap.shardId +
-                    '", postId="' + postMap.postId +
-                    '", nickname="' + postMap.nickname + '"');
-  // TODO: Filter by archive type.
-  this.addOrUpdatePost(new bits.posts.Post(postMap));
-};
-
-
-bits.posts.PostContainer.prototype.handleSubmitPostSuccess =
-function(postMap) {
-  this.logger_.info('User-submitted post received by server: ' +
-                    'shardId="' + postMap.shardId +
-                    '", postId="' + postMap.postId +
-                    '", nickname="' + postMap.nickname + '"');
-  this.addOrUpdatePost(new bits.posts.Post(postMap));
-};
-
-
+/**
+ * Handles when a post is received and should be added to the container.
+ * @param {object} postMap Post JSON object received from the server.
+ */
 bits.posts.PostContainer.prototype.handlePostReceived = function(postMap) {
-  this.logger_.info('External post received from server: ' +
-                    'shardId="' + postMap.shardId +
-                    '", postId="' + postMap.postId +
-                    '", sequenceId="' + postMap.sequenceId +
-                    '", nickname="' + postMap.nickname + '"');
   this.addOrUpdatePost(new bits.posts.Post(postMap));
 };
 
 
+/**
+ * Handles when historical posts were received.
+ * @param {Array.<object>} postMapList List of post JSON objects.
+ */
 bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
     function(postMapList) {
-  this.logger_.info('Historical posts received from server');
   var postList = [];
   for (var i = 0, n = postMapList.length; i < n; i++) {
     postList.push(new bits.posts.Post(postMapList[i]));
@@ -364,14 +417,10 @@ bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
 };
 
 
-bits.posts.PostContainer.prototype.handleRosterReceived = function(postMap) {
-  this.logger_.info('Received roster from server: ' +
-                    'shardId="' + postMap.shardId +
-                    '", body="' + postMap.body + '"');
-  this.addOrUpdatePost(new bits.posts.Post(postMap));
-};
-
-
+/**
+ * Prepend posts to the container that came before existing posts.
+ * @param {Array.<bits.posts.Post>} postList List of post objects.
+ */
 bits.posts.PostContainer.prototype.prependPosts = function(postList) {
   if (postList.length == 0) {
     return;
@@ -406,6 +455,11 @@ bits.posts.PostContainer.prototype.prependPosts = function(postList) {
   }, this);
 };
 
+
+/**
+ * Adds a post to the container or updates it in-place.
+ * @param {bits.posts.Post} post Post to add or update.
+ */
 bits.posts.PostContainer.prototype.addOrUpdatePost = function(post) {
   var scrollAtBottom =
       this.container.getElement().scrollHeight ==
@@ -442,6 +496,10 @@ bits.posts.PostContainer.prototype.addOrUpdatePost = function(post) {
 };
 
 
+/**
+ * Handles when the container is scrolled.
+ * @param {goog.events.Event} event Event that was dispatched.
+ */
 bits.posts.PostContainer.prototype.handleScroll_ = function(event) {
   if (this.container.getElement().scrollHeight <
       this.container.getElement().clientHeight) {

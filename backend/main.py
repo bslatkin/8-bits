@@ -583,13 +583,23 @@ def only_active_users(*login_record_list):
   return result_list
 
 
-def maybe_update_token(login_record):
-  """Assigns the user a new channel token, returns if it was necessary."""
+def maybe_update_token(login_record, force=False):
+  """Assigns the user a new channel token if needed.
+
+  Args:
+    login_record: Record for the user.
+    force: Optional. When True, always update the user's token. This is used
+      when the token is known to be bad on the client side.
+
+  Returns:
+    True if a new token was issued.
+  """
   now = datetime.datetime.now()
   oldest_token_time = (
       now - datetime.timedelta(seconds=config.user_token_lifetime_seconds))
 
-  if (login_record.browser_token_issue_time and
+  if not force and (
+      login_record.browser_token_issue_time and
       login_record.browser_token_issue_time > oldest_token_time):
     return False
 
@@ -725,6 +735,7 @@ class PresenceHandler(BaseRpcHandler):
     shard = self.get_required('shard', str)
     nickname = self.get_required('nickname', str, '', html_escape=True)
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
+    retrying = self.get_required('retrying', str, '') == 'true'
 
     if 'shards' not in self.session:
       # First login on any shard with no cookie present.
@@ -744,19 +755,19 @@ class PresenceHandler(BaseRpcHandler):
       if not login:
         login = models.LoginRecord(
           key=ndb.Key(models.LoginRecord._get_kind(), user_id),
-          shard_id=shard,
-          online=True)
-
-      if maybe_update_token(login):
-        logging.debug('Issuing new channel token to user_id=%r, shard=%r',
-                      user_id, shard)
-
-      if only_active_users(login):
+          shard_id=shard)
+      elif only_active_users(login):
         # This is a heartbeat presence check
         user_connected = False
 
+      if maybe_update_token(login, force=retrying):
+        logging.debug('Issuing channel token: user_id=%r, shard=%r, force=%r',
+                      user_id, shard, retrying)
+
       if nickname:
-        # This is a nickname change
+        # This is a potential nickname change. Right now the client always
+        # sends the nickname on every request, so we need to check for the
+        # difference to detect a rename.
         last_nickname = login.nickname
         login.nickname = nickname
 
@@ -805,21 +816,6 @@ class PresenceHandler(BaseRpcHandler):
     self.json_response['userConnected'] = user_connected
     self.json_response['browserToken'] = browser_token
     self.session.save()
-
-
-class ChannelPresenceHandler(webapp.RequestHandler):
-  """Handles user disconnect presence notifications."""
-
-  def post(self, action):
-    if action.startswith('disconnected'):
-      client_id = self.request.get('from')
-      login_record = models.LoginRecord.get_by_id(client_id)
-      if not login_record:
-        logging.warning('Channel client_id=%r has no associated LoginRecord',
-                        client_id)
-        return
-
-      user_logged_out(login_record.shard_id, client_id)
 
 
 class ShardCleanupHandler(BaseUiHandler):
@@ -945,7 +941,11 @@ class ListPostsHandler(BaseRpcHandler):
     ref_list = query.fetch(count)
     post_kind = models.Post._get_kind()
     post_key_list = [ndb.Key(post_kind, ref.post_id) for ref in ref_list]
-    post_list = ndb.get_multi(post_key_list)
+    # PostReference entities may point to non-existent Post entities once the
+    # cleanup job has run. Filter them out here. The client side won't try to
+    # scan for posts previous to the last one that's actually found, so this
+    # filtering is okay.
+    post_list = [p for p in ndb.get_multi(post_key_list) if p is not None]
 
     self.json_response['posts'] = marshal_posts(post_list)
 
@@ -1148,7 +1148,6 @@ ROUTES = webapp.WSGIApplication([
   (r'/create', CreateChatroomHandler),
   (r'/terms', TermsHandler),
   (r'/_ah/warmup', WarmupHandler),
-  (r'/_ah/channel/([^/]+)/', ChannelPresenceHandler),
   (r'/admin/debug', DebugFormHandler),
   (r'/work/apply_posts', ApplyWorker),
   (r'/work/cleanup', ShardCleanupHandler),

@@ -1,40 +1,40 @@
-v1 initial testing changes:
-- Surface RPC errors
-
 v1 Polish:
 - Clean up code comments and style everywhere
-- CSS parity for Firefox/IE9
 
 Bugs:
 - Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
-- Periodically get userConnected/reestablished-connection messages even though it was just a normal heartbeat request: Informing shard='x', user='y', nickname=u'b' about messages with sequence_numbers=[None]
-- This came prematurely! NotAuthorizedError: Connection no longer valid, must relogin
 
 v1 Production:
 - SSL cert
-- http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
-- gen204 handler on all event handlers and pubsub delivery
-- Reload client window on new version push
 
 -----
 
 v2 features:
 - Pasting URLs starts a new topic
 - Topic menu with auto-threading of chat
-- Play HTML5 sound when new chat arrives; put sound control in settings menu
-- Play sound on join and leave
-- Add a tutorial section on settings dialog on first join
+- Read state on topics and non-topic chat
+- Reload client window on new version push
+
+v2 polish:
+- Move favicons into data URIs; otherwise they hit the cache
+- When notifying, double check if we're the top window and cancel if so
+
+v2 production:
+- http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+- gen204 handler on all event handlers and pubsub delivery
 
 -----
 
 v3 features:
-- Read state on topics and non-topic chat
+- Add a tutorial section on settings dialog on first join
+- Play HTML5 sound when new chat arrives; put sound control in settings menu
+- Play sound on join and leave
 - Topics dissipate after 15 minutes of no activity
 
 -----
 
 v4 features:
-- Add Tweet/Facebook/G+ share buttons to "share this" dialog
+- Add share buttons to "share this" dialog
 - Drag/drop image upload
 - New topic snippeting/preview based on OGP
