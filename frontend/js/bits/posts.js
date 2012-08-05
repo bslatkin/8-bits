@@ -271,6 +271,10 @@ bits.posts.Post.prototype.exitDocument = function() {
 bits.posts.PostContainer = function(shardId) {
   goog.base(this);
 
+  /**
+   * @type {goog.debug.Logger}
+   * @private
+   */
   this.logger_ = goog.debug.Logger.getLogger(
       'bits.posts.PostContainer:' + shardId);
 

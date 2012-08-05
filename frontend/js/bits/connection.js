@@ -220,6 +220,8 @@ bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
   if (this.channel_) {
     if (this.channel_.close) {
       this.channel_.close();
+      // TODO(bslatkin): Disconnect the error handlers from the channel
+      // object so we don't keep getting error notifications.
     }
   }
 

@@ -66,10 +66,13 @@ class Shard(ndb.Model):
   def _get_kind(cls):
     return 'S'
 
+  # Immutable properties set upon shard creation.
   pretty_name = ndb.TextProperty(default='')
   description = ndb.TextProperty(default='')
-
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
+  created_nickname = ndb.TextProperty(default='')
+
+  # Properties updated as users interact with the shard.
   update_time = ndb.DateTimeProperty(auto_now=True)
   sequence_number = ndb.IntegerProperty(default=1, indexed=False)
 

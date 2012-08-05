@@ -16,8 +16,24 @@
 </head>
 <body>
 
+<div id="topic-menu"></div>
+
 <script>
-var menu = new bits.topics.TopicMenu('shard1');
+var c = new goog.debug.Console();
+c.setCapturing(true);
+
+var shardId = 'shard1';
+
+var menu = new bits.topics.TopicMenu(shardId);
+menu.decorate(goog.dom.getElement('topic-menu'));
+
+menu.addChild(new bits.topics.Topic({
+  shardId: shardId,
+  createdNickname: 'brett',
+  url: 'http://example.com/my-url',
+  description: 'Here is something funny I found',
+  updateTimeMs: 1344204556782
+}), true);
 </script>
 
 </body>
