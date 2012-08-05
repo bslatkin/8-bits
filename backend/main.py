@@ -416,8 +416,7 @@ def apply_posts(shard=None,
                   (shard, insertion_post_id))
 
   def txn():
-    shard_record = models.Shard.get_by_id(
-        shard, use_cache=False, use_memcache=False)
+    shard_record = models.Shard.get_by_id(shard)
     # TODO(bslatkin): Just drop this task entirely if this happens
     assert shard_record
 
