@@ -128,7 +128,6 @@ bits.connection.Connection = function(shardId, nickname) {
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.RequestHistoricalPosts,
       this.requestOldPosts_, this);
-
 };
 
 
@@ -400,6 +399,11 @@ bits.connection.Connection.prototype.handleSubmitPost_ = function(postMap) {
  */
 bits.connection.Connection.prototype.handleSubmitPostSuccessful_ =
     function(postMap, event) {
+  if (!event.target.isSuccess()) {
+    this.reportError_('Could not send post', true)
+    return;
+  }
+
   var responseJson = event.target.getResponseJson();
   this.logger_.info('Post submitted successfully: postId=' +
                     responseJson['postId']);
@@ -542,6 +546,11 @@ bits.connection.Connection.prototype.requestOldPosts_ =
  */
 bits.connection.Connection.prototype.handleRequestHistoricalPostsSuccessful_ =
     function(start, end, count, event) {
+  if (!event.target.isSuccess()) {
+    this.reportError_('Could not request historical posts', true);
+    return;
+  }
+
   var responseJson = event.target.getResponseJson();
   this.logger_.info('Received historical posts: start=' + start + ', end=' +
                     end + ', count=' + count);
