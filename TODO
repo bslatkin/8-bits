@@ -1,6 +1,5 @@
 v1 Polish:
 - Clean up code comments and style everywhere
-- CSS parity for Firefox/IE9
 
 Bugs:
 - Make splitpane collapse down to show all chat, not up

@@ -745,14 +745,13 @@ class PresenceHandler(BaseRpcHandler):
         login = models.LoginRecord(
           key=ndb.Key(models.LoginRecord._get_kind(), user_id),
           shard_id=shard)
+      elif only_active_users(login):
+        # This is a heartbeat presence check
+        user_connected = False
 
       if maybe_update_token(login):
         logging.debug('Issuing new channel token to user_id=%r, shard=%r',
                       user_id, shard)
-
-      if only_active_users(login):
-        # This is a heartbeat presence check
-        user_connected = False
 
       if nickname:
         # This is a potential nickname change. Right now the client always
@@ -806,21 +805,6 @@ class PresenceHandler(BaseRpcHandler):
     self.json_response['userConnected'] = user_connected
     self.json_response['browserToken'] = browser_token
     self.session.save()
-
-
-class ChannelPresenceHandler(webapp.RequestHandler):
-  """Handles user disconnect presence notifications."""
-
-  def post(self, action):
-    if action.startswith('disconnected'):
-      client_id = self.request.get('from')
-      login_record = models.LoginRecord.get_by_id(client_id)
-      if not login_record:
-        logging.warning('Channel client_id=%r has no associated LoginRecord',
-                        client_id)
-        return
-
-      user_logged_out(login_record.shard_id, client_id)
 
 
 class ShardCleanupHandler(BaseUiHandler):
@@ -1150,7 +1134,6 @@ ROUTES = webapp.WSGIApplication([
   (r'/create', CreateChatroomHandler),
   (r'/terms', TermsHandler),
   (r'/_ah/warmup', WarmupHandler),
-  (r'/_ah/channel/([^/]+)/', ChannelPresenceHandler),
   (r'/admin/debug', DebugFormHandler),
   (r'/work/apply_posts', ApplyWorker),
   (r'/work/cleanup', ShardCleanupHandler),

@@ -6,7 +6,6 @@ threadsafe: true
 
 
 inbound_services:
-- channel_presence
 - warmup
 
 
