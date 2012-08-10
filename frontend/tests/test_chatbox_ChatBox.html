@@ -54,7 +54,6 @@
       chatbox.decorate(goog.dom.getElement('chatbox'));
 
       var postId = 0;
-      
 
       for (var i = 50; i > 0; i--) {
         var post = new bits.posts.Post({
@@ -68,7 +67,7 @@
             postName: 'my post title',
             postAttachment: '/dead-link/' + i
           });
-        chatbox.postContainer.addOrUpdatePost(post);
+        chatbox.postContainer_.addOrUpdatePost(post);
       }
 
       // Simulate ACKs sent by bits.connection.Connection class.

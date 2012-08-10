@@ -1,5 +1,6 @@
 .bits-topic-menu {
   width: 100%;
+  outline: none;
 }
 .bits-topic {
   height: 75px;

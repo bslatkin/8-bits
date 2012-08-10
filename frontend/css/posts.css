@@ -13,6 +13,7 @@
   clear: both;
   padding: 0 2px;
   margin: 1px;
+  outline: none;
 }
 
 .bits-post-tooltip {
