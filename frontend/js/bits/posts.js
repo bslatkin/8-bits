@@ -31,12 +31,12 @@ goog.require('goog.events');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventType');
 goog.require('goog.pubsub.PubSub');
+goog.require('goog.structs.Map');
 goog.require('goog.ui.Container');
 goog.require('goog.ui.ContainerScroller');
 goog.require('goog.ui.Control');
 goog.require('goog.ui.Tooltip');
 goog.require('goog.userAgent');
-goog.require('goog.structs.Map');
 
 goog.require('bits.events');
 

@@ -22,7 +22,13 @@ goog.provide('bits.topics.TopicMenu');
 goog.require('goog.date.DateTime');
 goog.require('goog.debug.Logger');
 goog.require('goog.dom');
+goog.require('goog.events');
+goog.require('goog.events.EventHandler');
+goog.require('goog.structs.Map');
 goog.require('goog.style');
+goog.require('goog.ui.Component');
+goog.require('goog.ui.Container');
+goog.require('goog.ui.ContainerScroller');
 goog.require('goog.ui.Control');
 
 goog.require('bits.events');
@@ -42,40 +48,40 @@ bits.topics.Topic = function(topicMap) {
    * @type {string}
    * @private
    */
-  this.shardId_ = topicMap['shardId'] || null;
+  this.shardId = topicMap['shardId'] || null;
 
   /**
    * @type {string}
    * @private
    */
-  this.createdNickname_ = topicMap['createdNickname'] || null;
+  this.createdNickname = topicMap['createdNickname'] || null;
 
   /**
    * @type {string}
    * @private
    */
-  this.url_ = topicMap['url'] || null;
+  this.url = topicMap['url'] || null;
 
   /**
    * @type {string}
    * @private
    */
-  this.description_ = topicMap['description'] || null;
+  this.description = topicMap['description'] || null;
 
   /**
    * @type {number?}
    * @private
    */
-  this.updateTimeMs_ = topicMap['updateTimeMs'] || null;
+  this.updateTimeMs = topicMap['updateTimeMs'] || null;
 
   /**
    * @type {goog.date.DateTime}
    * @private
    */
-  this.updateDateTime_ = null;
-  if (this.updateTimeMs_) {
-    this.updateDateTime_ = new goog.date.DateTime();
-    this.updateDateTime_.setTime(this.updateTimeMs_);
+  this.updateDateTime = null;
+  if (this.updateTimeMs) {
+    this.updateDateTime = new goog.date.DateTime();
+    this.updateDateTime.setTime(this.updateTimeMs_);
   }
 
 };
@@ -86,34 +92,28 @@ goog.inherits(bits.topics.Topic, goog.ui.Control);
  * Creates an initial DOM representation for the component.
  */
 bits.topics.Topic.prototype.createDom = function() {
-  var element = this.dom_.createElement('div');
-  goog.dom.classes.add(element, goog.getCssName('bits-topic'));
+  var element = this.dom_.createDom('div', 'bits-topic');
 
-  var containerEl = this.dom_.createElement('div');
-  goog.dom.classes.add(containerEl, goog.getCssName('bits-topic-title-c'));
+  var containerEl = this.dom_.createDom('div', 'bits-topic-title-c');
 
-  var nicknameEl = this.dom_.createElement('span');
-  goog.dom.classes.add(nicknameEl, goog.getCssName('bits-topic-nickname'));
-  nicknameEl.innerHTML = this.createdNickname_;
+  var nicknameEl = this.dom_.createDom('span', 'bits-topic-nickname');
+  nicknameEl.innerHTML = this.createdNickname;
 
-  var separatorEl = this.dom_.createElement('span');
-  goog.dom.classes.add(separatorEl, goog.getCssName('bits-topic-separator'));
+  var separatorEl = this.dom_.createDom('span', 'bits-topic-separator');
   this.dom_.setTextContent(separatorEl, ': ');
 
-  var titleEl = this.dom_.createElement('a');
-  goog.dom.classes.add(titleEl, goog.getCssName('bits-topic-title'));
-  titleEl.href = this.url_;
+  var titleEl = this.dom_.createDom('a', 'bits-topic-title');
+  titleEl.href = this.url;
   titleEl.setAttribute('target', '_blank');
-  titleEl.innerText = this.url_.replace(
+  titleEl.innerText = this.url.replace(
       /http(s?):\/\/(www\.)?([^ '"\)\(]+)/g, '$3');
 
   containerEl.appendChild(nicknameEl);
   containerEl.appendChild(separatorEl);
   containerEl.appendChild(titleEl);
 
-  var descriptionEl = this.dom_.createElement('div');
-  goog.dom.classes.add(descriptionEl, goog.getCssName('bits-topic-description'));
-  descriptionEl.innerHTML = this.description_;
+  var descriptionEl = this.dom_.createDom('div', 'bits-topic-description');
+  descriptionEl.innerHTML = this.description;
 
   element.appendChild(containerEl);
   element.appendChild(descriptionEl);
@@ -128,10 +128,7 @@ bits.topics.Topic.prototype.createDom = function() {
  */
 bits.topics.Topic.prototype.decorateInternal = function(element) {
   bits.topics.Topic.superClass_.decorateInternal.call(this, element);
-
-  var elem = this.getElement();
-  elem.tabIndex = 0;
-  this.setAllowTextSelection(true);
+  // this.setAllowTextSelection(true);
 };
 
 
@@ -169,6 +166,8 @@ bits.topics.Topic.prototype.exitDocument = function() {
 bits.topics.TopicMenu = function(shardId) {
   goog.base(this);
 
+  this.setSupportedState(goog.ui.Component.State.OPENED, true);
+
   /**
    * @type {string}
    * @private
@@ -181,6 +180,27 @@ bits.topics.TopicMenu = function(shardId) {
    */
   this.logger_ = goog.debug.Logger.getLogger(
       'bits.topics.TopicMenu:' + shardId);
+
+  /**
+   * @type {goog.structs.Map}
+   * @private
+   */
+  this.topicIdMap_ = new goog.structs.Map();
+
+  /**
+   * @type {goog.ui.Container}
+   * @private
+   */
+  this.container_ = new goog.ui.Container();
+  this.container_.setFocusableChildrenAllowed(false);
+  this.container_.setFocusable(false);
+  this.registerDisposable(this.container_);
+
+  /**
+   * @type {bits.topics.Topic}
+   * @private
+   */
+  this.activeTopic_ = null;
 
   /**
    * @type {goog.events.EventHandler}
@@ -197,6 +217,10 @@ goog.inherits(bits.topics.TopicMenu, goog.ui.Control);
 bits.topics.TopicMenu.prototype.createDom = function() {
   var element = this.dom_.createDom('div', 'bits-topic-menu');
 
+  this.dom_.appendChild(
+      element,
+      this.dom_.createDom('div', 'bits-topic-menu-dropdown'));
+
   // create the pop-over div that will hover below when this is popped open
   // make that div scrollable
   // children go in that div by default, whatever gets selected goes back
@@ -209,7 +233,7 @@ bits.topics.TopicMenu.prototype.createDom = function() {
   // click on a child and they will swap, the menu will close, and then a
   // topic change will fire.
 
-  this.decorateInternal();
+  this.decorateInternal(element);
 };
 
 
@@ -220,6 +244,16 @@ bits.topics.TopicMenu.prototype.createDom = function() {
  */
 bits.topics.TopicMenu.prototype.decorateInternal = function(element) {
   bits.topics.TopicMenu.superClass_.decorateInternal.call(this, element);
+
+  var elem = this.getElement();
+
+  var dropdownEl = this.dom_.getElementByClass(
+      'bits-topic-menu-dropdown', elem);
+  this.container_.decorate(dropdownEl);
+  var scroller = new goog.ui.ContainerScroller(this.container_);
+  this.registerDisposable(scroller);
+
+  this.setOpen(false);
 };
 
 
@@ -248,3 +282,54 @@ bits.topics.TopicMenu.prototype.exitDocument = function() {
   bits.topics.TopicMenu.superClass_.exitDocument.call(this);
 };
 
+
+/**
+ *
+ */
+bits.topics.TopicMenu.prototype.addTopic = function(topic) {
+  this.container_.addChild(topic, true);
+  this.topicIdMap_.set(topic.shardId, topic);
+  this.eh_.listen(
+      topic, goog.ui.Component.EventType.ACTION, this.handleTopicClick);
+};
+
+
+/**
+ *
+ */
+bits.topics.TopicMenu.prototype.selectTopic = function(shardId) {
+  var topic = this.topicIdMap_.get(shardId);
+  if (!topic) {
+    return;
+  }
+
+  if (this.activeTopic_) {
+    this.removeChild(this.activeTopic_);
+    this.container_.addChild(this.activeTopic_);
+    // TODO: Resort the container list by update time.
+  }
+
+  this.container_.removeChild(topic);
+  this.addChildAt(topic, 0);
+  this.activeTopic_ = topic;
+};
+
+
+/**
+ *
+ */
+bits.topics.TopicMenu.prototype.setOpen = function(open) {
+  bits.topics.TopicMenu.superClass_.setOpen.call(this, open);
+  console.log('here! ' + this.isOpen());
+  this.container_.setVisible(this.isOpen());
+};
+
+
+/**
+ *
+ */
+bits.topics.TopicMenu.prototype.handleTopicClick = function(event) {
+  if (event.target != this.activeTopic_) {
+    this.selectTopic(event.target.shardId);
+  }
+};
