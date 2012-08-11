@@ -7,6 +7,7 @@
   <style type="text/css" media="screen">
   .topic-test-container {
     width: 700px;
+    height: 500px;
   }
   </style>
 
@@ -35,7 +36,7 @@ var shardId = 'shard';
 var menu = new bits.topics.TopicMenu(shardId);
 menu.decorate(goog.dom.getElement('topic-menu'));
 
-for (var i = 0; i < 10; i++) {
+for (var i = 0; i < 20; i++) {
   var topic = new bits.topics.Topic({
     shardId: shardId + i,
     createdNickname: 'brett' + i,
@@ -43,7 +44,7 @@ for (var i = 0; i < 10; i++) {
     description: 'Here is something funny I found with really long topic ' +
                  'text that will wrap to the next line and stuff. This ' +
                  'needs to be long or else it will not take up enough space',
-    updateTimeMs: 1344204556782
+    updateTimeMs: 1344204556782 + i
   });
   menu.addTopic(topic);
 }

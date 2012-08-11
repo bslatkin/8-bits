@@ -1,25 +1,45 @@
-.bits-topic-menu {
-  width: 100%;
-  outline: none;
-}
 .bits-topic {
   height: 75px;
-  border: 1px solid #ccc;
   background-color: #fff;
+}
+.bits-topic + .bits-topic {
+  border-top: 1px solid #ccc;
+}
+.bits-topic-selected {
+  border-bottom: 1px solid #ccc;
 }
 .bits-topic-title-c {
   height: 25px;
   line-height: 25px;
+  padding: 0 10px;
 }
 .bits-topic.goog-control-hover {
-  border: 1px solid #999;
   background-color: #eee;
 }
 .bits-topic-description {
-  width: 100%;
-  height: 50px;
+  width: 650px;
+  height: 40px;
+  line-height: 15px;
+  vertical-align: top;
+  padding: 0 10px;
   overflow: hidden;
   text-overflow: ellipsis;
   word-wrap: break-word;
   white-space: wrap;
+}
+
+.bits-topic-menu {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ddd;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  outline: none;
+}
+.bits-topic-menu-dropdown {
+  height: 100%;
 }

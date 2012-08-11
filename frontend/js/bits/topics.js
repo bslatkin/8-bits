@@ -19,6 +19,7 @@
 goog.provide('bits.topics.Topic');
 goog.provide('bits.topics.TopicMenu');
 
+goog.require('goog.array');
 goog.require('goog.date.DateTime');
 goog.require('goog.debug.Logger');
 goog.require('goog.dom');
@@ -105,8 +106,9 @@ bits.topics.Topic.prototype.createDom = function() {
   var titleEl = this.dom_.createDom('a', 'bits-topic-title');
   titleEl.href = this.url;
   titleEl.setAttribute('target', '_blank');
-  titleEl.innerText = this.url.replace(
-      /http(s?):\/\/(www\.)?([^ '"\)\(]+)/g, '$3');
+  this.dom_.setTextContent(
+      titleEl,
+      this.url.replace(/http(s?):\/\/(www\.)?([^ '"\)\(]+)/g, '$3'));
 
   containerEl.appendChild(nicknameEl);
   containerEl.appendChild(separatorEl);
@@ -128,7 +130,7 @@ bits.topics.Topic.prototype.createDom = function() {
  */
 bits.topics.Topic.prototype.decorateInternal = function(element) {
   bits.topics.Topic.superClass_.decorateInternal.call(this, element);
-  // this.setAllowTextSelection(true);
+  this.setAllowTextSelection(true);
 };
 
 
@@ -232,6 +234,10 @@ bits.topics.TopicMenu.prototype.createDom = function() {
   // the menu to open. click off anywhere and it will close.
   // click on a child and they will swap, the menu will close, and then a
   // topic change will fire.
+  //
+  // What else: Need a disclosure triangle
+  // Need a message to say how to start a topic if there are none. Or maybe
+  // the menu doesn't show until the first topic arrives?
 
   this.decorateInternal(element);
 };
@@ -254,6 +260,7 @@ bits.topics.TopicMenu.prototype.decorateInternal = function(element) {
   this.registerDisposable(scroller);
 
   this.setOpen(false);
+  this.setAllowTextSelection(true);
 };
 
 
@@ -291,6 +298,31 @@ bits.topics.TopicMenu.prototype.addTopic = function(topic) {
   this.topicIdMap_.set(topic.shardId, topic);
   this.eh_.listen(
       topic, goog.ui.Component.EventType.ACTION, this.handleTopicClick);
+  this.sortChildren_();
+};
+
+
+/**
+ *
+ */
+bits.topics.TopicMenu.prototype.sortChildren_ = function() {
+  var children = [];
+  this.container_.forEachChild(function(c) { children.push(c) });
+  goog.array.sort(children, function(a, b) {
+    if (a.updateTimeMs && b.updateTimeMs) {
+      return a.updateTimeMs - b.updateTimeMs;
+    }
+    if (a.updateTimeMs && !b.updateTimeMs) {
+      return 1;
+    }
+    if (!a.updateTimeMs && b.updateTimeMs) {
+      return -1;
+    }
+    return 0;
+  });
+  for (var i = 0, n = children.length; i < n; i++) {
+    this.container_.addChildAt(children[i], i);
+  }
 };
 
 
@@ -306,11 +338,14 @@ bits.topics.TopicMenu.prototype.selectTopic = function(shardId) {
   if (this.activeTopic_) {
     this.removeChild(this.activeTopic_);
     this.container_.addChild(this.activeTopic_);
-    // TODO: Resort the container list by update time.
+    goog.dom.classes.remove(
+        this.activeTopic_.getElement(), 'bits-topic-selected');
+    this.sortChildren_();
   }
 
   this.container_.removeChild(topic);
   this.addChildAt(topic, 0);
+  goog.dom.classes.add(topic.getElement(), 'bits-topic-selected');
   this.activeTopic_ = topic;
 };
 
@@ -320,7 +355,6 @@ bits.topics.TopicMenu.prototype.selectTopic = function(shardId) {
  */
 bits.topics.TopicMenu.prototype.setOpen = function(open) {
   bits.topics.TopicMenu.superClass_.setOpen.call(this, open);
-  console.log('here! ' + this.isOpen());
   this.container_.setVisible(this.isOpen());
 };
 
