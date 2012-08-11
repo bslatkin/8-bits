@@ -5,8 +5,17 @@ Bugs:
 - Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
 
-v1 Production:
-- SSL cert
+Let shards use unicode names:
+
+ERROR    2012-08-11 07:10:55,337 main.py:178] Error encountered during RPC
+Traceback (most recent call last):
+  File "/Users/bslatkin/projects/8-bits/backend/main.py", line 176, in handle_request
+    self.handle(*args)
+  File "/Users/bslatkin/projects/8-bits/backend/main.py", line 726, in handle
+    shard = self.get_required('shard', str)
+  File "/Users/bslatkin/projects/8-bits/backend/main.py", line 112, in get_required
+    % (name, value))
+BadParameterValueError: Parameter "shard" has an invalid value: u'\xe9spa\xf1ol'
 
 -----
 

@@ -201,15 +201,6 @@ def human_uuid():
   return base64.b32encode(uuid.uuid4().bytes).strip('=').lower()
 
 
-def normalize_human_uuid(user_supplied):
-  """Normalizes a UUID typed by a human.
-
-  Replaces any '1's with 'L's, etc; following the base32 encoding style.
-  """
-  # TODO(bslatkin): Actually do something here
-  return user_supplied
-
-
 ################################################################################
 # Posts and sequencing
 
@@ -1071,17 +1062,19 @@ class ChatroomHandler(BaseUiHandler):
   """Renders a specific chatroom with the given shard ID."""
 
   def handle_request(self, shard_id):
-    normalized = normalize_human_uuid(shard_id)
-    if normalized != shard_id:
-      self.redirect('/' + normalized)
-      return
-
     shard = models.Shard.get_by_id(shard_id)
     if not shard:
-      # TODO(bslatkin): Pretty 404
-      self.response.set_status(404)
-      self.response.out.write('Unknown shard')
-      return
+      # If the shard doesn't exist, then just create it. Makes it ridiculously
+      # easy for people to create a new chat with the name of their choice.
+      def txn():
+        shard = models.Shard.get_by_id(
+            shard_id, use_cache=False, use_memcache=False)
+        if not shard:
+          shard = models.Shard(id=shard_id)
+          shard.put()
+        return shard
+
+      shard = ndb.transaction(txn)
 
     nickname = 'Anonymous'
     first_login = True
@@ -1158,7 +1151,7 @@ ROUTES = webapp.WSGIApplication([
   # (r'/file/upload_start', StartUploadHandler),
   # (r'/file/upload_complete', CompleteUploadHandler),
   # (r'/file/download', DownloadFileHandler),
-  (r'/chat/([a-z0-9A-Z]+)', ChatroomHandler)
+  (r'/chat/([^/]+)', ChatroomHandler)
 ], debug=config.debug)
 
 
