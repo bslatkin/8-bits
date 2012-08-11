@@ -190,7 +190,7 @@ class BaseRpcHandler(BaseUiHandler):
 
   def _verify_shard_login(self):
     """Verifies the user is logged into the shard they assert, return it."""
-    shard = self.get_required('shard', unicode)
+    shard = self.get_required('shard', str)
     if shard not in self.session['shards']:
       raise NotAuthorizedError('You may not access shard %s' % shard)
     return shard
@@ -723,7 +723,7 @@ class PresenceHandler(BaseRpcHandler):
   """Handles updating user presence."""
 
   def handle(self):
-    shard = self.get_required('shard', unicode)
+    shard = self.get_required('shard', str)
     nickname = self.get_required('nickname', unicode, '', html_escape=True)
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
     retrying = self.get_required('retrying', str, '') == 'true'
@@ -818,7 +818,7 @@ class ShardCleanupHandler(BaseUiHandler):
   """
 
   def post(self):
-    shard = self.get_required('shard', unicode)
+    shard = self.get_required('shard', str)
 
     all_users_list = get_present_users(shard, include_stale=True)
     active_users_list = only_active_users(*all_users_list)
@@ -1056,7 +1056,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/list_posts', ListPostsHandler),
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
-  (r'/chat/([^/]+)', ChatroomHandler)
+  (r'/chat/([a-zA-Z0-9_-]{1,100})', ChatroomHandler)
 ], debug=config.debug)
 
 
