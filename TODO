@@ -1,16 +1,3 @@
-Let shards use unicode names:
-
-ERROR    2012-08-11 07:10:55,337 main.py:178] Error encountered during RPC
-Traceback (most recent call last):
-  File "/Users/bslatkin/projects/8-bits/backend/main.py", line 176, in handle_request
-    self.handle(*args)
-  File "/Users/bslatkin/projects/8-bits/backend/main.py", line 726, in handle
-    shard = self.get_required('shard', str)
-  File "/Users/bslatkin/projects/8-bits/backend/main.py", line 112, in get_required
-    % (name, value))
-BadParameterValueError: Parameter "shard" has an invalid value: u'\xe9spa\xf1ol'
-
------
 
 v2 features:
 - Pasting URLs starts a new topic
