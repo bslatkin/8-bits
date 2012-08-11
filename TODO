@@ -1,11 +1,11 @@
 
 v2 features:
-- Pasting URLs starts a new topic
 - Topic menu with auto-threading of chat
 - Read state on topics and non-topic chat
 - Reload client window on new version push
 
 v2 polish:
+- Blink page title on notification
 - Move favicons into data URIs; otherwise they hit the cache
 - When notifying, double check if we're the top window and cancel if so
 - Clean up code comments and style everywhere

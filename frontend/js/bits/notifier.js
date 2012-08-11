@@ -133,7 +133,6 @@ bits.notifier.Notifier.FLASH_PERIOD_INVERTED = 1000;
 bits.notifier.Notifier.prototype.disposeInternal = function() {
   bits.notifier.Notifier.superClass_.disposeInternal.call(this);
   this.shardId_ = null;
-  // TODO(bslatkin): Unsubscribe from events.
 };
 
 
@@ -178,11 +177,11 @@ bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
  * @private
  */
 bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
+  // TODO(bslatkin): Check if we're actually active.
   if (this.active_) {
     return;
   }
 
-  // TODO(bslatkin): Notify about people who have just joined.
   if (postMap['archiveType'] != bits.posts.ArchiveType.CHAT) {
     return;
   }
