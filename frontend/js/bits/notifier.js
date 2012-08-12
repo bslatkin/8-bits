@@ -83,6 +83,12 @@ bits.notifier.Notifier = function(shardId) {
   this.flashTitle_ = 'New chat!';
 
   /**
+   * @type {HTMLMediaElement}
+   * @private
+   */
+  this.receiveChatAudio_ = goog.dom.getElement('bits-sound-receivechat');
+
+  /**
    * @type {boolean}
    * @private
    */
@@ -98,7 +104,7 @@ bits.notifier.Notifier = function(shardId) {
    * @type {goog.structs.Set}
    * @private
    */
-  this.sentPosts_ = new goog.structs.Set();
+  this.seenPosts_ = new goog.structs.Set();
 
   /**
    * @type {goog.events.EventHandler}
@@ -123,6 +129,8 @@ bits.notifier.Notifier = function(shardId) {
                   goog.bind(this.handleWindowFocus_, this, true));
   this.eh_.listen(window, goog.events.EventType.MOUSEOUT,
                   goog.bind(this.handleWindowFocus_, this, false));
+
+  this.eh_.listen(this.receiveChatAudio_, 'ended', this.handleSoundEnded_);
 
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.SubmittedPostSent,
@@ -196,7 +204,8 @@ bits.notifier.Notifier.prototype.setFlashing_ = function(flashing) {
  */
 bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
   if (postMap['archiveType'] == bits.posts.ArchiveType.CHAT) {
-    this.sentPosts_.add(postMap['postId']);
+    this.seenPosts_.add(postMap['postId']);
+    this.playSound_(this.receiveChatAudio_);
   }
 };
 
@@ -207,34 +216,31 @@ bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
  * @private
  */
 bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
-  // TODO(bslatkin): Check if we're actually active.
-  if (this.active_) {
-    return;
-  }
-
   if (postMap['archiveType'] != bits.posts.ArchiveType.CHAT) {
-    return;
-  }
-
-  if (this.flashTimer_.enabled) {
     return;
   }
 
   var postId = postMap['postId'];
 
   // Don't notify for posts we recently sent ourselves.
-  if (this.sentPosts_.contains(postId)) {
+  if (this.seenPosts_.contains(postId)) {
     // Make sure memory doesn't get out of hand.
-    if (this.sentPosts_.getCount() > 1000) {
-      this.sentPosts_.clear();
+    if (this.seenPosts_.getCount() > 1000) {
+      this.seenPosts_.clear();
     }
     this.logger_.info('Notifier ignoring local postId=' + postId);
     return;
   }
 
+  this.seenPosts_.add(postMap['postId']);
   this.logger_.info('Notifier signalling for postId=' + postId);
-  this.setFlashing_(true);
-  this.flashTimer_.start();
+
+  this.playSound_(this.receiveChatAudio_);
+
+  if (!this.active_ && !this.flashTimer_.enabled) {
+    this.setFlashing_(true);
+    this.flashTimer_.start();
+  }
 };
 
 
@@ -271,4 +277,26 @@ bits.notifier.Notifier.prototype.handleTimer_ = function(e) {
   }
 
   this.setFlashing_(!this.flashing_);
+};
+
+
+/**
+ * Plays a sound, making sure it does not play multiple times concurrently.
+ * @param {HTMLMediaElement} audio Element to play.
+ */
+bits.notifier.Notifier.prototype.playSound_ = function(audio) {
+  if (!audio.playing) {
+    audio.playing = true;
+    audio.play();
+  }
+};
+
+
+/**
+ * Handles when a sound finishes playing.
+ * @param {goog.events.Event} e Sound event.
+ */
+bits.notifier.Notifier.prototype.handleSoundEnded_ = function(e) {
+  e.target.playing = false;
+  e.target.load();
 };

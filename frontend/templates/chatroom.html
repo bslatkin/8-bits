@@ -93,6 +93,11 @@
       value="{{short_url_prefix}}/chat/{{shard_id}}" readonly="readonly">
 </div>
 
+<audio id="bits-sound-receivechat" preload>
+  <source src="/static/{{cache_buster}}/sounds/receivechat.mp3"></source>
+  <source src="/static/{{cache_buster}}/sounds/receivechat.ogg"></source>
+</audio>
+
 <script>
   bits.startup({{params|safe}});
 </script>

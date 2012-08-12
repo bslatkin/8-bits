@@ -3,6 +3,7 @@ version: push-08-11-a
 runtime: python27
 api_version: 1
 threadsafe: true
+default_expiration: 10m
 
 
 inbound_services:
