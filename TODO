@@ -1,3 +1,10 @@
+Bugs:
+- When user re-opens laptop after sleep, immediately send a presence request and do not allow any posting until it has successfully reconnected
+- User reconnect on wake-up says it's successful, but it really misses messages
+- Make splitpane collapse down to show all chat, not up
+- after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
+
+------
 
 v2 features:
 - Topic menu with auto-threading of chat
@@ -7,11 +14,6 @@ v2 features:
 v2 polish:
 - Clean up code comments and style everywhere
 - Pass through error traceback to users
-
-Bugs:
-- line-wrapping in text input window is wonky; width of div is too big and scrolls without showing a scrollbar
-- Make splitpane collapse down to show all chat, not up
-- after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
 
 -----
 
