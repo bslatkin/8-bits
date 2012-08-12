@@ -5,9 +5,7 @@ v2 features:
 - Reload client window on new version push
 
 v2 polish:
-- Blink page title on notification
 - Move favicons into data URIs; otherwise they hit the cache
-- When notifying, double check if we're the top window and cancel if so
 - Clean up code comments and style everywhere
 - Pass through error traceback to users
 
@@ -18,7 +16,6 @@ Bugs:
 v2 production:
 - http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
 - gen204 handler on all event handlers and pubsub delivery
-
 
 -----
 

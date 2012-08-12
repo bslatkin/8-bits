@@ -232,3 +232,11 @@ bits.chatbox.ChatBox.prototype.resize_ = function() {
   // Keep the chat input the same height when the whole chatbox is resized.
   this.setChatInputHeight_(chatInputHeight);
 };
+
+
+/**
+ * Sets this chatbox's input field as focused for keyboard input.
+ */
+bits.chatbox.ChatBox.prototype.focusAndSelect = function() {
+  this.chatInput_.focusAndSelect();
+};

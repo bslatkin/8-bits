@@ -86,7 +86,7 @@ bits.notifier.Notifier = function(shardId) {
    * @type {boolean}
    * @private
    */
-  this.active_ = true;
+  this.active_ = false;
 
   /**
    * @type {boolean}
@@ -116,9 +116,13 @@ bits.notifier.Notifier = function(shardId) {
   this.eh_.listen(this.flashTimer_, goog.Timer.TICK, this.handleTimer_);
 
   this.eh_.listen(window, goog.events.EventType.FOCUS,
-                  goog.bind(this.handleWindowFocus_, this, true), true);
+                  goog.bind(this.handleWindowFocus_, this, true));
   this.eh_.listen(window, goog.events.EventType.BLUR,
-                  goog.bind(this.handleWindowFocus_, this, false), true);
+                  goog.bind(this.handleWindowFocus_, this, false));
+  this.eh_.listen(window, goog.events.EventType.MOUSEOVER,
+                  goog.bind(this.handleWindowFocus_, this, true));
+  this.eh_.listen(window, goog.events.EventType.MOUSEOUT,
+                  goog.bind(this.handleWindowFocus_, this, false));
 
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.SubmittedPostSent,
@@ -238,9 +242,15 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
  * Handles when the window changes focus.
  * @param {boolean} focused True if the window is now focused, false if it
  *   has become unfocused.
+ * @param {goog.events.Event} event Focus or unfocus event.
  * @private
  */
-bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused) {
+bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused, event) {
+  if ((event.type == goog.events.EventType.MOUSEOUT ||
+       event.type == goog.events.EventType.MOUSEOVER) &&
+      !!event.relatedTarget) {
+    return;
+  }
   this.active_ = focused;
   if (this.active_ && this.flashTimer_.enabled) {
     this.flashTimer_.stop();

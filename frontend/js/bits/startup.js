@@ -67,6 +67,10 @@ bits.startup = function(params) {
     settings.setVisible(true);
   } else {
     connection.login();
+    // TODO(bslatkin): Do this after ConnectionReestablishing events, which
+    // will include the re-logins and the moment after the user first closes
+    // the presence dialog.
+    chatbox.focusAndSelect();
   }
 };
 
