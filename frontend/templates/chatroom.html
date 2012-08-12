@@ -99,9 +99,24 @@
       value="{{short_url_prefix}}/chat/{{shard_id}}" readonly="readonly">
 </div>
 
+<audio id="bits-sound-login" preload>
+  <source src="/static/{{cache_buster}}/sounds/login.mp3"></source>
+  <source src="/static/{{cache_buster}}/sounds/login.ogg"></source>
+</audio>
+
 <audio id="bits-sound-receivechat" preload>
   <source src="/static/{{cache_buster}}/sounds/receivechat.mp3"></source>
   <source src="/static/{{cache_buster}}/sounds/receivechat.ogg"></source>
+</audio>
+
+<audio id="bits-sound-userjoin" preload>
+  <source src="/static/{{cache_buster}}/sounds/userjoin.mp3"></source>
+  <source src="/static/{{cache_buster}}/sounds/userjoin.ogg"></source>
+</audio>
+
+<audio id="bits-sound-userleave" preload>
+  <source src="/static/{{cache_buster}}/sounds/userleave.mp3"></source>
+  <source src="/static/{{cache_buster}}/sounds/userleave.ogg"></source>
 </audio>
 
 <script>

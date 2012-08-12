@@ -93,7 +93,25 @@ bits.notifier.Notifier = function(shardId, soundsEnabled) {
    * @type {HTMLMediaElement}
    * @private
    */
+  this.loginAudio_ = goog.dom.getElement('bits-sound-login');
+
+  /**
+   * @type {HTMLMediaElement}
+   * @private
+   */
   this.receiveChatAudio_ = goog.dom.getElement('bits-sound-receivechat');
+
+  /**
+   * @type {HTMLMediaElement}
+   * @private
+   */
+  this.userJoinAudio_ = goog.dom.getElement('bits-sound-userjoin');
+
+  /**
+   * @type {HTMLMediaElement}
+   * @private
+   */
+  this.userLeaveAudio_ = goog.dom.getElement('bits-sound-userleave');
 
   /**
    * @type {boolean}
@@ -227,8 +245,20 @@ bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
  * @private
  */
 bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
-  if (postMap['archiveType'] != bits.posts.ArchiveType.CHAT) {
-    return;
+  switch (postMap['archiveType']) {
+    case bits.posts.ArchiveType.USER_LOGIN:
+      this.playSound_(this.userJoinAudio_);
+      return;
+
+    case bits.posts.ArchiveType.USER_LOGOUT:
+      this.playSound_(this.userLeaveAudio_);
+      return;
+
+    case bits.posts.ArchiveType.CHAT:
+      break;
+
+    default:
+      return;
   }
 
   var postId = postMap['postId'];
