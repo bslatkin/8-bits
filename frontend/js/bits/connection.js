@@ -76,6 +76,15 @@ bits.connection.Connection = function(shardId, nickname, soundsEnabled) {
       this.heartbeatTimer_, goog.Timer.TICK, this.handleHeartbeat_);
 
   /**
+   * Timer used for retrying presence setting.
+   * @type {goog.Timer}
+   * @private
+   */
+  this.retryTimer_ = new goog.Timer(5);
+
+  this.eh_.listen(this.retryTimer_, goog.Timer.TICK, this.setPresence_);
+
+  /**
    * @type {string}
    * @private
    */
@@ -153,6 +162,8 @@ bits.connection.Connection.prototype.login = function() {
  */
 bits.connection.Connection.prototype.setPresence_ =
     function(opt_acceptedTerms) {
+  this.retryTimer_.stop();
+
   var params = new goog.Uri.QueryData();
   params.add('shard', this.shardId_);
   params.add('nickname', this.nickname_);
@@ -164,24 +175,14 @@ bits.connection.Connection.prototype.setPresence_ =
     params.add('retrying', 'true');
   }
 
-  var send = goog.bind(function() {
-    this.xhrManager_.send(
-        this.getNextMessageId_(),
-        '/rpc/presence',
-        opt_method='POST',
-        opt_content=params.toString(),
-        null,
-        null,
-        goog.bind(this.handleSetPresenceComplete_, this));
-  }, this);
-
-  if (this.numErrors_ == 0) {
-    send();
-  } else {
-    var delay = Math.pow(2, this.numErrors_);
-    this.reportInfo_('Retrying in ' + delay + ' seconds');
-    window.setTimeout(send, delay * 1000);
-  }
+  this.xhrManager_.send(
+      this.getNextMessageId_(),
+      '/rpc/presence',
+      opt_method='POST',
+      opt_content=params.toString(),
+      null,
+      null,
+      goog.bind(this.handleSetPresenceComplete_, this));
 };
 
 
@@ -193,8 +194,17 @@ bits.connection.Connection.prototype.setPresence_ =
 bits.connection.Connection.prototype.handleSetPresenceComplete_ =
     function(event) {
   if (!event.target.isSuccess()) {
+    var delay = Math.min(10, 5 * Math.pow(2, this.numErrors_ - 1));
+
     if (this.reportError_('Could not set presence', true)) {
-      this.setPresence_();
+      if (this.retryTimer_.enabled) {
+        // Already waiting to retry, don't bother dispatching.
+        return;
+      }
+
+      this.reportInfo_('Reconnecting in ' + delay + ' seconds');
+      this.retryTimer_.setInterval(delay * 1000);
+      this.retryTimer_.start();
     }
     return;
   }
@@ -329,9 +339,7 @@ bits.connection.Connection.prototype.handleChannelMessage_ = function(event) {
  * @private
  */
 bits.connection.Connection.prototype.handleChannelError_ = function(event) {
-  var retry = this.reportError_(
-      'Could not establish channel: code=' + event['code'] +
-      ', description=' + event['description'], true);
+  var retry = this.reportError_('Could not establish channel', true);
   if (retry) {
     // Reallocate the channel on errors, per:
     //   http://stackoverflow.com/questions/10729842
@@ -444,7 +452,11 @@ bits.connection.Connection.prototype.handleSubmitPost_ = function(postMap) {
 bits.connection.Connection.prototype.handleSubmitPostSuccessful_ =
     function(postMap, event) {
   if (!event.target.isSuccess()) {
-    this.reportError_('Could not send post', true)
+    if (this.reportError_('Could not send post', true)) {
+      // This will also cause a new channel token to be issued if this
+      // fails more than once.
+      this.setPresence_();
+    }
     return;
   }
 
@@ -489,7 +501,7 @@ bits.connection.Connection.prototype.reportInfo_ = function(message) {
 bits.connection.Connection.prototype.reportError_ =
     function(message, opt_ignorable) {
   this.numErrors_++;
-  var fatal = this.numErrors_ > 5 || !opt_ignorable;
+  var fatal = this.numErrors_ > 10 || !opt_ignorable;
   this.logger_.severe(message + ', ignorable=' + !!opt_ignorable +
                       ', numErrors=' + this.numErrors_ + ', fatal=' + fatal);
 
