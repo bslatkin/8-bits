@@ -10,6 +10,7 @@ v2 polish:
 - Pass through error traceback to users
 
 Bugs:
+- line-wrapping in text input window is wonky; width of div is too big and scrolls without showing a scrollbar
 - Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
 
@@ -20,6 +21,7 @@ v3 features:
 - Play HTML5 sound when new chat arrives; put sound control in settings menu
 - Play sound on join and leave
 - Topics dissipate after 15 minutes of no activity
+- Add analytics events to link clicks & UI actions
 
 v3 production:
 - gen204 handler on all event handlers and pubsub delivery
