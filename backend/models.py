@@ -51,6 +51,10 @@ def datetime_to_stamp_seconds(when):
   stamp += when.microsecond / 1000000.0
   return stamp
 
+def datetime_to_stamp_ms(when):
+  """Converts a datetime to a timestamp in milliseconds since the epoch."""
+  return int(datetime_to_stamp_seconds * 1000.0)
+
 ################################################################################
 
 class Shard(ndb.Model):
@@ -61,12 +65,12 @@ class Shard(ndb.Model):
     return 'S'
 
   # Immutable properties set upon shard creation. For topic shards, pretty_name
-  # will probably contain a URL. The description of the topic will be the
-  # first post associated with the new topic shard (i.e., sequence number 1).
-  # This ensures that descriptions are deleted over time.
+  # will probably contain a URL. The description of the topic is what the
+  # initial user supplied at topic creation time.
   pretty_name = ndb.TextProperty(default='')
+  description = ndb.TextProperty(default='')
+  creation_nickname = ndb.TextProperty(default='')
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
-  created_nickname = ndb.TextProperty(default='')
 
   # Properties updated as users interact with the shard.
   update_time = ndb.DateTimeProperty(auto_now=True)
@@ -153,7 +157,7 @@ class ReadState(ndb.Model):
     return self.key.id
 
   first_read_time = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
-  last_read_sequence = ndb.IntegerProperty(indexed=False)
+  last_read_sequence = ndb.IntegerProperty(default=1, indexed=False)
   last_read_time = ndb.DateTimeProperty(auto_now=True, indexed=False)
 
 

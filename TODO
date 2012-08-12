@@ -1,6 +1,4 @@
 Bugs:
-- When user re-opens laptop after sleep, immediately send a presence request and do not allow any posting until it has successfully reconnected
-- User reconnect on wake-up says it's successful, but it really misses messages
 - Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
 
@@ -13,6 +11,7 @@ v2 features:
 
 v2 polish:
 - Clean up code comments and style everywhere
+- Ditch the splitpane and just give the input box a fixed height
 - Pass through error traceback to users
 
 -----
@@ -31,3 +30,14 @@ v4 features:
 - Add share buttons to "share this" dialog
 - Drag/drop image upload
 - New topic snippeting/preview based on OGP
+
+
+---
+
+How topics will work:
+
+* New topic submitted: All users get the notification. It adds it to the topic menu with the meta data about the topic? Or it causes all the clients to refetch the topic list and update the menu to match, with the just-posted topic as the new one. Update message can go into chat window.
+
+* User views topic with read state. Clicks on old topic. Sees posts and chat box below it. When does the user's read state get saved? Periodically with presence notifications seems really easy. In the UI, we'll fetch every post after their last read state all the way to the bottom. When they scroll all the way to the bottom, then we can update the read state menu to match. Maybe the read state messages missed can be missing from the currently highlighted topic and only shown for old ones.
+
+* Save read state every 10 seconds if the user has scrolled the window at all. Only can set read state for non-default topics. Default topic read-state will always scroll to the latest post.

@@ -97,26 +97,43 @@ class BaseHandler(webapp.RequestHandler):
   def handle_request(self, *args):
     raise NotImplementedError()
 
-  def get_required(self, name, type_constructor,
+  def get_required(self,
+                   name,
+                   type_constructor,
                    default=None,
+                   repeated=False,
                    html_escape=False):
     """Retrieves a required parameter with the given name and default."""
-    value = self.request.get(name)
-    if value == '':
-      value = default
-    if value is None:
-      raise MissingParameterError('Parameter "%s" is required' % name)
+    value_list = self.request.get(allow_multiple=repeated)
 
-    try:
-      value = type_constructor(value)
-    except ValueError:
-      raise BadParameterValueError('Parameter "%s" has an invalid value: %r'
-                                   % (name, value))
+    out_list = []
+    for value in value_list:
+      if value == '':
+        value = default
+      if value is None:
+        raise MissingParameterError('Parameter "%s" is required' % name)
 
-    if html_escape:
-      return cgi.escape(value)
-    else:
-      return value
+      try:
+        value = type_constructor(value)
+      except ValueError:
+        raise BadParameterValueError('Parameter "%s" has an invalid value: %r'
+                                     % (name, value))
+
+      if html_escape:
+        value = cgi.escape(value)
+
+      out_list.append(value)
+
+    if repeated:
+      return out_list
+    return out_list[0]
+
+  def require_active_login(self):
+    """Raises an error if the user does not have an active connection."""
+    login_record = models.LoginRecord.get_by_id(self.user_id)
+    if not only_active_users(login_record):
+        raise NotAuthorizedError('Connection no longer valid, must relogin')
+    return login_record
 
   def render(self, template_name, context=None):
     """Renders the given template and context."""
@@ -487,8 +504,7 @@ def marshal_posts(shard, post_list):
       archiveType=models.Post.ARCHIVE_REVERSE_MAPPING[post.archive_type],
       nickname=post.nickname,
       body=post.body,
-      postTimeMs=int(
-          models.datetime_to_stamp_seconds(post.post_time) * 1000),
+      postTimeMs=models.datetime_to_stamp_ms(post.post_time),
       sequenceId=getattr(post, 'sequence', None),
       postId=post.post_id)
     out.append(post_dict)
@@ -570,21 +586,6 @@ def notify_posts(shard, post_list, sequence_numbers=None):
       logging.warning('Could not send JSON message to user=%r with '
                       'browser_token=%r. %s: %s', login_record.user_id,
                       browser_token, e.__class__.__name__, str(e))
-
-
-def marshal_shards(shard_list):
-  """TODO
-  """
-  out = []
-  # for shard in shard_list:
-  #   shard_dict = dict(
-  #     prettyName=,
-  #     creationTime=,
-  #     createdNickname=,
-  #     updateTime=,
-  #   )
-
-  return out
 
 ################################################################################
 # User login and presence
@@ -799,16 +800,6 @@ class ShardCleanupHandler(BaseHandler):
 ################################################################################
 # RPC handlers
 
-class CreateShardHandler(BaseRpcHandler):
-  """Creates new shards."""
-
-  def handle(self):
-    pretty_name = self.get_required('pretty', unicode)
-    shard = models.Shard(pretty_name=pretty_name)
-    shard.put()
-    self.json_response['shardId'] = shard.shard_id
-
-
 class PresenceHandler(BaseRpcHandler):
   """Handles updating user presence."""
 
@@ -915,9 +906,7 @@ class PostHandler(BaseRpcHandler):
     body = self.get_required('body', unicode, html_escape=True)
     post_id = self.get_required('post_id', str)
 
-    login_record = models.LoginRecord.get_by_id(self.user_id)
-    if not only_active_users(login_record):
-        raise NotAuthorizedError('Connection no longer valid, must relogin')
+    login_record = self.require_active_login()
 
     post_key = insert_post(
       self.shard,
@@ -1014,6 +1003,29 @@ class ListPostsHandler(BaseRpcHandler):
     self.json_response['posts'] = marshal_posts(self.shard, post_list)
 
 
+class CreateTopicHandler(BaseRpcHandler):
+  """Create a new topic shard and returns its ID."""
+
+  require_shard = True
+
+  def handle(self):
+    pretty_name = self.get_required(
+        'pretty_name', unicode, '', html_escape=True)
+    description = self.get_required(
+        'description', unicode, '', html_escape=True)
+
+    login_record = self.require_active_login()
+
+    shard = models.Shard(
+        pretty_name=pretty_name,
+        description=description,
+        creation_nickname=login_record.nickname,
+        root_shard=self.shard_id)
+    shard.put()
+
+    self.json_response['shardId'] = shard.shard_id
+
+
 class ListTopicsHandler(BaseRpcHandler):
   """TODO
   """
@@ -1021,28 +1033,90 @@ class ListTopicsHandler(BaseRpcHandler):
   require_shard = True
 
   def handle(self):
+    oldest_update_time = (
+        datetime.datetime.now() -
+        datetime.timedelta(seconds=config.ephemeral_lifetime_seconds))
+
     query = models.Shard.query()
-    query = query.filter(models.Shard.root_shard_id == self.shard_id)
+    query = query.filter(models.Shard.root_shard == self.shard_id)
+    query = query.filter(models.Shard.update_time > oldest_update_time)
     query = query.order(-models.Shard.update_time)
+    shard_list = query.fetch(100);
+
+    # Get the current user's readstate for each shard that was found.
+    read_state_key_list = [
+        ndb.Key(models.LoginRecord._get_kind(), self.user_id,
+                models.ReadState._get_kind(), shard_id)
+        for shard_id in shard_list]
+    read_state_list = ndb.get_multi(read_state_key_list)
+
+    out = []
+    for shard, read_state in zip(shard_list, read_state_list):
+      shard_dict = dict(
+        shardId=shard.shard_id,
+        prettyName=shard.pretty_name,
+        description=shard.description,
+        creationTimeMs=models.datetime_to_stamp_ms(shard.creation_time),
+        creationNickname=shard.creation_nickname,
+        updateTimeMs=models.datetime_to_stamp_ms(shard.update_time),
+        sequenceNumber=shard.sequence_number,
+        isRoot=shard.root_shard is None,
+      )
+
+      if read_state:
+        shard_dict.update(
+            firstReadTime=models.datetime_to_stamp_ms(
+                read_state.first_read_time),
+            lastReadSequence=read_state.last_read_sequence,
+            lastReadTime=models.datetime_to_stamp_ms(
+                read_state.last_read_time))
+
+      out.append(shard_dict)
+
+    self.json_response['topics'] = out
 
 
 class ReadStateHandler(BaseRpcHandler):
-  """Handles interactions with read state for a user.
+  """Updates the read state for a user.
 
   Args:
-    topic: Sequence ID of the topic being interacted with.
-    position: Optional. Sequence ID to set the read state to. When not supplied
-      the position will just be read.
-
-  Returns:
-    position: Sequence ID at which this user is presently. Will return 0 if
-      the position is unknown.
+    topic: Repeated set of shard IDs being updated.
+    position: Repeated set of sequence IDs to set as read states. Each item
+      in this list corresponds one-to-one with an item in the topic list.
   """
 
   require_shard = True
 
   def handle(self):
-    pass
+    topic_list = self.get_required('topic', str, repeated=True)
+    position_list = self.get_required('position', int, repeated=True)
+    if len(topic_list) != len(position_list):
+      raise BadParameterValueError(
+          'Must supply the same number of topics and positions')
+    position_dict = dict(zip(topic_list, position_list))
+
+    login_record = self.require_active_login()
+
+    # TODO(bslatkin): Consider validating the topic list provided here
+    # to ensure they are actually associated with the current logged-in shard.
+    # The possible damage here is restricted to the user so we don't care much.
+    read_state_keys = [
+        ndb.Key(models.LoginRecord._get_kind(), self.user_id,
+                models.ReadState._get_kind(), topic)
+        for topic in topic_list]
+
+    def txn():
+      read_state_list = ndb.get_multi(read_state_keys)
+      to_put = []
+      for key, read_state in zip(read_state_keys, read_state_list):
+        if read_state is None:
+          read_state = models.ReadState(key=key)
+        read_state.last_read_sequence = position_dict[key.id]
+        to_put.append(read_state)
+
+      ndb.put_multi(to_put)
+
+    ndb.transaction(txn)
 
 ################################################################################
 # UI handlers
@@ -1161,11 +1235,11 @@ ROUTES = webapp.WSGIApplication([
   (r'/_ah/warmup', WarmupHandler),
   (r'/work/apply_posts', ApplyWorker),
   (r'/work/cleanup', ShardCleanupHandler),
-  (r'/rpc/create_shard', CreateShardHandler),
   (r'/rpc/show_roster', ShowRosterHandler),
   (r'/rpc/list_posts', ListPostsHandler),
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
+  (r'/rpc/create_topic', CreateTopicHandler),
   (r'/rpc/list_topics', ListTopicsHandler),
   (r'/rpc/read_state', ReadStateHandler),
   (r'/chat/([a-zA-Z0-9_-]{1,100})', ChatroomHandler)
