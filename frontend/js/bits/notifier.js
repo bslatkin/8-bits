@@ -33,10 +33,11 @@ goog.require('bits.posts.ArchiveType');
 /**
  * Constructs a new Notifier object.
  * @param {string} shardId ID of the shard to notify for.
+ * @param {string} nickname Nickname of the user.
  * @param {boolean} soundsEnabled True if the user should hear sounds.
  * @constructor
  */
-bits.notifier.Notifier = function(shardId, soundsEnabled) {
+bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
   goog.base(this);
 
   /**
@@ -50,6 +51,12 @@ bits.notifier.Notifier = function(shardId, soundsEnabled) {
    * @private
    */
   this.shardId_ = shardId;
+
+  /**
+   * @type {string}
+   * @private
+   */
+  this.nickname_ = nickname;
 
   /**
    * @type {boolean}
@@ -168,6 +175,10 @@ bits.notifier.Notifier = function(shardId, soundsEnabled) {
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.SubmitPresenceChange,
       this.handleSubmitPresenceChange_, this);
+
+  bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.ConnectionReestablishing,
+      this.handleReestablishing_, this);
 }
 goog.inherits(bits.notifier.Notifier, goog.Disposable);
 
@@ -247,7 +258,9 @@ bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
 bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
   switch (postMap['archiveType']) {
     case bits.posts.ArchiveType.USER_LOGIN:
-      this.playSound_(this.userJoinAudio_);
+      if (this.nickname_ != postMap['nickname']) {
+        this.playSound_(this.userJoinAudio_);
+      }
       return;
 
     case bits.posts.ArchiveType.USER_LOGOUT:
@@ -331,7 +344,16 @@ bits.notifier.Notifier.prototype.handleTimer_ = function(e) {
  */
 bits.notifier.Notifier.prototype.handleSubmitPresenceChange_ =
     function(nickname, acceptedTerms, soundsEnabled) {
+  this.nickname_ = nickname;
   this.soundsEnabled_ = soundsEnabled;
+};
+
+
+/**
+ * Handles when a connection has reestablished.
+ */
+bits.notifier.Notifier.prototype.handleReestablishing_ = function() {
+  this.playSound_(this.loginAudio_);
 };
 
 

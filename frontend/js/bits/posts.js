@@ -379,9 +379,9 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.ServerError,
       this.handlePostReceived, this);
-
-  // TODO(bslatkin): Handle ConnectionReestablishing events and clear out
-  // all posts in the container when they happen.
+  bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.ConnectionReestablishing,
+      this.handleReestablishing_, this);
 };
 
 
@@ -414,6 +414,15 @@ bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
     postList.push(new bits.posts.Post(postMapList[i]));
   }
   this.prependPosts(postList);
+};
+
+
+/**
+ * Handles when the user has reconnected.
+ */
+bits.posts.PostContainer.prototype.handleReestablishing_ = function() {
+  this.postIdMap.clear();
+  this.container.removeChildren();
 };
 
 

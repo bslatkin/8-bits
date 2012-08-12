@@ -62,7 +62,8 @@ bits.startup = function(params) {
   var shortUrlDialog = new bits.shorturl.ShortUrlDialog(shardId);
   shortUrlDialog.decorate(goog.dom.getElement('link-dialog'));
 
-  var notifier = new bits.notifier.Notifier(shardId, soundsEnabled);
+  var notifier = new bits.notifier.Notifier(
+      shardId, nickname, soundsEnabled);
 
   // Now do initial actions.
   if (firstLogin || mustAcceptTerms) {
