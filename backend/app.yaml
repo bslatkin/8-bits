@@ -1,5 +1,5 @@
 application: 8-bits-live
-version: push-08-11-a
+version: push-08-12-a
 runtime: python27
 api_version: 1
 threadsafe: true

@@ -34,6 +34,8 @@ body {
   border: 1px solid rgba(80, 80, 80, 0.5);
   background-image: -webkit-gradient(
       linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));  /* TODO firefox */
+  background-image: -moz-linear-gradient(
+        top, #f9f9f9 40%, #e3e3e3 70%);
   cursor: pointer;
   border-radius: 20px;
 }
@@ -44,6 +46,7 @@ body {
 .landing-create-image {
   padding: 0;
   -webkit-transform: rotate(-3deg);
+  -moz-transform: rotate(-3deg);
 }
 
 .landing-footer {
