@@ -36,9 +36,10 @@ goog.require('bits.events');
  *
  * @param {string} shardId Shard ID for this connection.
  * @param {string} nickname Initial nickname this user has.
+ * @param {boolean} soundsEnabled True if the user should hear sounds.
  * @constructor
  */
-bits.connection.Connection = function(shardId, nickname) {
+bits.connection.Connection = function(shardId, nickname, soundsEnabled) {
   /**
    * @type {goog.debug.Logger}
    * @private
@@ -85,6 +86,12 @@ bits.connection.Connection = function(shardId, nickname) {
    * @private
    */
   this.nickname_ = nickname;
+
+  /**
+   * @type {string}
+   * @private
+   */
+  this.soundsEnabled_ = soundsEnabled;
 
   /**
    * The browser token currently being used for the channel.
@@ -149,6 +156,7 @@ bits.connection.Connection.prototype.setPresence_ =
   var params = new goog.Uri.QueryData();
   params.add('shard', this.shardId_);
   params.add('nickname', this.nickname_);
+  params.add('sounds_enabled', this.soundsEnabled_ ? 'true' : '');
   if (opt_acceptedTerms) {
     params.add('accepted_terms', 'true');
   }
@@ -361,12 +369,14 @@ bits.connection.Connection.prototype.getNextMessageId_ = function() {
  * Handles bits.events.EventType.SubmitPresenceChange requests.
  * @param {string} nickname New nickname for the user.
  * @param {boolean} acceptedTerms User has just accepted the terms of service.
+ * @param {boolean} soundsEnabled User wants to hear sounds.
  * @private
  */
 bits.connection.Connection.prototype.handleSubmitPresenceChange_ =
-    function(nickname, acceptedTerms) {
+    function(nickname, acceptedTerms, soundsEnabled) {
   this.logger_.info('Submitting presence change');
   this.nickname_ = nickname;
+  this.soundsEnabled_ = soundsEnabled;
   this.setPresence_(acceptedTerms);
 };
 

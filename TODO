@@ -1,33 +1,29 @@
-v1 Polish:
-- Clean up code comments and style everywhere
-
 Bugs:
+- When user re-opens laptop after sleep, immediately send a presence request and do not allow any posting until it has successfully reconnected
+- User reconnect on wake-up says it's successful, but it really misses messages
 - Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
 
 -----
 
 v2 features:
-- Pasting URLs starts a new topic
 - Topic menu with auto-threading of chat
 - Read state on topics and non-topic chat
 - Reload client window on new version push
 
 v2 polish:
-- Move favicons into data URIs; otherwise they hit the cache
-- When notifying, double check if we're the top window and cancel if so
-
-v2 production:
-- http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
-- gen204 handler on all event handlers and pubsub delivery
+- Clean up code comments and style everywhere
+- Pass through error traceback to users
 
 -----
 
 v3 features:
 - Add a tutorial section on settings dialog on first join
-- Play HTML5 sound when new chat arrives; put sound control in settings menu
-- Play sound on join and leave
 - Topics dissipate after 15 minutes of no activity
+- Add analytics events to link clicks & UI actions
+
+v3 production:
+- gen204 handler on all event handlers and pubsub delivery
 
 -----
 

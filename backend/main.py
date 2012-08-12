@@ -79,6 +79,7 @@ class BaseHandler(webapp.RequestHandler):
   post_enabled = True
 
   def get(self, *args):
+    self.response.headers['Strict-Transport-Security'] = 'max-age=31536000'
     if not self.get_enabled:
       self.response.set_status(405)
       return
@@ -86,6 +87,7 @@ class BaseHandler(webapp.RequestHandler):
     self.handle_request(*args)
 
   def post(self, *args):
+    self.response.headers['Strict-Transport-Security'] = 'max-age=31536000'
     if not self.post_enabled:
       self.response.set_status(405)
       return
@@ -199,15 +201,6 @@ class BaseRpcHandler(BaseHandler):
 def human_uuid():
   """Generates a more human friendly UUID."""
   return base64.b32encode(uuid.uuid4().bytes).strip('=').lower()
-
-
-def normalize_human_uuid(user_supplied):
-  """Normalizes a UUID typed by a human.
-
-  Replaces any '1's with 'L's, etc; following the base32 encoding style.
-  """
-  # TODO(bslatkin): Actually do something here
-  return user_supplied
 
 
 ################################################################################
@@ -793,7 +786,7 @@ class CreateShardHandler(BaseRpcHandler):
   """Creates new shards."""
 
   def handle(self):
-    pretty_name = self.get_required('pretty', str)
+    pretty_name = self.get_required('pretty', unicode)
     shard = models.Shard(pretty_name=pretty_name)
     shard.put()
     self.json_response['shardId'] = shard.shard_id
@@ -804,8 +797,9 @@ class PresenceHandler(BaseRpcHandler):
 
   def handle(self):
     shard = self.get_required('shard', str)
-    nickname = self.get_required('nickname', str, '', html_escape=True)
+    nickname = self.get_required('nickname', unicode, '', html_escape=True)
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
+    sounds_enabled = self.get_required('sounds_enabled', str, '') == 'true'
     retrying = self.get_required('retrying', str, '') == 'true'
 
     if 'shards' not in self.session:
@@ -847,6 +841,7 @@ class PresenceHandler(BaseRpcHandler):
         login.accepted_terms_version = config.terms_version
 
       login.online = True
+      login.sounds_enabled = sounds_enabled
       login.put()
 
       return last_nickname, user_connected, login.browser_token
@@ -900,7 +895,7 @@ class PostHandler(BaseRpcHandler):
     if archive_enum not in models.Post.ALLOWED_ARCHIVES:
       raise BadParameterValueError(
           '"%s" is not a valid post type' % archive_type)
-    body = self.get_required('body', str, html_escape=True)
+    body = self.get_required('body', unicode, html_escape=True)
     post_id = self.get_required('post_id', str)
 
     login_record = models.LoginRecord.get_by_id(self.user_id)
@@ -1066,32 +1061,37 @@ class ChatroomHandler(BaseHandler):
   """Renders a specific chatroom with the given shard ID."""
 
   def handle_request(self, shard_id):
-    normalized = normalize_human_uuid(shard_id)
-    if normalized != shard_id:
-      self.redirect('/' + normalized)
-      return
-
     shard = models.Shard.get_by_id(shard_id)
     if not shard:
-      # TODO(bslatkin): Pretty 404
-      self.response.set_status(404)
-      self.response.out.write('Unknown shard')
-      return
+      # If the shard doesn't exist, then just create it. Makes it ridiculously
+      # easy for people to create a new chat with the name of their choice.
+      def txn():
+        shard = models.Shard.get_by_id(
+            shard_id, use_cache=False, use_memcache=False)
+        if not shard:
+          shard = models.Shard(id=shard_id)
+          shard.put()
+        return shard
+
+      shard = ndb.transaction(txn)
 
     nickname = 'Anonymous'
     first_login = True
     must_accept_terms = True
+    sounds_enabled = True
+
     if 'shards' in self.session:
       # TODO(bslatkin): Reuse presence code here.
       user_id = self.session['shards'].get(shard_id)
       if user_id:
         login_record = models.LoginRecord.get_by_id(user_id)
-        if login_record.shard_id == shard_id:
+        if login_record and login_record.shard_id == shard_id:
           nickname = login_record.nickname
           first_login = False
           must_accept_terms = bool(
               login_record.accepted_terms_version !=
               config.terms_version)
+          sounds_enabled = login_record.sounds_enabled
 
     context = {
       'first_login': first_login,
@@ -1099,13 +1099,14 @@ class ChatroomHandler(BaseHandler):
       'nickname': xml.sax.saxutils.unescape(nickname),
       'shard_id': shard_id,
       'short_url_prefix': self.request.host_url,
+      'sounds_enabled': sounds_enabled,
     }
     context['params'] = json.dumps(context)
 
     self.render('chatroom.html', context)
 
 
-class WarmupHandler(BaseHandler):
+class WarmupHandler(BaseUiHandler):
   """Handles warm-up requests by doing nothing."""
 
   def get(self):
@@ -1137,7 +1138,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
   (r'/rpc/read_state', ReadStateHandler),
-  (r'/chat/([a-z0-9A-Z]+)', ChatroomHandler)
+  (r'/chat/([a-zA-Z0-9_-]{1,100})', ChatroomHandler)
 ], debug=config.debug)
 
 

@@ -110,6 +110,8 @@ class LoginRecord(ndb.Model):
   nickname = ndb.TextProperty()
   browser_token = ndb.TextProperty()
   browser_token_issue_time = ndb.DateTimeProperty(indexed=False)
+  sounds_enabled = ndb.BooleanProperty(default=True, indexed=False)
+
   # Zero means no terms accepted.
   accepted_terms_version = ndb.IntegerProperty(default=0, indexed=False)
 

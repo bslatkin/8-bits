@@ -52,6 +52,7 @@ bits.events.EventType = {
   // Args:
   //  nickname: New nickname for the user.
   //  acceptedTerms: User has accepted terms for the first time.
+  //  soundEnabled: True if the user wants to hear sounds.
   SubmitPresenceChange: 'SubmitPresenceChange',
 
   // The last action resulted in a server-returned error that is fatal.

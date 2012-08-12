@@ -1,8 +1,9 @@
 application: 8-bits-live
-version: push-08-09-a
+version: push-08-12-a
 runtime: python27
 api_version: 1
 threadsafe: true
+default_expiration: 10m
 
 
 inbound_services:

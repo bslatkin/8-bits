@@ -3,9 +3,14 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+
+    {% block favicon %}
     <link href="/static/{{cache_buster}}/favicon.png"
-        id="favicon" rel="shortcut icon" type="image/x-icon"
-        data-flash-url="/static/{{cache_buster}}/favicon_inverted.png">
+        id="favicon" rel="shortcut icon" type="image/x-icon">
+    {% endblock %}
+
+    <title>{% block title %}8-bits of ephemera{% endblock %}</title>
+
     {% block additional_meta %}{% endblock %}
 
     <link rel="stylesheet" href="/static/{{cache_buster}}/css/screen.css"
