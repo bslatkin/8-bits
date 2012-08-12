@@ -19,23 +19,20 @@
 - Post: Root entity for a single user post. Inserts quickly into a separate
       entity group. Put in order in a Shard by PostReference entities.
 
+  - Receipt (child): Indicates that a shard has written this post and put it
+      in order. Allows one Post to existing in multiple shards at a time.
+
 - LoginRecord: Record of a user who's logged in. Periodically cleaned up
     if the user has not been active for some number of hours.
+
+  - ReadState (child): Saves the state of what the user has read on a given
+      shard. Lets the UI scroll the history to that starting position when the
+      user relogins in to a shard (or views a specific topic shard).
 
 - Shard: Root entity for a single chat room.
 
   - PostReference (child): Reference to a Post entity that's periodically
       written under the Shard whenever fan-in occurs.
-
-
-How do topics work?
-Post: Used as a reference point for the topic with the topic_start event.
-PostReference: Used to look up topic start events in sequence
-
-post the posts to the normal shard, but then replicate the post references
-over to an alternate shard that is the topic. then when querying for posts
-you just query for them on an alternate root shard
-
 """
 
 import datetime
@@ -57,18 +54,17 @@ def datetime_to_stamp_seconds(when):
 ################################################################################
 
 class Shard(ndb.Model):
-  """Core reference to a single community.
-
-  TODO explain root shards versus topic shards
-  """
+  """Core reference to a single chatroom or a topic within that chatroom."""
 
   @classmethod
   def _get_kind(cls):
     return 'S'
 
-  # Immutable properties set upon shard creation.
+  # Immutable properties set upon shard creation. For topic shards, pretty_name
+  # will probably contain a URL. The description of the topic will be the
+  # first post associated with the new topic shard (i.e., sequence number 1).
+  # This ensures that descriptions are deleted over time.
   pretty_name = ndb.TextProperty(default='')
-  description = ndb.TextProperty(default='')
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
   created_nickname = ndb.TextProperty(default='')
 
@@ -76,17 +72,43 @@ class Shard(ndb.Model):
   update_time = ndb.DateTimeProperty(auto_now=True)
   sequence_number = ndb.IntegerProperty(default=1, indexed=False)
 
-  # Current topic being discussed. This is the shard ID of that topic. Will
-  # be unset when there is no current topic.
-  current_topic = ndb.StringProperty(indexed=False)
+  # Shard ID of the current topic being discussed. Unset when there is no
+  # current topic. Only set for root shards.
+  current_topic_shard_id = ndb.StringProperty(indexed=False)
 
-  # Shard that owns this topic shard. Will be unset for root shards.
-  # TODO(bslatkin): Don't allow users to login to shards that have a root.
-  root_shard = ndb.StringProperty()
+  # Shard ID that owns this topic shard. Will be unset for root shards.
+  # TODO(bslatkin): Don't allow users to login to shards that have a root,
+  # otherwise they'll be able to use the whole UI in a subset of the stream.
+  root_shard_id = ndb.StringProperty()
 
   @property
   def shard_id(self):
     return self.key.id()
+
+
+class PostReference(ndb.Model):
+  """Reference to a Post that exists under a Shard entity.
+
+  Ensures that transactional queries on a Shard will find all associated posts
+  when using the high-replication datastore.
+
+  Parent is the Shard. Key name is the sequence number for the post.
+  """
+
+  @classmethod
+  def _get_kind(cls):
+    return 'PR'
+
+  @property
+  def shard_id(self):
+    return self.key.parent().id()
+
+  @property
+  def sequence(self):
+    return self.key.id()
+
+  # The key name of the Post that has this sequence number. Usually a UUID.
+  post_id = ndb.TextProperty()
 
 
 class LoginRecord(ndb.Model):
@@ -117,11 +139,9 @@ class LoginRecord(ndb.Model):
 
 
 class ReadState(ndb.Model):
-  """User's read state for a specific topic.
+  """User's read state for a specific shard (applies to root and topic shards).
 
-  Parent is the LoginRecord. ID is the Shard for which this is the read
-  state. Must be the same as LoginRecord.shard_id unless the Shard is a topic
-  shard.
+  Parent is the LoginRecord. ID is the Shard for which this is the read state.
   """
 
   @classmethod
@@ -188,11 +208,10 @@ class Post(ndb.Model):
 
 
 class Receipt(ndb.Model):
-  """TODO
+  """Indicates that a post has been written to a shard in sequence.
 
-  parent is the Post
-  ID is the shard to which the post was written
-  used to make sure we don't duplicate writes
+  Parent is the Post entity that was written. ID is the shard to which the
+  post was written. Used to make sure we don't duplicate writes.
   """
 
   @classmethod
@@ -204,28 +223,3 @@ class Receipt(ndb.Model):
     return self.key.parent().id()
 
   sequence = ndb.IntegerProperty(indexed=False)
-
-
-class PostReference(ndb.Model):
-  """Reference to a Post that exists under a Shard entity.
-
-  Ensures that transactional queries on a Shard will find all associated posts
-  when using the high-replication datastore.
-
-  Parent is the Shard. Key name is the sequence number for the post.
-  """
-
-  @classmethod
-  def _get_kind(cls):
-    return 'PR'
-
-  @property
-  def shard_id(self):
-    return self.key.parent().id()
-
-  @property
-  def sequence(self):
-    return self.key.id()
-
-  # The key name of the Post that has this sequence number. Usually a UUID.
-  post_id = ndb.TextProperty()

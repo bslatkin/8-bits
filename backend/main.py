@@ -206,7 +206,6 @@ def human_uuid():
 ################################################################################
 # Posts and sequencing
 
-
 def dirty_bit(shard, set=False, check=False, clear=False):
   """Sets or checks the dirty bit for a shard."""
   assert set ^ check ^ clear
@@ -267,8 +266,7 @@ def enqueue_cleanup_task(shard):
 
 
 def enqueue_post_task(shard, post_ids):
-  """TODO
-  """
+  """Enqueues a task to post a new task on a shard."""
   taskqueue.Task(
     method='PULL',
     tag=str(shard),
@@ -524,10 +522,15 @@ def send_message_async(client_id, message):
 def notify_posts(shard, post_list, sequence_numbers=None):
   """Notifies logged-in users of a set of new posts.
 
-  When the post_list is a list of strings, then it's assumed these are the IDs
-  of Posts that must be fetched prior to notification.
-
-  TODO sequence numbers
+  Args:
+    shard: Shard ID to notify for.
+    post_list: When the post_list is a list of strings, then it's assumed these
+      are the IDs of Posts that must be fetched prior to notification.
+      Otherwise these should be Post entities.
+    sequence_numbers: When supplied, should be a list of sequence numbers
+      that correspond to each of the items in the post_list, in order. This
+      is used to tell the user what the sequence ID of each post is within
+      a particular shard.
   """
   if not post_list:
     return
@@ -568,6 +571,20 @@ def notify_posts(shard, post_list, sequence_numbers=None):
                       'browser_token=%r. %s: %s', login_record.user_id,
                       browser_token, e.__class__.__name__, str(e))
 
+
+def marshal_shards(shard_list):
+  """TODO
+  """
+  out = []
+  for shard in shard_list:
+    shard_dict = dict(
+      prettyName=,
+      creationTime=,
+      createdNickname=,
+      updateTime=,
+    )
+
+  return out
 
 ################################################################################
 # User login and presence
@@ -997,6 +1014,18 @@ class ListPostsHandler(BaseRpcHandler):
     self.json_response['posts'] = marshal_posts(self.shard, post_list)
 
 
+class ListTopicsHandler(BaseRpcHandler):
+  """TODO
+  """
+
+  require_shard = True
+
+  def handle(self):
+    query = models.Shard.query()
+    query = query.filter(models.Shard.root_shard_id == self.shard_id)
+    query = query.order(-models.Shard.update_time)
+
+
 class ReadStateHandler(BaseRpcHandler):
   """Handles interactions with read state for a user.
 
@@ -1106,7 +1135,7 @@ class ChatroomHandler(BaseHandler):
     self.render('chatroom.html', context)
 
 
-class WarmupHandler(BaseUiHandler):
+class WarmupHandler(BaseHandler):
   """Handles warm-up requests by doing nothing."""
 
   def get(self):
@@ -1137,6 +1166,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/list_posts', ListPostsHandler),
   (r'/rpc/post', PostHandler),
   (r'/rpc/presence', PresenceHandler),
+  (r'/rpc/list_topics', ListTopicsHandler),
   (r'/rpc/read_state', ReadStateHandler),
   (r'/chat/([a-zA-Z0-9_-]{1,100})', ChatroomHandler)
 ], debug=config.debug)
