@@ -32,16 +32,20 @@ body {
   display: inline-block;
   padding: 10px 30px;
   border: 1px solid rgba(80, 80, 80, 0.5);
+  background-color: #e3e3e3;
   background-image: -webkit-gradient(
-      linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));  /* TODO firefox */
+      linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));
   background-image: -moz-linear-gradient(
         top, #f9f9f9 40%, #e3e3e3 70%);
   cursor: pointer;
   border-radius: 20px;
 }
 .landing-create-image-c:hover {
+  background-color: #dcdcdc;
   background-image: -webkit-gradient(
-      linear, 0% 40%, 0% 70%, from(#f0f0f0), to(#dcdcdc));  /* TODO firefox */
+      linear, 0% 40%, 0% 70%, from(#f0f0f0), to(#dcdcdc));
+  background-image: -moz-linear-gradient(
+        top, #f0f0f0 40%, #dcdcdc 70%);
 }
 .landing-create-image {
   padding: 0;
