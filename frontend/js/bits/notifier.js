@@ -65,6 +65,24 @@ bits.notifier.Notifier = function(shardId) {
   this.flashFaviconUrl_ = goog.dom.dataset.get(favEl, 'flashUrl');
 
   /**
+   * @type {Element}
+   * @private
+   */
+  this.titleEl_ = goog.dom.getElementsByTagNameAndClass('title')[0];
+
+  /**
+   * @type {string}
+   * @private
+   */
+  this.normalTitle_ = goog.dom.getTextContent(this.titleEl_);
+
+  /**
+   * @type {string}
+   * @private
+   */
+  this.flashTitle_ = 'New chat!';
+
+  /**
    * @type {boolean}
    * @private
    */
@@ -142,6 +160,14 @@ bits.notifier.Notifier.prototype.disposeInternal = function() {
  * @private
  */
 bits.notifier.Notifier.prototype.setFlashing_ = function(flashing) {
+  // Update the title.
+  var title = this.normalTitle_;
+  if (flashing) {
+    title = this.flashTitle_;
+  }
+  goog.dom.setTextContent(this.titleEl_, title);
+
+  // Update the favicon. Must come after title change or else it won't stick.
   var href = this.normalFaviconUrl_;
   if (flashing) {
     href = this.flashFaviconUrl_;
