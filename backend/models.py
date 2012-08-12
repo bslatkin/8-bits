@@ -74,12 +74,12 @@ class Shard(ndb.Model):
 
   # Shard ID of the current topic being discussed. Unset when there is no
   # current topic. Only set for root shards.
-  current_topic_shard_id = ndb.StringProperty(indexed=False)
+  current_topic = ndb.StringProperty(indexed=False)
 
   # Shard ID that owns this topic shard. Will be unset for root shards.
   # TODO(bslatkin): Don't allow users to login to shards that have a root,
   # otherwise they'll be able to use the whole UI in a subset of the stream.
-  root_shard_id = ndb.StringProperty()
+  root_shard = ndb.StringProperty()
 
   @property
   def shard_id(self):

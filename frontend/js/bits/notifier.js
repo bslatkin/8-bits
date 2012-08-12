@@ -162,10 +162,13 @@ bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
   this.eh_.listen(window, goog.events.EventType.MOUSEOUT,
                   goog.bind(this.handleWindowFocus_, this, false));
 
+  this.eh_.listen(this.loginAudio_, 'ended', this.handleSoundEnded_);
   this.eh_.listen(this.receiveChatAudio_, 'ended', this.handleSoundEnded_);
+  this.eh_.listen(this.userJoinAudio_, 'ended', this.handleSoundEnded_);
+  this.eh_.listen(this.userLeaveAudio_, 'ended', this.handleSoundEnded_);
 
   bits.events.PubSub.subscribe(
-      this.shardId_, bits.events.EventType.SubmittedPostSent,
+      this.shardId_, bits.events.EventType.SubmitPost,
       this.handlePostSent_, this);
 
   bits.events.PubSub.subscribe(
@@ -282,11 +285,11 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
     if (this.seenPosts_.getCount() > 1000) {
       this.seenPosts_.clear();
     }
-    this.logger_.info('Notifier ignoring local postId=' + postId);
+    this.logger_.info('Notifier ignoring existing postId=' + postId);
     return;
   }
 
-  this.seenPosts_.add(postMap['postId']);
+  this.seenPosts_.add(postId);
   this.logger_.info('Notifier signalling for postId=' + postId);
 
   this.playSound_(this.receiveChatAudio_);

@@ -163,14 +163,25 @@ bits.connection.Connection.prototype.setPresence_ =
   if (this.numErrors_ > 0) {
     params.add('retrying', 'true');
   }
-  this.xhrManager_.send(
-      this.getNextMessageId_(),
-      '/rpc/presence',
-      opt_method='POST',
-      opt_content=params.toString(),
-      null,
-      null,
-      goog.bind(this.handleSetPresenceComplete_, this));
+
+  var send = goog.bind(function() {
+    this.xhrManager_.send(
+        this.getNextMessageId_(),
+        '/rpc/presence',
+        opt_method='POST',
+        opt_content=params.toString(),
+        null,
+        null,
+        goog.bind(this.handleSetPresenceComplete_, this));
+  }, this);
+
+  if (this.numErrors_ == 0) {
+    send();
+  } else {
+    var delay = Math.pow(2, this.numErrors_);
+    this.reportInfo_('Retrying in ' + delay + ' seconds');
+    window.setTimeout(send, delay * 1000);
+  }
 };
 
 
@@ -201,16 +212,25 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
         this.shardId_, bits.events.EventType.ConnectionReestablishing);
   }
 
-  // The browser token will be refreshed periodically, in addition to being
-  // issued on the first presence request and relogin presence requests.
-  if (this.browserToken_ != response.browserToken ||
-      firstRequest || !this.channel_) {
-    this.browserToken_ = response.browserToken;
-    this.allocateChannel_(firstRequest);
-  }
-
   // Reset the error counter. If we can heartbeat, then we're in good shape.
+  // If we had already reported errors, then say everything is clear so the
+  // user knows they're good.
+  var hadErrors = this.numErrors_ > 0;
+  if (hadErrors) {
+    bits.events.PubSub.publish(
+        this.shardId_, bits.events.EventType.ConnectionReestablishing);
+    this.reportInfo_('Connection reestablished');
+  }
   this.numErrors_ = 0;
+
+  // The browser token will be refreshed periodically, in addition to being
+  // issued on the first presence request, relogin presence requests, and
+  // after errors.
+  var reinitChannel = firstRequest || !this.channel_ || hadErrors;
+  if (this.browserToken_ != response.browserToken || reinitChannel) {
+    this.browserToken_ = response.browserToken;
+    this.allocateChannel_(reinitChannel);
+  }
 
   // Starting this timer repeatedly has no effect, but we don't want to
   // start it until we know the very first presence request was successful.
@@ -437,14 +457,34 @@ bits.connection.Connection.prototype.handleSubmitPostSuccessful_ =
 
 
 /**
+ * Report connect info to the user.
+ *
+ * @param {string} message Info message to show.
+ * @private
+ */
+bits.connection.Connection.prototype.reportInfo_ = function(message) {
+  var postMap = {
+      'shardId': this.shardId_,
+      'body': message,
+      'postTimeMs': (new goog.date.DateTime()).getTime(),
+      'archiveType': bits.posts.ArchiveType.INFO,
+      'postId': 'system-info-' + this.getNextMessageId_()
+  };
+  bits.events.PubSub.publish(
+      this.shardId_, bits.events.EventType.SystemInfo, postMap);
+};
+
+
+/**
  * Report an error to the user.
  *
- * @param {string} message Error message to show
+ * @param {string} message Error message to show.
  * @param {boolean=} opt_ignorable When true, it means the error message can
  *   be ignored and the caller will retry. If false, then this connection
  *   should be destroyed immediately.
  * @return {boolean} True if the caller can retry, regardless of whether or
  *   not it was ignorable. Callers should not retry if this returns false.
+ * @private
  */
 bits.connection.Connection.prototype.reportError_ =
     function(message, opt_ignorable) {

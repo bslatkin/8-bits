@@ -51,12 +51,15 @@
   display: block;
 }
 
-.bits-post-presence {
+.bits-post-presence,
+.bits-post-error,
+.bits-post-info {
   line-height: 20px;
   height: 20px;  /* need height for strict overflow */
-  color: #999;
 }
-.bits-post-presence-body {
+.bits-post-presence-body,
+.bits-post-error-body,
+.bits-post-info-body {
   /* line height here must be a pixel value or else 'em' rounding causes
      the page to jump inconsistent heights on each newly added post line. */
   line-height: 20px;
@@ -65,16 +68,12 @@
   clear: both;
 }
 
+.bits-post-presence {
+  color: #999;
+}
 .bits-post-error {
-  line-height: 20px;
-  height: 20px;  /* need height for strict overflow */
   color: #CC9610;
 }
-.bits-post-error-body {
-  /* line height here must be a pixel value or else 'em' rounding causes
-     the page to jump inconsistent heights on each newly added post line. */
-  line-height: 20px;
-  display: block;
-  float: left;
-  clear: both;
+.bits-post-info {
+  color: #389BCF;
 }

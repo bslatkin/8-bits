@@ -48,6 +48,7 @@ goog.require('bits.events');
  */
 bits.posts.ArchiveType = {
   CHAT: 'chat',
+  INFO: 'info',
   ERROR: 'error',
   ROSTER: 'roster',
   TOPIC_START: 'topic_start',
@@ -140,6 +141,10 @@ bits.posts.Post.prototype.createDom = function() {
       this.renderPresence(element);
       break;
 
+    case bits.posts.ArchiveType.INFO:
+      this.renderInfo(element);
+      break;
+
     case bits.posts.ArchiveType.ERROR:
       this.renderError(element);
       break;
@@ -201,6 +206,20 @@ bits.posts.Post.prototype.renderPresence = function(element) {
 
   var bodyDiv = this.dom_.createElement('span');
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-presence-body'));
+  bodyDiv.innerHTML = this.body;
+
+  element.appendChild(bodyDiv);
+};
+
+
+/**
+ * Render an info message as a post.
+ * @param {Element} element HTML element to decorate.
+ */
+bits.posts.Post.prototype.renderInfo = function(element) {
+  goog.dom.classes.add(element, 'bits-post-info');
+
+  var bodyDiv = this.dom_.createDom('span', 'bits-post-info-body');
   bodyDiv.innerHTML = this.body;
 
   element.appendChild(bodyDiv);
@@ -381,7 +400,10 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
       this.shardId, bits.events.EventType.ServerError,
       this.handlePostReceived, this);
   bits.events.PubSub.subscribe(
-      this.shardId_, bits.events.EventType.ConnectionReestablishing,
+      this.shardId, bits.events.EventType.SystemInfo,
+      this.handlePostReceived, this);
+  bits.events.PubSub.subscribe(
+      this.shardId, bits.events.EventType.ConnectionReestablishing,
       this.handleReestablishing_, this);
 };
 
@@ -423,7 +445,7 @@ bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
  */
 bits.posts.PostContainer.prototype.handleReestablishing_ = function() {
   this.postIdMap.clear();
-  this.container.removeChildren();
+  this.container.removeChildren(true);
 };
 
 

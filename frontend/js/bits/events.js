@@ -55,8 +55,12 @@ bits.events.EventType = {
   //  soundEnabled: True if the user wants to hear sounds.
   SubmitPresenceChange: 'SubmitPresenceChange',
 
-  // The last action resulted in a server-returned error that is fatal.
+  // The last action resulted in a server-returned error message.
   ServerError: 'ServerError',
+
+  // The connection or system wants to show the user some information, such
+  // as the fact that their connection has been reestablished after errors.
+  SystemInfo: 'SystemInfo',
 
   // The user wants to see the settings dialog.
   // No arguments.

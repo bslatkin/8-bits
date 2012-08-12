@@ -576,13 +576,13 @@ def marshal_shards(shard_list):
   """TODO
   """
   out = []
-  for shard in shard_list:
-    shard_dict = dict(
-      prettyName=,
-      creationTime=,
-      createdNickname=,
-      updateTime=,
-    )
+  # for shard in shard_list:
+  #   shard_dict = dict(
+  #     prettyName=,
+  #     creationTime=,
+  #     createdNickname=,
+  #     updateTime=,
+  #   )
 
   return out
 
