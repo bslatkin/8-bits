@@ -5,7 +5,6 @@ v2 features:
 - Reload client window on new version push
 
 v2 polish:
-- Move favicons into data URIs; otherwise they hit the cache
 - Clean up code comments and style everywhere
 - Pass through error traceback to users
 
@@ -18,8 +17,6 @@ Bugs:
 
 v3 features:
 - Add a tutorial section on settings dialog on first join
-- Play HTML5 sound when new chat arrives; put sound control in settings menu
-- Play sound on join and leave
 - Topics dissipate after 15 minutes of no activity
 - Add analytics events to link clicks & UI actions
 
