@@ -13,10 +13,6 @@ Bugs:
 - Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
 
-v2 production:
-- http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
-- gen204 handler on all event handlers and pubsub delivery
-
 -----
 
 v3 features:
@@ -24,6 +20,9 @@ v3 features:
 - Play HTML5 sound when new chat arrives; put sound control in settings menu
 - Play sound on join and leave
 - Topics dissipate after 15 minutes of no activity
+
+v3 production:
+- gen204 handler on all event handlers and pubsub delivery
 
 -----
 

@@ -79,6 +79,7 @@ class BaseUiHandler(webapp.RequestHandler):
   post_enabled = True
 
   def get(self, *args):
+    self.response.headers['Strict-Transport-Security'] = 'max-age=31536000'
     if not self.get_enabled:
       self.response.set_status(405)
       return
@@ -86,6 +87,7 @@ class BaseUiHandler(webapp.RequestHandler):
     self.handle_request(*args)
 
   def post(self, *args):
+    self.response.headers['Strict-Transport-Security'] = 'max-age=31536000'
     if not self.post_enabled:
       self.response.set_status(405)
       return
