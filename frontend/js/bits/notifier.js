@@ -309,6 +309,10 @@ bits.notifier.Notifier.prototype.handleWindowFocus_ = function(focused, event) {
   if ((event.type == goog.events.EventType.MOUSEOUT ||
        event.type == goog.events.EventType.MOUSEOVER) &&
       !!event.relatedTarget) {
+    // This is an event on a dom element within the window, not having to do
+    // with the window itself.
+    // TODO(bslatkin): Treat all such events as focus events, since it means
+    // the user was actively moving their mouse in the UI and thus it's active.
     return;
   }
   this.active_ = focused;
