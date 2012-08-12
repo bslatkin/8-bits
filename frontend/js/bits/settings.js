@@ -51,6 +51,12 @@ bits.settings.SettingsDialog = function(shardId, acceptedTerms) {
    * @type {Element?}
    * @private
    */
+  this.soundsEnabledEl_ = null;
+
+  /**
+   * @type {Element?}
+   * @private
+   */
   this.termsEl_ = null;
 
   /**
@@ -124,6 +130,8 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
   var element = this.getElement();
 
   this.nicknameEl_ = goog.dom.getElement('setting-nickname', element);
+  this.soundsEnabledEl_ = goog.dom.getElement(
+      'setting-sounds-enabled', element);
   this.termsEl_ = goog.dom.getElement('settings-terms', element);
 
   goog.style.setStyle(element, 'display', null);
@@ -159,6 +167,7 @@ bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
   if (e.key == goog.ui.Dialog.DefaultButtonKeys.OK) {
     var nickname = goog.string.trim(
         goog.dom.forms.getValue(this.nicknameEl_));
+    var soundsEnabled = goog.dom.forms.getValue(this.soundsEnabledEl_) == 'on';
 
     // TODO(bslatkin): Show a error message to users about invalid nicknames.
     if (!nickname || nickname.length > 32) {
@@ -170,7 +179,9 @@ bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
     bits.events.PubSub.publish(
         this.shardId_, bits.events.EventType.SubmitPresenceChange,
         nickname,
-        !this.acceptedTerms_);  // Only send param on changes
+        !this.acceptedTerms_,  // Only send param the first time.
+        soundsEnabled);
+
     this.acceptedTerms_ = true;
   } else if (e.key == bits.settings.SettingsDialog.DECLINE.key) {
     // User has declined the terms of service.

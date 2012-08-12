@@ -76,6 +76,12 @@
         id="setting-nickname" class="title" value="{{nickname}}">
   </div>
 
+  <div>
+    <input type="checkbox" name="sounds_enabled" id="setting-sounds-enabled"
+        {% if sounds_enabled %}checked="checked"{% endif %}>
+    <label for="setting-sounds-enabled" class="large">Sounds enabled</label>
+  </div>
+
   <div id="settings-terms">
     By clicking below I agree to the terms of use for
     8-bits of ephemera, which are available

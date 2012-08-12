@@ -728,6 +728,7 @@ class PresenceHandler(BaseRpcHandler):
     shard = self.get_required('shard', str)
     nickname = self.get_required('nickname', unicode, '', html_escape=True)
     accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
+    sounds_enabled = self.get_required('sounds_enabled', str, '') == 'true'
     retrying = self.get_required('retrying', str, '') == 'true'
 
     if 'shards' not in self.session:
@@ -769,6 +770,7 @@ class PresenceHandler(BaseRpcHandler):
         login.accepted_terms_version = config.terms_version
 
       login.online = True
+      login.sounds_enabled = sounds_enabled
       login.put()
 
       return last_nickname, user_connected, login.browser_token
@@ -1002,17 +1004,20 @@ class ChatroomHandler(BaseUiHandler):
     nickname = 'Anonymous'
     first_login = True
     must_accept_terms = True
+    sounds_enabled = True
+
     if 'shards' in self.session:
       # TODO(bslatkin): Reuse presence code here.
       user_id = self.session['shards'].get(shard_id)
       if user_id:
         login_record = models.LoginRecord.get_by_id(user_id)
-        if login_record.shard_id == shard_id:
+        if login_record and login_record.shard_id == shard_id:
           nickname = login_record.nickname
           first_login = False
           must_accept_terms = bool(
               login_record.accepted_terms_version !=
               config.terms_version)
+          sounds_enabled = login_record.sounds_enabled
 
     context = {
       'first_login': first_login,
@@ -1020,6 +1025,7 @@ class ChatroomHandler(BaseUiHandler):
       'nickname': xml.sax.saxutils.unescape(nickname),
       'shard_id': shard_id,
       'short_url_prefix': self.request.host_url,
+      'sounds_enabled': sounds_enabled,
     }
     context['params'] = json.dumps(context)
 

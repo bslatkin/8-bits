@@ -38,6 +38,7 @@ bits.startup = function(params) {
   var nickname = params.nickname;
   var firstLogin = params.first_login;
   var mustAcceptTerms = params.must_accept_terms;
+  var soundsEnabled = params.sounds_enabled;
 
   var c = new goog.debug.Console();
   c.setCapturing(true);
@@ -46,7 +47,8 @@ bits.startup = function(params) {
   logger.info('Starting up with params: ' + goog.json.serialize(params));
 
   // Set up all the various UI components.
-  var connection = new bits.connection.Connection(shardId, nickname);
+  var connection = new bits.connection.Connection(
+      shardId, nickname, soundsEnabled);
 
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));
@@ -60,7 +62,7 @@ bits.startup = function(params) {
   var shortUrlDialog = new bits.shorturl.ShortUrlDialog(shardId);
   shortUrlDialog.decorate(goog.dom.getElement('link-dialog'));
 
-  var notifier = new bits.notifier.Notifier(shardId);
+  var notifier = new bits.notifier.Notifier(shardId, soundsEnabled);
 
   // Now do initial actions.
   if (firstLogin || mustAcceptTerms) {

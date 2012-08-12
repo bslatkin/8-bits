@@ -33,9 +33,10 @@ goog.require('bits.posts.ArchiveType');
 /**
  * Constructs a new Notifier object.
  * @param {string} shardId ID of the shard to notify for.
+ * @param {boolean} soundsEnabled True if the user should hear sounds.
  * @constructor
  */
-bits.notifier.Notifier = function(shardId) {
+bits.notifier.Notifier = function(shardId, soundsEnabled) {
   goog.base(this);
 
   /**
@@ -49,6 +50,12 @@ bits.notifier.Notifier = function(shardId) {
    * @private
    */
   this.shardId_ = shardId;
+
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.soundsEnabled_ = soundsEnabled;
 
   var favEl = goog.dom.getElement('favicon');
 
@@ -139,6 +146,10 @@ bits.notifier.Notifier = function(shardId) {
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.PostReceived,
       this.handlePostReceived_, this);
+
+  bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.SubmitPresenceChange,
+      this.handleSubmitPresenceChange_, this);
 }
 goog.inherits(bits.notifier.Notifier, goog.Disposable);
 
@@ -281,10 +292,27 @@ bits.notifier.Notifier.prototype.handleTimer_ = function(e) {
 
 
 /**
+ * Handles when the user changes their settings.
+ *
+ * @param {string} nickname New nickname for the user.
+ * @param {boolean} acceptedTerms User has just accepted the terms of service.
+ * @param {boolean} soundsEnabled User wants to hear sounds.
+ * @private
+ */
+bits.notifier.Notifier.prototype.handleSubmitPresenceChange_ =
+    function(nickname, acceptedTerms, soundsEnabled) {
+  this.soundsEnabled_ = soundsEnabled;
+};
+
+
+/**
  * Plays a sound, making sure it does not play multiple times concurrently.
  * @param {HTMLMediaElement} audio Element to play.
  */
 bits.notifier.Notifier.prototype.playSound_ = function(audio) {
+  if (!this.soundsEnabled_) {
+    return;
+  }
   if (!audio.playing) {
     audio.playing = true;
     audio.play();
