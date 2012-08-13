@@ -239,10 +239,12 @@ def dirty_bit(shard, set=False, check=False, clear=False):
 def enqueue_apply_task(shard, post_id=None):
   """Enqueues a push task to apply new Posts to be sequenced.
 
-  post_id, if supplied, indicates to the apply task which posts it should
-  apply at the very least. This lets us handle the race condition where
-  a pull task is enqueued, then the apply task runs, the apply task queries
-  for pull tasks, finds none, and gives up, leaving the pull task around.
+  Args:
+    shard: Shard to submit an apply task for.
+    post_id: Optional. Indicates to the apply task which posts it should
+      apply at the very least. This lets us handle the race condition where
+      a pull task is enqueued, then the apply task runs, the apply task queries
+      for pull tasks, finds none, and gives up, leaving the pull task around.
   """
   join_index = 1
   shard_record = yield models.Shard.get_by_id_async(
@@ -302,8 +304,7 @@ def insert_post(shard, **kwargs):
   if not post_id:
     post_id = human_uuid()
 
-  if 'post_time' not in kwargs:
-    kwargs['post_time'] = datetime.datetime.now()
+  kwargs['post_time'] = datetime.datetime.now()
 
   post_key = ndb.Key(models.Post._get_kind(), post_id)
   post = models.Post(
@@ -383,8 +384,15 @@ def apply_posts(shard=None,
       queue.lease_tasks_by_tag(lease_seconds, max_tasks, tag=str(shard)))
 
   receipt_key_list = []
+  new_topic = None
   for task in task_list:
     params = task.extract_params()
+
+    # Extract the new topic shard associated with this task, if any. The last
+    # one wins. If all of the found posts have already been applied, then topic
+    # assignment will be ignored.
+    new_topic = params.get('new_topic') or new_topic
+
     post_id_list = params['post_ids']
     if not isinstance(post_id_list, list):
       post_id_list = [post_id_list]
@@ -415,9 +423,12 @@ def apply_posts(shard=None,
         models.Receipt._get_kind(), shard)
     receipt = receipt_key.get()
     if receipt:
-      logging.warning('No post application to do for shard=%r, but'
-                      'post_id=%r already applied; dropping this task',
+      logging.warning('No post application to do for shard=%r, but post_id=%r '
+                      'already applied; doing nothing in this task',
                       shard, insertion_post_id)
+      new_topic = None
+      # Do not 'return' here. We need to increment the shard sequence or else
+      # tasks will not run for this shard in the future because of de-duping.
     else:
       raise Error('No post application to do for shard=%r, but'
                   'post_id=%r has not been applied; will retry' %
@@ -427,6 +438,11 @@ def apply_posts(shard=None,
     shard_record = models.Shard.get_by_id(shard)
     # TODO(bslatkin): Just drop this task entirely if this happens
     assert shard_record
+
+    # One of the tasks in this batch has a topic assignment. Apply it here.
+    if new_topic:
+      shard_record.current_topic = new_topic
+      shard_record.topic_change_time = datetime.datetime.now()
 
     new_sequence_numbers = list(
         xrange(shard_record.sequence_number,
@@ -903,8 +919,13 @@ class PostHandler(BaseRpcHandler):
     if archive_enum not in models.Post.ALLOWED_ARCHIVES:
       raise BadParameterValueError(
           '"%s" is not a valid post type' % archive_type)
+
     body = self.get_required('body', unicode, html_escape=True)
     post_id = self.get_required('post_id', str)
+
+    new_topic = self.get_required('new_topic', str, '')
+    if archive_enum != models.Post.TOPIC_CHANGE:
+      new_topic = None
 
     login_record = self.require_active_login()
 
@@ -914,7 +935,8 @@ class PostHandler(BaseRpcHandler):
       archive_type=archive_enum,
       nickname=login_record.nickname,
       user_id=login_record.user_id,
-      body=body)
+      body=body,
+      new_topic=new_topic)
     self.json_response['postId'] = post_key.id()
 
 
@@ -1009,26 +1031,34 @@ class CreateTopicHandler(BaseRpcHandler):
   require_shard = True
 
   def handle(self):
-    pretty_name = self.get_required(
-        'pretty_name', unicode, '', html_escape=True)
+    title = self.get_required(
+        'title', unicode, '', html_escape=True)
     description = self.get_required(
         'description', unicode, '', html_escape=True)
 
     login_record = self.require_active_login()
 
     shard = models.Shard(
-        pretty_name=pretty_name,
+        title=title,
         description=description,
         creation_nickname=login_record.nickname,
         root_shard=self.shard_id)
     shard.put()
 
+    insert_post(
+        shard,
+        archive_type=models.Post.TOPIC_START,
+        nickname=login_record.nickname,
+        user_id=self.user_id,
+        title=title,
+        body=description,
+        new_topic=shard.shard_id)
+
     self.json_response['shardId'] = shard.shard_id
 
 
 class ListTopicsHandler(BaseRpcHandler):
-  """TODO
-  """
+  """Finds topics associated with a root shard and the user's read state."""
 
   require_shard = True
 
@@ -1054,7 +1084,7 @@ class ListTopicsHandler(BaseRpcHandler):
     for shard, read_state in zip(shard_list, read_state_list):
       shard_dict = dict(
         shardId=shard.shard_id,
-        prettyName=shard.pretty_name,
+        title=shard.title,
         description=shard.description,
         creationTimeMs=models.datetime_to_stamp_ms(shard.creation_time),
         creationNickname=shard.creation_nickname,

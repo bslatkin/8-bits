@@ -64,10 +64,10 @@ class Shard(ndb.Model):
   def _get_kind(cls):
     return 'S'
 
-  # Immutable properties set upon shard creation. For topic shards, pretty_name
+  # Immutable properties set upon shard creation. For topic shards, title
   # will probably contain a URL. The description of the topic is what the
   # initial user supplied at topic creation time.
-  pretty_name = ndb.TextProperty(default='')
+  title = ndb.TextProperty(default='')
   description = ndb.TextProperty(default='')
   creation_nickname = ndb.TextProperty(default='')
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
@@ -79,6 +79,7 @@ class Shard(ndb.Model):
   # Shard ID of the current topic being discussed. Unset when there is no
   # current topic. Only set for root shards.
   current_topic = ndb.StringProperty(indexed=False)
+  topic_change_time = ndb.DateTimeProperty(indexed=False)
 
   # Shard ID that owns this topic shard. Will be unset for root shards.
   # TODO(bslatkin): Don't allow users to login to shards that have a root,
@@ -184,6 +185,7 @@ class Post(ndb.Model):
     USER_LOGOUT,
     USER_UPDATE,
     CHAT,
+    TOPIC_START,
     TOPIC_CHANGE,
   ])
   ARCHIVE_MAPPING = {
@@ -197,14 +199,16 @@ class Post(ndb.Model):
   ARCHIVE_REVERSE_MAPPING = dict((v, k) for k, v in ARCHIVE_MAPPING.items())
 
   # Allowed post types directly from users.
-  ALLOWED_ARCHIVES = frozenset([CHAT])
+  ALLOWED_ARCHIVES = frozenset([CHAT, TOPIC_CHANGE])
 
   archive_type = ndb.IntegerProperty(
       required=True, indexed=False, choices=ARCHIVE_TYPES)
   nickname = ndb.TextProperty(required=True)
   user_id = ndb.TextProperty(required=True)
-  body = ndb.TextProperty(required=True)  # chat, topic intro
   post_time = ndb.DateTimeProperty(indexed=False)
+  title = ndb.TextProperty()
+  body = ndb.TextProperty(required=True)
+  new_topic = ndb.TextProperty()
 
   @property
   def post_id(self):
