@@ -44,7 +44,8 @@ dev_appserver.py -a 0.0.0.0 .
 
 * To compile the Closure JS into a binary:
 
-cd frontend/js/bits
+cd frontend
+./gendepsfile.sh
 ./compile.sh
 
 
