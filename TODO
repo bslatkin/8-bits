@@ -1,5 +1,4 @@
 Bugs:
-- Make splitpane collapse down to show all chat, not up
 - after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
 
 -----
@@ -20,6 +19,9 @@ v3 features:
 - Add a tutorial section on settings dialog on first join
 - Topics dissipate after 15 minutes of no activity
 - Add analytics events to link clicks & UI actions
+
+v3 polish:
+- Scrollbar for Firefox etc that looks decent
 
 v3 production:
 - gen204 handler on all event handlers and pubsub delivery
