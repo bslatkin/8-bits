@@ -62,6 +62,9 @@ class BadParameterValueError(Error):
 class NotAuthorizedError(Error):
   """The user is not authorized to do this action."""
 
+class TopicShardError(Error):
+  """Topic shards cannot be used in this way."""
+
 class PostError(Error):
   """A posting could not be made."""
 
@@ -104,15 +107,15 @@ class BaseHandler(webapp.RequestHandler):
                    repeated=False,
                    html_escape=False):
     """Retrieves a required parameter with the given name and default."""
-    value_list = self.request.get(allow_multiple=repeated)
+    value_list = self.request.get_all(name)
+
+    if default is None and not value_list:
+      raise MissingParameterError('Parameter "%s" is required' % name)
+    else:
+      value_list.append(default)
 
     out_list = []
     for value in value_list:
-      if value == '':
-        value = default
-      if value is None:
-        raise MissingParameterError('Parameter "%s" is required' % name)
-
       try:
         value = type_constructor(value)
       except ValueError:
@@ -210,6 +213,8 @@ class BaseRpcHandler(BaseHandler):
   def _verify_shard_login(self):
     """Verifies the user is logged into the shard they assert, return it."""
     shard = self.get_required('shard', str)
+    if 'shards' not in self.session:
+      raise NotAuthorizedError('Your cookie has no valid shards')
     if shard not in self.session['shards']:
       raise NotAuthorizedError('You may not access shard %s' % shard)
     return shard
@@ -284,12 +289,16 @@ def enqueue_cleanup_task(shard):
                   shard)
 
 
-def enqueue_post_task(shard, post_ids):
+def enqueue_post_task(shard, post_ids, new_topic=None):
   """Enqueues a task to post a new task on a shard."""
+  params_dict = dict(shard=shard, post_ids=post_ids)
+  if new_topic is not None:
+    params_dict.update(new_topic=new_topic)
+
   taskqueue.Task(
     method='PULL',
     tag=str(shard),
-    params=dict(shard=shard, post_ids=post_ids),
+    params=params_dict,
   ).add(config.pending_queue, transactional=ndb.in_transaction())
 
 
@@ -303,6 +312,8 @@ def insert_post(shard, **kwargs):
   post_id = kwargs.pop('post_id', None)
   if not post_id:
     post_id = human_uuid()
+
+  new_topic = kwargs.get('new_topic', None)
 
   kwargs['post_time'] = datetime.datetime.now()
 
@@ -320,8 +331,10 @@ def insert_post(shard, **kwargs):
 
     yield post.put_async(use_memcache=False, use_cache=False)
 
-    # Pull task that indicates the post to apply
-    enqueue_post_task(shard, [post_id])
+    # Pull task that indicates the post to apply. This must encode the
+    # new_topic data for this post so the apply_posts() function doesn't
+    # need the models.Post entity in order to make progress.
+    enqueue_post_task(shard, [post_id], new_topic=new_topic)
 
   # Notify all users of the post.
   futures = []
@@ -434,6 +447,8 @@ def apply_posts(shard=None,
                   'post_id=%r has not been applied; will retry' %
                   (shard, insertion_post_id))
 
+  now = datetime.datetime.now()
+
   def txn():
     shard_record = models.Shard.get_by_id(shard)
     # TODO(bslatkin): Just drop this task entirely if this happens
@@ -441,8 +456,10 @@ def apply_posts(shard=None,
 
     # One of the tasks in this batch has a topic assignment. Apply it here.
     if new_topic:
+      logging.debug('Changing topic from %r to %r',
+                    shard_record.current_topic, new_topic)
       shard_record.current_topic = new_topic
-      shard_record.topic_change_time = datetime.datetime.now()
+      shard_record.topic_change_time = now
 
     new_sequence_numbers = list(
         xrange(shard_record.sequence_number,
@@ -522,6 +539,7 @@ def marshal_posts(shard, post_list):
       body=post.body,
       postTimeMs=models.datetime_to_stamp_ms(post.post_time),
       sequenceId=getattr(post, 'sequence', None),
+      newTopicId=post.new_topic,
       postId=post.post_id)
     out.append(post_dict)
   return out
@@ -826,6 +844,11 @@ class PresenceHandler(BaseRpcHandler):
     sounds_enabled = self.get_required('sounds_enabled', str, '') == 'true'
     retrying = self.get_required('retrying', str, '') == 'true'
 
+    # Make sure this shard can be logged into.
+    shard_record = models.Shard.get_by_id(shard)
+    if shard_record.root_shard:
+      raise TopicShardError('Cannot login to topic shard')
+
     if 'shards' not in self.session:
       # First login on any shard with no cookie present.
       self.session['shards'] = {}
@@ -1039,14 +1062,15 @@ class CreateTopicHandler(BaseRpcHandler):
     login_record = self.require_active_login()
 
     shard = models.Shard(
+        id=human_uuid(),
         title=title,
         description=description,
         creation_nickname=login_record.nickname,
-        root_shard=self.shard_id)
+        root_shard=self.shard)
     shard.put()
 
     insert_post(
-        shard,
+        self.shard,
         archive_type=models.Post.TOPIC_START,
         nickname=login_record.nickname,
         user_id=self.user_id,
@@ -1063,12 +1087,14 @@ class ListTopicsHandler(BaseRpcHandler):
   require_shard = True
 
   def handle(self):
+    root_shard_future = models.Shard.get_by_id_async(self.shard)
+
     oldest_update_time = (
         datetime.datetime.now() -
         datetime.timedelta(seconds=config.ephemeral_lifetime_seconds))
 
     query = models.Shard.query()
-    query = query.filter(models.Shard.root_shard == self.shard_id)
+    query = query.filter(models.Shard.root_shard == self.shard)
     query = query.filter(models.Shard.update_time > oldest_update_time)
     query = query.order(-models.Shard.update_time)
     shard_list = query.fetch(100);
@@ -1098,11 +1124,16 @@ class ListTopicsHandler(BaseRpcHandler):
             firstReadTime=models.datetime_to_stamp_ms(
                 read_state.first_read_time),
             lastReadSequence=read_state.last_read_sequence,
-            lastReadTime=models.datetime_to_stamp_ms(
+            lastReadTimeMs=models.datetime_to_stamp_ms(
                 read_state.last_read_time))
 
       out.append(shard_dict)
 
+    shard_record = root_shard_future.get_result()
+
+    self.json_response['currentTopicId'] = shard_record.current_topic
+    self.json_response['currentTopicTimeMs'] = models.datetime_to_stamp_ms(
+        shard_record.topic_change_time)
     self.json_response['topics'] = out
 
 
@@ -1208,6 +1239,12 @@ class ChatroomHandler(BaseHandler):
 
       shard = ndb.transaction(txn)
 
+    # Do not allow users to directly access topic shards.
+    if shard.root_shard:
+      # TODO(bslatkin): Make this pretty.
+      self.response.set_status(404)
+      return
+
     nickname = 'Anonymous'
     first_login = True
     must_accept_terms = True
@@ -1279,6 +1316,8 @@ ROUTES = webapp.WSGIApplication([
 SESSION_OPTS = {
   'session.type': 'cookie',
   'session.key': '8bits',
+  'session.httponly': True,
+  'session.secure': not config.debug,
   'session.cookie_expires': False,
   'session.validate_key': config.session_validate_key,
   'session.encrypt_key': config.session_encrypt_key,

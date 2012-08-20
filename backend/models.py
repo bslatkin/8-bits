@@ -53,7 +53,7 @@ def datetime_to_stamp_seconds(when):
 
 def datetime_to_stamp_ms(when):
   """Converts a datetime to a timestamp in milliseconds since the epoch."""
-  return int(datetime_to_stamp_seconds * 1000.0)
+  return int(datetime_to_stamp_seconds(when) * 1000.0)
 
 ################################################################################
 
@@ -82,8 +82,6 @@ class Shard(ndb.Model):
   topic_change_time = ndb.DateTimeProperty(indexed=False)
 
   # Shard ID that owns this topic shard. Will be unset for root shards.
-  # TODO(bslatkin): Don't allow users to login to shards that have a root,
-  # otherwise they'll be able to use the whole UI in a subset of the stream.
   root_shard = ndb.StringProperty()
 
   @property

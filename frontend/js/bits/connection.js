@@ -563,9 +563,7 @@ bits.connection.Connection.prototype.requestRoster_ = function() {
 bits.connection.Connection.prototype.handleRequestRosterSuccessful_ =
     function(event) {
   if (!event.target.isSuccess()) {
-    if (this.reportError_('Could not get roster', true)) {
-      this.requestRoster_();
-    }
+    this.reportError_('Could not get roster', true);
     return;
   }
 

@@ -43,3 +43,10 @@ How topics will work:
 * Save read state every 10 seconds if the user has scrolled the window at all. Only can set read state for non-default topics. Default topic read-state will always scroll to the latest post.
 
 * If you are looking at topic X (which is not the current topic) and suddenly someone else changes it to the current topic, then your UI should switch you back to the default topic menu state and start showing you live chats. The same thing happens when you change the topic back to what you were looking at.
+
+# TODO(bslatkin): Mark that we should insert a pseudo task to expire
+# the current topic and tell all users about the expiration. Do this
+# by inserting a new post from the system to change the topic to None
+# outside this transaction.
+
+* Menu actually has 3 states: No topic currently; topic selected by someone else but seeing all chat; digest mode where you're catching up on a selected topic
