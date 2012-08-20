@@ -4,7 +4,7 @@ body {
   width: 100%;
 }
 body {
-  background-color: #ccc;
+  background-color: #eee;
 }
 a.bits-chatroom-link {
   word-wrap: break-word;
@@ -38,5 +38,5 @@ a.bits-chatroom-link:active {
 .bits-post-container,
 .bits-chat-input {
   color: #000;
-  background-color: #ccc;
+  background-color: #eee;
 }
