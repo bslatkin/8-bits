@@ -1087,7 +1087,8 @@ class ListTopicsHandler(BaseRpcHandler):
   require_shard = True
 
   def handle(self):
-    root_shard_future = models.Shard.get_by_id_async(self.shard)
+    root_shard_future = models.Shard.get_by_id_async(
+        self.shard, use_cache=False, use_memcache=False)
 
     oldest_update_time = (
         datetime.datetime.now() -
@@ -1102,8 +1103,8 @@ class ListTopicsHandler(BaseRpcHandler):
     # Get the current user's readstate for each shard that was found.
     read_state_key_list = [
         ndb.Key(models.LoginRecord._get_kind(), self.user_id,
-                models.ReadState._get_kind(), shard_id)
-        for shard_id in shard_list]
+                models.ReadState._get_kind(), shard.shard_id)
+        for shard in shard_list]
     read_state_list = ndb.get_multi(read_state_key_list)
 
     out = []
@@ -1132,8 +1133,9 @@ class ListTopicsHandler(BaseRpcHandler):
     shard_record = root_shard_future.get_result()
 
     self.json_response['currentTopicId'] = shard_record.current_topic
-    self.json_response['currentTopicTimeMs'] = models.datetime_to_stamp_ms(
-        shard_record.topic_change_time)
+    if shard_record.topic_change_time:
+      self.json_response['currentTopicTimeMs'] = models.datetime_to_stamp_ms(
+          shard_record.topic_change_time)
     self.json_response['topics'] = out
 
 
