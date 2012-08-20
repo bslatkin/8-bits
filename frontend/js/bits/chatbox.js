@@ -21,7 +21,6 @@ goog.provide('bits.chatbox.ChatBox');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('goog.dom.forms');
-goog.require('goog.dom.ViewportSizeMonitor');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.math.Size');
 goog.require('goog.string');
@@ -71,12 +70,6 @@ bits.chatbox.ChatBox = function(shardId) {
    * @private
    */
   this.kh_ = null;
-
-  /**
-   * @type {goog.dom.ViewportSizeMonitor}
-   * @private
-   */
-  this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
 }
 goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
 
@@ -126,8 +119,6 @@ bits.chatbox.ChatBox.prototype.enterDocument = function() {
 
   this.kh_ = new goog.events.KeyHandler(this.chatInput_.getElement());
   this.eh_.listen(this.kh_, goog.events.KeyHandler.EventType.KEY, this.onKey_);
-  // this.eh_.listen(
-  //     this.sizeMonitor_, goog.events.EventType.RESIZE, this.resize_);
 };
 
 
@@ -166,37 +157,6 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
     goog.dom.forms.setValue(this.chatInput_.getElement(), '');
   }
 };
-// 
-// 
-// /**
-//  * Sets the height of the chat input widget.
-//  * @param {number} height New height of the chat input.
-//  * @private
-//  */
-// bits.chatbox.ChatBox.prototype.setChatInputHeight_ = function(height) {
-//   var currentSize = goog.style.getBorderBoxSize(this.getElement());
-//   var firstSize = goog.style.getBorderBoxSize(
-//       this.postContainer_.getElement());
-//   var firstComponentNewHeight = currentSize.height - height;
-//   this.splitPane_.setFirstComponentSize(firstComponentNewHeight);
-// };
-
-// 
-// /**
-//  * Resize this element to fill its parent container. Will keep the chatbox
-//  * part of the splitpane the same size.
-//  * @private
-//  */
-// bits.chatbox.ChatBox.prototype.resize_ = function() {
-//   var chatInputHeight = this.getChatInputHeight_();
-// 
-//   var parentSize = goog.style.getBorderBoxSize(this.getElement().parentNode);
-//   this.splitPane_.setSize(
-//       new goog.math.Size(parentSize.width, parentSize.height));
-// 
-//   // Keep the chat input the same height when the whole chatbox is resized.
-//   this.setChatInputHeight_(chatInputHeight);
-// };
 
 
 /**
