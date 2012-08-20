@@ -4,9 +4,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  border-top: 1px solid #ccc;
+  border: 0;
   height: 29px;
-  background-color: #eee;
   line-height: 29px;
   vertical-align: baseline;
 }
@@ -36,4 +35,12 @@
 
 .footer-logo {
   padding: 2px 0;
+}
+
+.bits-footer-bar a:link,
+.bits-footer-bar a:visited,
+.bits-footer-bar a:hover,
+.bits-footer-bar a:active {
+  color: #555;
+  text-decoration: none;
 }

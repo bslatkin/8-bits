@@ -1,7 +1,7 @@
 /* goog.ui.Dialog styling */
 .modal-dialog {
-  background: #A2B3B3;
-  border: 1px solid #555;
+  background: #ccc;
+  border: 0;
   color: #000;
   padding: 3px;
   position: absolute;

@@ -27,8 +27,6 @@ goog.require('goog.math.Size');
 goog.require('goog.string');
 goog.require('goog.ui.Component');
 goog.require('goog.ui.LabelInput');
-goog.require('goog.ui.SplitPane');
-goog.require('goog.ui.SplitPane.Orientation');
 
 goog.require('bits.events');
 goog.require('bits.posts.PostContainer');
@@ -63,15 +61,6 @@ bits.chatbox.ChatBox = function(shardId) {
       'Type chat messages here');
 
   /**
-   * @type {goog.ui.SplitPane}
-   * @private
-   */
-  this.splitPane_ = new goog.ui.SplitPane(
-        this.postContainer_,
-        this.chatInput_,
-        goog.ui.SplitPane.Orientation.VERTICAL);
-
-  /**
    * @type {goog.events.EventHandler}
    * @private
    */
@@ -90,13 +79,6 @@ bits.chatbox.ChatBox = function(shardId) {
   this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
 }
 goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
-
-
-/**
- * Thickness of the chatbox splitpane handle.
- * @type {number}
- */
-bits.chatbox.ChatBox.HANDLE_HEIGHT = 4;
 
 
 /**
@@ -121,11 +103,6 @@ bits.chatbox.ChatBox.prototype.decorateInternal = function(element) {
 
   var inputElem = goog.dom.getElementByClass('bits-chat-input', element);
   this.chatInput_.decorate(inputElem);
-
-  this.splitPane_.decorate(element);
-  this.splitPane_.setContinuousResize(true);
-  this.splitPane_.setHandleSize(bits.chatbox.ChatBox.HANDLE_HEIGHT);
-  this.setChatInputHeight_(bits.chatbox.ChatBox.INPUT_DEFAULT_HEIGHT);
 };
 
 
@@ -149,8 +126,8 @@ bits.chatbox.ChatBox.prototype.enterDocument = function() {
 
   this.kh_ = new goog.events.KeyHandler(this.chatInput_.getElement());
   this.eh_.listen(this.kh_, goog.events.KeyHandler.EventType.KEY, this.onKey_);
-  this.eh_.listen(
-      this.sizeMonitor_, goog.events.EventType.RESIZE, this.resize_);
+  // this.eh_.listen(
+  //     this.sizeMonitor_, goog.events.EventType.RESIZE, this.resize_);
 };
 
 
@@ -189,49 +166,37 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
     goog.dom.forms.setValue(this.chatInput_.getElement(), '');
   }
 };
+// 
+// 
+// /**
+//  * Sets the height of the chat input widget.
+//  * @param {number} height New height of the chat input.
+//  * @private
+//  */
+// bits.chatbox.ChatBox.prototype.setChatInputHeight_ = function(height) {
+//   var currentSize = goog.style.getBorderBoxSize(this.getElement());
+//   var firstSize = goog.style.getBorderBoxSize(
+//       this.postContainer_.getElement());
+//   var firstComponentNewHeight = currentSize.height - height;
+//   this.splitPane_.setFirstComponentSize(firstComponentNewHeight);
+// };
 
-
-/**
- * Gets the height of the chat input widget.
- * @return {number} Current height of the chat input.
- * @private
- */
-bits.chatbox.ChatBox.prototype.getChatInputHeight_ = function() {
-  var currentSize = goog.style.getBorderBoxSize(this.getElement());
-  var firstSize = this.splitPane_.getFirstComponentSize();
-  return currentSize.height - firstSize - bits.chatbox.ChatBox.HANDLE_HEIGHT;
-};
-
-
-/**
- * Sets the height of the chat input widget.
- * @param {number} height New height of the chat input.
- * @private
- */
-bits.chatbox.ChatBox.prototype.setChatInputHeight_ = function(height) {
-  var currentSize = goog.style.getBorderBoxSize(this.getElement());
-  var firstSize = this.splitPane_.getFirstComponentSize();
-  var firstComponentNewHeight = currentSize.height - height -
-      bits.chatbox.ChatBox.HANDLE_HEIGHT;
-  this.splitPane_.setFirstComponentSize(firstComponentNewHeight);
-};
-
-
-/**
- * Resize this element to fill its parent container. Will keep the chatbox
- * part of the splitpane the same size.
- * @private
- */
-bits.chatbox.ChatBox.prototype.resize_ = function() {
-  var chatInputHeight = this.getChatInputHeight_();
-
-  var parentSize = goog.style.getBorderBoxSize(this.getElement().parentNode);
-  this.splitPane_.setSize(
-      new goog.math.Size(parentSize.width, parentSize.height));
-
-  // Keep the chat input the same height when the whole chatbox is resized.
-  this.setChatInputHeight_(chatInputHeight);
-};
+// 
+// /**
+//  * Resize this element to fill its parent container. Will keep the chatbox
+//  * part of the splitpane the same size.
+//  * @private
+//  */
+// bits.chatbox.ChatBox.prototype.resize_ = function() {
+//   var chatInputHeight = this.getChatInputHeight_();
+// 
+//   var parentSize = goog.style.getBorderBoxSize(this.getElement().parentNode);
+//   this.splitPane_.setSize(
+//       new goog.math.Size(parentSize.width, parentSize.height));
+// 
+//   // Keep the chat input the same height when the whole chatbox is resized.
+//   this.setChatInputHeight_(chatInputHeight);
+// };
 
 
 /**
