@@ -91,7 +91,7 @@ bits.chatbox.ChatBox.prototype.decorateInternal = function(element) {
 
   var element = this.getElement();
 
-  var postElem = goog.dom.getElementByClass('bits-post-container', element);
+  var postElem = goog.dom.getElementByClass('bits-posts-scrollable', element);
   this.postContainer_.decorate(postElem);
 
   var inputElem = goog.dom.getElementByClass('bits-chat-input', element);
