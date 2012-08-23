@@ -124,6 +124,7 @@ bits.ui.Scrollbar.prototype.updateFromTarget_ = function() {
   this.setMinimum(0);
   this.setMaximum(adjustedHeight);
   this.setValue(adjustedHeight - this.target_.scrollTop);
+  this.setBlockIncrement(adjustedHeight / 10);
 
   // If we're at the very top or the bottom, then don't activate. This
   // prevents the scrollbar from flashing when a new item is added to the
