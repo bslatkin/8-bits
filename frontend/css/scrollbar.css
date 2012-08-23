@@ -25,6 +25,7 @@
   -moz-transition: opacity .2s ease-out;
   opacity: 0.05;
 }
+.goog-slider-vertical:hover .goog-slider-thumb,
 .active .goog-slider-thumb {
   opacity: 0.5;
 }
