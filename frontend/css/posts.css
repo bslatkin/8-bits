@@ -3,14 +3,6 @@
   overflow: hidden;
 }
 
-.bits-posts-scrollable .goog-slider-vertical {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 10px;
-}
-
 .bits-post-container {
   border: 0;
   padding: 0 10px 0 0;

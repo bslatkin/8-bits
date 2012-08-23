@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="/static/1/css/scrollbar.css">
 
     <style type="text/css" media="screen">
+      body {
+        background-color: #eee;
+      }
       .chatbox-wrapper {
         border: 1px solid black;
         display: inline-block;
@@ -14,6 +17,9 @@
       .bits-chatbox-container {
         width: 500px;
         height: 400px;
+      }
+      .bits-chat-input {
+        background-color: #eee;
       }
     </style>
 
@@ -34,8 +40,10 @@
 
       <div class="bits-chatbox-container">
         <div id="chatbox" class="bits-chatbox">
-          <div class="bits-posts-scrollable">
-            <div class="bits-post-container"></div>
+          <div class="bits-chatbox-posts">
+            <div class="bits-posts-scrollable">
+              <div class="bits-post-container"></div>
+            </div>
           </div>
           <textarea class="bits-chat-input"></textarea>
         </div>

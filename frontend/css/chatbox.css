@@ -14,12 +14,15 @@
   left: 0;
 }
 
-.bits-chatbox .bits-post-container {
+.bits-chatbox-posts {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
+  top: 2px;
   bottom: 90px;
+}
+.bits-chatbox-posts .bits-posts-scrollable {
+  height: 100%;
 }
 
 .bits-chat-input {

@@ -1,16 +1,30 @@
 .goog-slider-vertical {
-  background-color: ThreeDFace;
-  position: relative;
   overflow: hidden;
   outline: none;
+  border: 2px solid #eee;
+  background-color: #eee;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
 }
 .goog-slider-thumb {
   position: absolute;
-  background-color: ThreeDShadow;
+  background-color: #000;
   overflow: hidden;
 }
 .goog-slider-vertical .goog-slider-thumb {
   left: 0;
   height: 20px;
   width: 100%;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-transition: opacity .2s ease-out;
+  -moz-transition: opacity .2s ease-out;
+  opacity: 0.05;
+}
+.active .goog-slider-thumb {
+  opacity: 0.5;
 }

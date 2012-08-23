@@ -18,7 +18,9 @@
 
 goog.provide('bits.ui.Scrollbar');
 
+goog.require('goog.Timer');
 goog.require('goog.dom');
+goog.require('goog.dom.classes');
 goog.require('goog.events');
 goog.require('goog.style');
 goog.require('goog.ui.Component');
@@ -46,6 +48,15 @@ bits.ui.Scrollbar = function() {
    * @private
    */
   this.eh_ = new goog.events.EventHandler(this);
+
+  /**
+   * @type {goog.Timer}
+   * @private
+   */
+  this.deactiveTimer_ = new goog.Timer(500);
+
+  this.eh_.listen(
+      this.deactiveTimer_, goog.Timer.TICK, this.handleDeactivate_);
 }
 goog.inherits(bits.ui.Scrollbar, goog.ui.Slider);
 
@@ -57,7 +68,6 @@ goog.inherits(bits.ui.Scrollbar, goog.ui.Slider);
  */
 bits.ui.Scrollbar.prototype.setTarget = function(target) {
   this.target_ = target;
-  this.updateFromTarget_();
 };
 
 
@@ -90,6 +100,8 @@ bits.ui.Scrollbar.prototype.enterDocument = function() {
       this.target_, goog.events.EventType.SCROLL, this.updateFromTarget_);
   this.eh_.listen(
       this, goog.ui.Component.EventType.CHANGE, this.updateFromSlider_);
+
+  this.updateFromTarget_();
 };
 
 
@@ -112,6 +124,10 @@ bits.ui.Scrollbar.prototype.updateFromTarget_ = function() {
   this.setMaximum(this.target_.scrollHeight - targetSize.height);
   this.setValue(
       this.target_.scrollHeight - this.target_.scrollTop - targetSize.height);
+
+  this.deactiveTimer_.stop();
+  this.deactiveTimer_.start();
+  goog.dom.classes.add(this.getElement(), 'active');
 };
 
 
@@ -124,4 +140,18 @@ bits.ui.Scrollbar.prototype.updateFromSlider_ = function(e) {
   var targetSize = goog.style.getSize(this.target_);
   this.target_.scrollTop =
       this.target_.scrollHeight - this.getValue() - targetSize.height;
+
+  this.deactiveTimer_.stop();
+  this.deactiveTimer_.start();
+  goog.dom.classes.add(this.getElement(), 'active');
+};
+
+
+/**
+ * Handles when interaction with the scrollbar has finished.
+ * @private
+ */
+bits.ui.Scrollbar.prototype.handleDeactivate_ = function(e) {
+  this.deactiveTimer_.stop();
+  goog.dom.classes.remove(this.getElement(), 'active');
 };
