@@ -119,11 +119,19 @@ bits.ui.Scrollbar.prototype.exitDocument = function() {
  */
 bits.ui.Scrollbar.prototype.updateFromTarget_ = function() {
   var targetSize = goog.style.getSize(this.target_);
+  var adjustedHeight = this.target_.scrollHeight - targetSize.height;
 
   this.setMinimum(0);
-  this.setMaximum(this.target_.scrollHeight - targetSize.height);
-  this.setValue(
-      this.target_.scrollHeight - this.target_.scrollTop - targetSize.height);
+  this.setMaximum(adjustedHeight);
+  this.setValue(adjustedHeight - this.target_.scrollTop);
+
+  // If we're at the very top or the bottom, then don't activate. This
+  // prevents the scrollbar from flashing when a new item is added to the
+  // container and it auto-scrolls to bring that item into view.
+  if (this.target_.scrollTop == 0 ||
+      this.target_.scrollTop == adjustedHeight) {
+    return;
+  }
 
   this.deactiveTimer_.stop();
   this.deactiveTimer_.start();
@@ -138,12 +146,8 @@ bits.ui.Scrollbar.prototype.updateFromTarget_ = function() {
  */
 bits.ui.Scrollbar.prototype.updateFromSlider_ = function(e) {
   var targetSize = goog.style.getSize(this.target_);
-  this.target_.scrollTop =
-      this.target_.scrollHeight - this.getValue() - targetSize.height;
-
-  this.deactiveTimer_.stop();
-  this.deactiveTimer_.start();
-  goog.dom.classes.add(this.getElement(), 'active');
+  var adjustedHeight = this.target_.scrollHeight - targetSize.height;
+  this.target_.scrollTop = adjustedHeight - this.getValue();
 };
 
 
