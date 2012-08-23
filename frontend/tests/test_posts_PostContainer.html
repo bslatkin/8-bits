@@ -10,13 +10,22 @@
       goog.require('bits.posts.PostContainer');
       goog.require('goog.debug.Console');
     </script>
+
+    <style type="text/css" media="screen">
+      .container {
+        height: 200px;
+        width: 400px;
+        border: 1px solid black;
+        position: relative;
+      }
+    </style>
   </head>
   <body>
     <p>
       Here's a container of posts! Mouse-over to see a tooltip. Try copying/pasting lines into a text editor to make sure that they properly render in plaintext format. Clicking on a line should not cause a horizontal scrollbar to show. Here the IDs should go in descending order because we just blindly add them to the end of the list regardless of their sequence number. This scrollbar should be automatically scrolled to the end because these posts were appended.
     </p>
 
-    <div style="height: 200px; width: 400px; border: 1px solid black;">
+    <div class="container">
       <div id="scrollable-posts" class="bits-post-container"></div>
     </div>
 
@@ -26,7 +35,7 @@
       Here's another container where they've been filled in historically. Make sure that the posts show up in historical order, lower IDs first. Here the scrollbar should also be showing the first post, since historical addition should leave the scrollbar in its old location (highlighting the non-historically added element).
     </p>
 
-    <div style="height: 200px; width: 400px; border: 1px solid black;">
+    <div class="container">
       <div id="scrollable-posts2" class="bits-post-container"></div>
     </div>
 
@@ -36,7 +45,7 @@
       Here's one more container that receives its messages via pubsub events. There should be messages in here for the various receiving modes. Click the send buttons to see the auto-scroll-to-bottom behavior for new posts and the stay-in-place behavior for historical posts. If the scrollbar is not already at the bottom upon message receipt it should not scroll. Once there are enough messages to show a scroll bar, you can scroll all the way to the top and then even older messages should backfill.
     </p>
 
-    <div style="height: 200px; width: 400px; border: 1px solid black;">
+    <div class="container">
       <div id="scrollable-posts3" class="bits-post-container"></div>
     </div>
 
@@ -269,6 +278,9 @@
                 oldPosts);
             }, 1000);
           });
+
+      // TODO(bslatkin): Add test buttons for system messages and
+      // connection errors.
     </script>
   </body>
 </html>
