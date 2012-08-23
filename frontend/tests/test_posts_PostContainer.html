@@ -3,6 +3,7 @@
   <head>
     <link rel="stylesheet" href="/static/1/css/common.css">
     <link rel="stylesheet" href="/static/1/css/posts.css">
+    <link rel="stylesheet" href="/static/1/css/scrollbar.css">
 
     <script src="/js/closure/goog/base.js"></script>
     <script src="/js/bits/deps.js"></script>
@@ -12,11 +13,10 @@
     </script>
 
     <style type="text/css" media="screen">
-      .container {
+      .bits-posts-scrollable {
         height: 200px;
         width: 400px;
         border: 1px solid black;
-        position: relative;
       }
     </style>
   </head>
@@ -25,8 +25,8 @@
       Here's a container of posts! Mouse-over to see a tooltip. Try copying/pasting lines into a text editor to make sure that they properly render in plaintext format. Clicking on a line should not cause a horizontal scrollbar to show. Here the IDs should go in descending order because we just blindly add them to the end of the list regardless of their sequence number. This scrollbar should be automatically scrolled to the end because these posts were appended.
     </p>
 
-    <div class="container">
-      <div id="scrollable-posts" class="bits-post-container"></div>
+    <div class="bits-posts-scrollable" id="posts1">
+      <div class="bits-post-container"></div>
     </div>
 
     <br><br>
@@ -35,8 +35,8 @@
       Here's another container where they've been filled in historically. Make sure that the posts show up in historical order, lower IDs first. Here the scrollbar should also be showing the first post, since historical addition should leave the scrollbar in its old location (highlighting the non-historically added element).
     </p>
 
-    <div class="container">
-      <div id="scrollable-posts2" class="bits-post-container"></div>
+    <div class="bits-posts-scrollable" id="posts2">
+      <div class="bits-post-container"></div>
     </div>
 
     <br><br>
@@ -45,8 +45,8 @@
       Here's one more container that receives its messages via pubsub events. There should be messages in here for the various receiving modes. Click the send buttons to see the auto-scroll-to-bottom behavior for new posts and the stay-in-place behavior for historical posts. If the scrollbar is not already at the bottom upon message receipt it should not scroll. Once there are enough messages to show a scroll bar, you can scroll all the way to the top and then even older messages should backfill.
     </p>
 
-    <div class="container">
-      <div id="scrollable-posts3" class="bits-post-container"></div>
+    <div class="bits-posts-scrollable" id="posts3">
+      <div class="bits-post-container"></div>
     </div>
 
     <br>
@@ -66,7 +66,7 @@
       //////////////////
       // Test filling posts as they come in an event-driven manner.
       var container = new bits.posts.PostContainer();
-      container.decorate(goog.dom.getElement('scrollable-posts'));
+      container.decorate(goog.dom.getElement('posts1'));
 
       for (var i = 50; i > 0; i--) {
         var postId = 'my id ' + i;
@@ -98,7 +98,7 @@
       //////////////////
       // Test filling in historical posts as a result of a polling query.
       var container2 = new bits.posts.PostContainer();
-      container2.decorate(goog.dom.getElement('scrollable-posts2'));
+      container2.decorate(goog.dom.getElement('posts2'));
 
       // This one should be at the bottom.
       container2.addOrUpdatePost(new bits.posts.Post({
@@ -138,7 +138,7 @@
       // Tests that PostContainers know which messages to subscribe to.
       var shardId = 5;
       var container3 = new bits.posts.PostContainer(shardId);
-      container3.decorate(goog.dom.getElement('scrollable-posts3'));
+      container3.decorate(goog.dom.getElement('posts3'));
 
       bits.events.PubSub.publish(
         shardId, bits.events.EventType.PostReceived,

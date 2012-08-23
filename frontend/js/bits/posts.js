@@ -39,6 +39,7 @@ goog.require('goog.ui.Tooltip');
 goog.require('goog.userAgent');
 
 goog.require('bits.events');
+goog.require('bits.ui.Scrollbar');
 
 
 /**
@@ -333,6 +334,11 @@ bits.posts.PostContainer = function(shardId) {
   this.container = new goog.ui.Container();
   this.container.setFocusableChildrenAllowed(false);
   this.container.setFocusable(true);
+
+  /**
+   * @type {bits.ui.Scrollbar}
+   */
+  this.scrollbar_ = new bits.ui.Scrollbar();
 }
 goog.inherits(bits.posts.PostContainer, goog.ui.Component);
 
@@ -341,6 +347,7 @@ goog.inherits(bits.posts.PostContainer, goog.ui.Component);
  * Creates an initial DOM representation for the component.
  */
 bits.posts.PostContainer.prototype.createDom = function() {
+  // xxx
   this.decorateInternal(this.dom_.createDom('div', 'bits-post-container'));
 };
 
@@ -354,10 +361,18 @@ bits.posts.PostContainer.prototype.decorateInternal = function(element) {
   bits.posts.PostContainer.superClass_.decorateInternal.call(this, element);
 
   var elem = this.getElement();
-  this.container.decorate(elem);
-  goog.style.setUnselectable(elem, false, goog.userAgent.GECKO);
-  var scroller = new goog.ui.ContainerScroller(this.container);
-  this.registerDisposable(scroller);
+
+  // Make the list of posts scrollable.
+  var containerEl = this.dom_.getElementByClass('bits-post-container', elem);
+  this.container.decorate(containerEl);
+  goog.style.setUnselectable(containerEl, false, goog.userAgent.GECKO);
+  var containerScroller = new goog.ui.ContainerScroller(this.container);
+  this.registerDisposable(containerScroller);
+
+  // Put a scrollbar to the container.
+  this.scrollbar_.setTarget(containerEl);
+  this.scrollbar_.render(elem);
+  this.registerDisposable(this.scrollbar_);
 };
 
 

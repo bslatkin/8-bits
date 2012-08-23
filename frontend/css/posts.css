@@ -1,16 +1,26 @@
+.bits-posts-scrollable {
+  position: relative;
+  overflow: hidden;
+}
+
+.bits-posts-scrollable .goog-slider-vertical {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+}
+
 .bits-post-container {
   border: 0;
-  padding: 0;
+  padding: 0 10px 0 0;
   margin: 0;
   overflow-y: scroll;
   overflow-x: hidden;
   font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
   font-size: 12px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  height: 100%;
+  width: 100%;
 }
 
 .bits-post {
