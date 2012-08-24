@@ -1,6 +1,6 @@
 .goog-slider-vertical {
   overflow: hidden;
-  outline: none;
+  outline: 0;
   position: absolute;
   right: 0;
   top: 0;
@@ -13,9 +13,14 @@
   -moz-transition: opacity .3s ease-out;
 }
 .goog-slider-thumb {
+  outline: 0;
   position: absolute;
-  background-color: #000;
+  background-color: #555;
+  border: 1px solid #000;
   overflow: hidden;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
 }
 .goog-slider-vertical .goog-slider-thumb {
   left: 0;

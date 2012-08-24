@@ -1,7 +1,3 @@
-Bugs:
-- after resizing a window smaller, when the chat scrolly was all the way at the bottom, the scrolly won't be at the bottom anymore and you have to rescroll it all the way down
-
------
 
 v2 features:
 - Topic menu with auto-threading of chat

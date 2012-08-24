@@ -20,6 +20,7 @@ goog.provide('bits.ui.Scrollbar');
 
 goog.require('goog.Timer');
 goog.require('goog.dom');
+goog.require('goog.dom.ViewportSizeMonitor');
 goog.require('goog.dom.classes');
 goog.require('goog.events');
 goog.require('goog.style');
@@ -36,6 +37,7 @@ bits.ui.Scrollbar = function() {
   goog.base(this);
 
   this.setOrientation(goog.ui.Slider.Orientation.VERTICAL);
+  this.setMoveToPointEnabled(true);
 
   /**
    * @type {Element}
@@ -50,14 +52,17 @@ bits.ui.Scrollbar = function() {
   this.eh_ = new goog.events.EventHandler(this);
 
   /**
+   * @type {goog.dom.ViewportSizeMonitor}
+   * @private
+   */
+  this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
+
+  /**
    * @type {goog.Timer}
    * @private
    */
   this.deactiveTimer_ = new goog.Timer(500);
-
-  this.eh_.listen(
-      this.deactiveTimer_, goog.Timer.TICK, this.handleDeactivate_);
-}
+};
 goog.inherits(bits.ui.Scrollbar, goog.ui.Slider);
 
 
@@ -68,6 +73,8 @@ goog.inherits(bits.ui.Scrollbar, goog.ui.Slider);
  */
 bits.ui.Scrollbar.prototype.setTarget = function(target) {
   this.target_ = target;
+  var scrollbarWidth = goog.style.getScrollbarWidth();
+  this.target_.style.paddingRight = '' + scrollbarWidth + 'px';
 };
 
 
@@ -97,7 +104,14 @@ bits.ui.Scrollbar.prototype.enterDocument = function() {
   bits.ui.Scrollbar.superClass_.enterDocument.call(this);
 
   this.eh_.listen(
+    this.sizeMonitor_, goog.events.EventType.RESIZE, this.updateFromTarget_);
+
+  this.eh_.listen(
+      this.deactiveTimer_, goog.Timer.TICK, this.handleDeactivate_);
+
+  this.eh_.listen(
       this.target_, goog.events.EventType.SCROLL, this.updateFromTarget_);
+
   this.eh_.listen(
       this, goog.ui.Component.EventType.CHANGE, this.updateFromSlider_);
 
@@ -122,11 +136,14 @@ bits.ui.Scrollbar.prototype.updateFromTarget_ = function() {
   var adjustedHeight = this.target_.scrollHeight - targetSize.height;
   var ratio = this.target_.scrollHeight / targetSize.height;
 
+  // Must set thumb height before calling setValue or else the calculation
+  // comes out wrong on initialization.
   var thumbHeight = Math.max(20, targetSize.height / ratio);
+  goog.style.setHeight(this.getValueThumb(), thumbHeight);
+
   this.setMinimum(0);
   this.setMaximum(adjustedHeight);
 
-  goog.style.setHeight(this.getValueThumb(), thumbHeight);
   var value = adjustedHeight - this.target_.scrollTop;
   this.setValue(value);
 

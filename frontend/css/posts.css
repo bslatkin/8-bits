@@ -5,7 +5,7 @@
 
 .bits-post-container {
   border: 0;
-  padding: 0 10px 0 0;
+  padding: 0;  /* Padding-right set by scrollbar.js to hide scrollbar */
   margin: 0;
   overflow-y: scroll;
   overflow-x: hidden;
