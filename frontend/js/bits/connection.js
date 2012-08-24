@@ -256,15 +256,15 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
  */
 bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
   if (this.channel_) {
-    if (this.channel_.close) {
-      this.channel_.close();
-      // TODO(bslatkin): Disconnect the error handlers from the channel
-      // object so we don't keep getting error notifications.
-    }
+    // Disconnect the error handlers from the channel object so we don't
+    // keep getting error notifications.
+    delete this.channel_.onclose;
+    delete this.channel_.onerror;
+    this.channel_.close();
   }
 
-  this.channel_ = new goog.appengine.Channel(this.browserToken_);
-  var socket = this.channel_.open({
+  var factory = new goog.appengine.Channel(this.browserToken_);
+  this.channel_ = factory.open({
     'onopen': goog.bind(this.handleChannelOpen_, this, connected),
     'onmessage': goog.bind(this.handleChannelMessage_, this),
     'onerror': goog.bind(this.handleChannelError_, this),
