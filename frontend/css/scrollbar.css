@@ -19,7 +19,6 @@
 }
 .goog-slider-vertical .goog-slider-thumb {
   left: 0;
-  height: 20px;
   width: 100%;
   border-radius: 5px;
   -webkit-border-radius: 5px;
@@ -30,6 +29,7 @@
 }
 .goog-slider-vertical:hover .goog-slider-thumb,
 .active .goog-slider-thumb,
-.goog-slider-vertical.active {
+.goog-slider-vertical.active,
+.goog-slider-vertical:hover {
   opacity: 0.5;
 }

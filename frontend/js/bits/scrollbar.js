@@ -120,11 +120,15 @@ bits.ui.Scrollbar.prototype.exitDocument = function() {
 bits.ui.Scrollbar.prototype.updateFromTarget_ = function() {
   var targetSize = goog.style.getSize(this.target_);
   var adjustedHeight = this.target_.scrollHeight - targetSize.height;
+  var ratio = this.target_.scrollHeight / targetSize.height;
 
+  var thumbHeight = Math.max(20, targetSize.height / ratio);
   this.setMinimum(0);
   this.setMaximum(adjustedHeight);
-  this.setValue(adjustedHeight - this.target_.scrollTop);
-  this.setBlockIncrement(adjustedHeight / 10);
+
+  goog.style.setHeight(this.getValueThumb(), thumbHeight);
+  var value = adjustedHeight - this.target_.scrollTop;
+  this.setValue(value);
 
   // If we're at the very top or the bottom, then don't activate. This
   // prevents the scrollbar from flashing when a new item is added to the
