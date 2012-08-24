@@ -249,19 +249,29 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
 
 
 /**
- * Allocates a new channel with the current browser token.
- * @param {boolean} connected User was just connected for the first time in
- *   a while and some initial setup actions should be taken.
+ * Closes the channel if it's open.
  * @private
  */
-bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
+bits.connection.Connection.prototype.closeChannel_ = function() {
   if (this.channel_) {
     // Disconnect the error handlers from the channel object so we don't
     // keep getting error notifications.
     delete this.channel_.onclose;
     delete this.channel_.onerror;
     this.channel_.close();
+    this.channel_ = null;
   }
+};
+
+
+/**
+ * Allocates a new channel with the current browser token.
+ * @param {boolean} connected User was just connected for the first time in
+ *   a while and some initial setup actions should be taken.
+ * @private
+ */
+bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
+  this.closeChannel_();
 
   var factory = new goog.appengine.Channel(this.browserToken_);
   this.channel_ = factory.open({
@@ -343,12 +353,7 @@ bits.connection.Connection.prototype.handleChannelError_ = function(event) {
   if (retry) {
     // Reallocate the channel on errors, per:
     //   http://stackoverflow.com/questions/10729842
-    if (this.channel_) {
-      if (this.channel_.close) {
-        this.channel_.close();
-      }
-      this.channel_ = null;
-    }
+    this.closeChannel_();
 
     // This will also cause a new channel token to be issued if this
     // fails more than once.
