@@ -392,7 +392,8 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
   bits.posts.PostContainer.superClass_.enterDocument.call(this);
 
   this.eh_.listen(
-      this.getElement(), goog.events.EventType.SCROLL, this.handleScroll_);
+      this.container.getElement(),
+      goog.events.EventType.SCROLL, this.handleScroll_);
 
   // Subscribe to internal events.
   bits.events.PubSub.subscribe(
@@ -548,11 +549,12 @@ bits.posts.PostContainer.prototype.addOrUpdatePost = function(post) {
  * @param {goog.events.Event} event Event that was dispatched.
  */
 bits.posts.PostContainer.prototype.handleScroll_ = function(event) {
-  if (this.container.getElement().scrollHeight <
-      this.container.getElement().clientHeight) {
+  var el = this.container.getElement()
+
+  if (el.scrollHeight < el.clientHeight) {
     return;
   }
-  if (this.container.getElement().scrollTop > 0) {
+  if (el.scrollTop > 0) {
     return;
   }
 
