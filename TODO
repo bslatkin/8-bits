@@ -1,12 +1,15 @@
+Bugs:
+- Fetch historical posts after connection reestablished event clears chat
+- Connection thinks it's reestablished even when it isn't
+
+-----
 
 v2 features:
 - Topic menu with auto-threading of chat
 - Read state on topics and non-topic chat
-- Reload client window on new version push
 
 v2 polish:
 - Clean up code comments and style everywhere
-- Ditch the splitpane and just give the input box a fixed height
 - Pass through error traceback to users
 
 -----
@@ -15,9 +18,6 @@ v3 features:
 - Add a tutorial section on settings dialog on first join
 - Topics dissipate after 15 minutes of no activity
 - Add analytics events to link clicks & UI actions
-
-v3 polish:
-- Scrollbar for Firefox etc that looks decent
 
 v3 production:
 - gen204 handler on all event handlers and pubsub delivery
@@ -28,7 +28,6 @@ v4 features:
 - Add share buttons to "share this" dialog
 - Drag/drop image upload
 - New topic snippeting/preview based on OGP
-
 
 ---
 
