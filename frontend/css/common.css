@@ -20,6 +20,29 @@
   padding: 8px;
 }
 .modal-dialog-buttons button {
-  font-size: 16px;
+  display: inline-block;
+  padding: 6px;
+  border: 1px solid rgba(80, 80, 80, 0.5);
+  background-color: #e3e3e3;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));
+  background-image: -moz-linear-gradient(
+        top, #f9f9f9 40%, #e3e3e3 70%);
+  cursor: pointer;
+  border-radius: 3px;
   margin-right: 20px;
+  font-size: 16px;
+}
+.modal-dialog-buttons button:hover {
+  background-color: #dcdcdc;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#f0f0f0), to(#dcdcdc));
+  background-image: -moz-linear-gradient(
+        top, #f0f0f0 40%, #dcdcdc 70%);
+}
+.modal-dialog-buttons button:active {
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#dcdcdc), to(#f0f0f0));
+  background-image: -moz-linear-gradient(
+        top, #dcdcdc 40%, #f0f0f0 70%);
 }
