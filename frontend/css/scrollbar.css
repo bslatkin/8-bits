@@ -1,13 +1,16 @@
 .goog-slider-vertical {
   overflow: hidden;
   outline: none;
-  border: 2px solid #eee;
-  background-color: #eee;
   position: absolute;
   right: 0;
   top: 0;
   bottom: 0;
   width: 5px;
+  border-radius: 5px;
+  opacity: 0;
+  background-color: #ccc;
+  -webkit-transition: opacity .3s ease-out;
+  -moz-transition: opacity .3s ease-out;
 }
 .goog-slider-thumb {
   position: absolute;
@@ -21,11 +24,12 @@
   border-radius: 5px;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
-  -webkit-transition: opacity .2s ease-out;
-  -moz-transition: opacity .2s ease-out;
-  opacity: 0.05;
+  -webkit-transition: opacity .4s ease-out;
+  -moz-transition: opacity .4s ease-out;
+  opacity: 0;
 }
 .goog-slider-vertical:hover .goog-slider-thumb,
-.active .goog-slider-thumb {
+.active .goog-slider-thumb,
+.goog-slider-vertical.active {
   opacity: 0.5;
 }
