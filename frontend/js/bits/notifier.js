@@ -259,44 +259,44 @@ bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
  * @private
  */
 bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
+  var postId = postMap['postId'];
+
+  // Don't notify for posts we have already seen.
+  if (this.seenPosts_.contains(postId)) {
+    this.logger_.info('Notifier ignoring existing postId=' + postId);
+    return;
+  }
+
+  // Make sure memory doesn't get out of hand.
+  if (this.seenPosts_.getCount() > 1000) {
+    this.seenPosts_.clear();
+  }
+  this.seenPosts_.add(postId);
+  this.logger_.info('Notifier signalling for postId=' + postId);
+
   switch (postMap['archiveType']) {
     case bits.posts.ArchiveType.USER_LOGIN:
       if (this.nickname_ != postMap['nickname']) {
         this.playSound_(this.userJoinAudio_);
       }
-      return;
+      break;
 
     case bits.posts.ArchiveType.USER_LOGOUT:
       this.playSound_(this.userLeaveAudio_);
-      return;
+      break;
 
     case bits.posts.ArchiveType.CHAT:
+      this.playSound_(this.receiveChatAudio_);
+
+      // Only flash the icon for chat messages.
+      if (!this.active_ && !this.flashTimer_.enabled) {
+        this.setFlashing_(true);
+        this.flashTimer_.start();
+      }
       break;
 
     default:
-      return;
-  }
-
-  var postId = postMap['postId'];
-
-  // Don't notify for posts we recently sent ourselves.
-  if (this.seenPosts_.contains(postId)) {
-    // Make sure memory doesn't get out of hand.
-    if (this.seenPosts_.getCount() > 1000) {
-      this.seenPosts_.clear();
-    }
-    this.logger_.info('Notifier ignoring existing postId=' + postId);
-    return;
-  }
-
-  this.seenPosts_.add(postId);
-  this.logger_.info('Notifier signalling for postId=' + postId);
-
-  this.playSound_(this.receiveChatAudio_);
-
-  if (!this.active_ && !this.flashTimer_.enabled) {
-    this.setFlashing_(true);
-    this.flashTimer_.start();
+      break;
   }
 };
 
