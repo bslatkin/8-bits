@@ -460,6 +460,7 @@ bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
  * Handles when the user has reconnected.
  */
 bits.posts.PostContainer.prototype.handleReestablishing_ = function() {
+  this.lowestSequenceId = null;
   this.postIdMap.clear();
   this.container.removeChildren(true);
 };

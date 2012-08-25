@@ -212,26 +212,23 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
   var response = event.target.getResponseJson();
   // TODO(bslatkin): Better validation of the response payload.
 
+  // Reset the error counter. If we can heartbeat, then we're in good shape.
+  // If we had already reported errors, then say everything is clear so the
+  // user knows they're good.
+  var hadErrors = this.numErrors_ > 0;
+  this.numErrors_ = 0;
+
   // This is a reconnection after the user has been disconnected for a
   // while. This could be a page reload or a first time load. Send an event so
   // other components can take appropriate action, such as clearing out old
   // posts since they're out of date.
   var firstRequest = !this.browserToken_ || response.userConnected;
   if (firstRequest) {
-    bits.events.PubSub.publish(
-        this.shardId_, bits.events.EventType.ConnectionReestablishing);
-  }
-
-  // Reset the error counter. If we can heartbeat, then we're in good shape.
-  // If we had already reported errors, then say everything is clear so the
-  // user knows they're good.
-  var hadErrors = this.numErrors_ > 0;
-  if (hadErrors) {
-    bits.events.PubSub.publish(
-        this.shardId_, bits.events.EventType.ConnectionReestablishing);
+    this.establishConnection_();
+  } else if (hadErrors) {
+    this.establishConnection_();
     this.reportInfo_('Connection reestablished');
   }
-  this.numErrors_ = 0;
 
   // The browser token will be refreshed periodically, in addition to being
   // issued on the first presence request, relogin presence requests, and
@@ -239,7 +236,7 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
   var reinitChannel = firstRequest || !this.channel_ || hadErrors;
   if (this.browserToken_ != response.browserToken || reinitChannel) {
     this.browserToken_ = response.browserToken;
-    this.allocateChannel_(reinitChannel);
+    this.allocateChannel_();
   }
 
   // Starting this timer repeatedly has no effect, but we don't want to
@@ -256,8 +253,8 @@ bits.connection.Connection.prototype.closeChannel_ = function() {
   if (this.channel_) {
     // Disconnect the error handlers from the channel object so we don't
     // keep getting error notifications.
-    delete this.channel_.onclose;
-    delete this.channel_.onerror;
+    this.channel_.onclose = function() {};
+    this.channel_.onerror = function() {};
     this.channel_.close();
     this.channel_ = null;
   }
@@ -266,20 +263,29 @@ bits.connection.Connection.prototype.closeChannel_ = function() {
 
 /**
  * Allocates a new channel with the current browser token.
- * @param {boolean} connected User was just connected for the first time in
- *   a while and some initial setup actions should be taken.
  * @private
  */
-bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
+bits.connection.Connection.prototype.allocateChannel_ = function() {
   this.closeChannel_();
 
   var factory = new goog.appengine.Channel(this.browserToken_);
   this.channel_ = factory.open({
-    'onopen': goog.bind(this.handleChannelOpen_, this, connected),
+    'onopen': goog.bind(this.handleChannelOpen_, this),
     'onmessage': goog.bind(this.handleChannelMessage_, this),
     'onerror': goog.bind(this.handleChannelError_, this),
     'onclose': goog.bind(this.handleChannelClose_, this)
   });
+};
+
+
+/**
+ *
+ */
+bits.connection.Connection.prototype.establishConnection_ = function() {
+  bits.events.PubSub.publish(
+      this.shardId_, bits.events.EventType.ConnectionReestablishing);
+  this.requestOldPosts_();
+  this.requestRoster_();
 };
 
 
@@ -292,13 +298,6 @@ bits.connection.Connection.prototype.allocateChannel_ = function(connected) {
 bits.connection.Connection.prototype.handleChannelOpen_ =
     function(userConnected) {
   this.logger_.info('Connection now open');
-
-  // Only refresh the roster upon new connections. When the roster becomes an
-  // actual UI widget, then we can issue this request every time.
-  if (userConnected) {
-    this.requestOldPosts_();
-    this.requestRoster_();
-  }
 };
 
 

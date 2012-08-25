@@ -1,6 +1,4 @@
 Bugs:
-- Fetch historical posts after connection reestablished event clears chat
-- Connection thinks it's reestablished even when it isn't
 
 -----
 
