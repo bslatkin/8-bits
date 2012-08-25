@@ -3,8 +3,7 @@ cron:
   url: /work/apply_posts
   schedule: every 1 minutes
 
-# TODO(bslatkin): This is deleting things that are only a day old. Whoops!
-# - description: Delete old posts
-#   url: /jobs/periodic?key=delete-posts
-#   schedule: every day 11:00
-#   timezone: America/Los_Angeles
+- description: Delete old posts
+  url: /jobs/periodic?key=delete-posts
+  schedule: every day 11:00
+  timezone: America/Los_Angeles

@@ -1,6 +1,6 @@
 /* goog.ui.Dialog styling */
 .modal-dialog {
-  background: #ccc;
+  background: #fff;
   border: 0;
   color: #000;
   padding: 3px;
@@ -9,10 +9,17 @@
   z-index: 100;
 }
 .modal-dialog-bg {
-  background: #666;
   left: 0;
   position: absolute;
   top: 0;
+  background: #666;
+  /* From http://www.colorzilla.com/gradient-editor/ */
+  background: -moz-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%, rgba(54,54,54,0.9) 75%, rgba(0,0,0,0.9) 100%); /* FF3.6+ */
+  background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgba(214,214,214,1)), color-stop(75%,rgba(54,54,54,0.9)), color-stop(100%,rgba(0,0,0,0.9))); /* Chrome,Safari4+ */
+  background: -webkit-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* Opera 12+ */
+  background: -ms-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* IE10+ */
+  background: radial-gradient(ellipse at center,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* W3C */
 }
 .modal-dialog-buttons,
 .modal-dialog-content {

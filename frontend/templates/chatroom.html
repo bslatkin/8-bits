@@ -75,20 +75,26 @@
 </div>
 
 <div class="bits-dialog" id="settings-dialog">
-  <div>
-    <label for="setting-nickname" class="large">Set your Nickname</label>
+  <div id="welcome-text">
+    <div class="welcome-title">Welcome</div>
+
+    <div class="welcome-detail">
+      This is a private stream.  Only people who have the link can join. Share silly websites, images, and stories. Be serious when you need to. It's like chat, but you can catch up on what you've missed. Each post is auto-deleted after ten days, fading like memories.
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <label for="setting-nickname">Set your Nickname</label>
     <br>
     <input type="text" name="nickname"
         id="setting-nickname" class="title" value="{{nickname}}">
-  </div>
-
-  <div>
+    <br>
     <input type="checkbox" name="sounds_enabled" id="setting-sounds-enabled"
         {% if sounds_enabled %}checked="checked"{% endif %}>
-    <label for="setting-sounds-enabled" class="large">Sounds enabled</label>
+    <label for="setting-sounds-enabled">Play sounds</label>
   </div>
 
-  <div id="settings-terms">
+  <div id="settings-terms" class="settings-section">
     By clicking below I agree to the terms of use for
     8-bits of ephemera, which are available
     <a title="View the Terms of Service" href="/terms"

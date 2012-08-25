@@ -199,7 +199,7 @@ bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
   this.dialog_.setVisible(isVisible);
   if (isVisible) {
     if (!this.acceptedTerms_) {
-      goog.style.setStyle(this.termsEl_, 'display', null);
+      goog.dom.classes.add(this.dialog_.getElement(), 'bits-first-time');
       this.dialog_.setEscapeToCancel(false);
 
       var buttonSet = new goog.ui.Dialog.ButtonSet().
@@ -207,7 +207,7 @@ bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
           addButton(bits.settings.SettingsDialog.DECLINE, false, true);
       this.dialog_.setButtonSet(buttonSet);
     } else {
-      goog.style.setStyle(this.termsEl_, 'display', 'none');
+      goog.dom.classes.remove(this.dialog_.getElement(), 'bits-first-time');
       this.dialog_.setEscapeToCancel(true);
       this.dialog_.setButtonSet(goog.ui.Dialog.ButtonSet.OK_CANCEL);
     }

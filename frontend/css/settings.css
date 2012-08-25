@@ -7,5 +7,25 @@
   max-width: 325px;
 }
 #settings-terms {
+  display: none;
+}
+#welcome-text {
+  display: none;
+}
+.bits-first-time .settings-section {
   margin-top: 15px;
+}
+
+.bits-first-time #settings-terms,
+.bits-first-time #welcome-text,
+.bits-first-time .tutorial-step {
+  display: block;
+}
+
+.welcome-title {
+  font-size: 16px;
+  font-weight: bold;
+}
+.welcome-detail {
+  margin-top: 0.5em;
 }
