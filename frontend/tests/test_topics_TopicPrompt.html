@@ -27,23 +27,24 @@
 
 <button id="trigger-button">Trigger display</button>
 
-
 <div class="topic-test-container">
+
   <div class="bits-topic-prompt">
     <div class="bits-topic-prompt-title">Title here</div>
     <div class="bits-topic-prompt-close">X</div>
-    <a class="bits-topic-prompt-link" href="#">Link here</a>
+    <a class="bits-topic-prompt-link" href="#" target="_blank">Link here</a>
     <div class="bits-topic-prompt-helptext">Help text here</div>
     <textarea class="bits-topic-prompt-summary"></textarea>
     <a class="bits-topic-prompt-submit fancy-button" href="#">Start</a>
   </div>
+
 </div>
 
 <script>
 var c = new goog.debug.Console();
 c.setCapturing(true);
 
-var shardId = 'shard';
+var shardId = 'shard1';
 
 var menu = new bits.topics.TopicPrompt(shardId);
 menu.decorate(goog.dom.getElementByClass('bits-topic-prompt'));
@@ -53,7 +54,7 @@ goog.events.listen(
     goog.events.EventType.CLICK,
     function() {
       bits.events.PubSub.publish(
-          shardId, bits.events.EventType.SubmitTopicLink,
+          shardId, bits.events.EventType.SubmitLink,
           'http://www.onebigfluke.com/2012/07/' +
           'building-incorruptible-infrastructure.html');
     });

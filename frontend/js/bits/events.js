@@ -99,8 +99,22 @@ bits.events.EventType = {
 
   // User has submitted a URL for starting a new topic.
   // Args:
-  //   link: URl that the user submitted.
-  SubmitTopicLink: 'SubmitTopicLink'
+  //   link: URL that the user submitted.
+  SubmitLink: 'SubmitLink',
+
+  // User has submitted new topic.
+  // Args:
+  //   link: URL that the user submitted.
+  //   summary: Text summary of the topic.
+  SubmitTopic: 'SubmitTopic',
+
+  // User-submitted topic was sent to the server side.
+  // TODO args
+  SubmittedTopicSent: 'SubmittedTopicSent',
+
+  // User-submitted topic was received by the server side.
+  // TODO args
+  SubmittedTopicReceived: 'SubmittedTopicReceived'
 };
 
 

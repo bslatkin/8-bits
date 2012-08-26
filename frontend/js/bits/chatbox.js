@@ -151,7 +151,7 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
 
     if (bits.util.matchLink(chatText)) {
       bits.events.PubSub.publish(
-          this.shardId_, bits.events.EventType.SubmitTopicLink, chatText);
+          this.shardId_, bits.events.EventType.SubmitLink, chatText);
     } else {
       bits.events.PubSub.publish(
           this.shardId_, bits.events.EventType.SubmitPost,
