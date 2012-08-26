@@ -57,6 +57,8 @@
       <input type="button" value="User login" id="user-login">
       <input type="button" value="User update" id="user-update">
       <input type="button" value="User logout" id="user-logout">
+      <input type="button" value="Start topic" id="start-topic">
+      <input type="button" value="Change topic" id="change-topic">
     </div>
 
     <script>
@@ -263,6 +265,24 @@
                 bits.events.EventType.HistoricalPostsReceived,
                 oldPosts);
             }, 1000);
+          });
+
+      goog.events.listen(
+          goog.dom.getElement('start-topic'), goog.events.EventType.CLICK,
+          function(event) {
+            event.preventDefault();
+            bits.events.PubSub.publish(
+              shardId, bits.events.EventType.PostReceived,
+              {
+                shardId: 5,
+                archiveType: 'topic_start',
+                nickname: 'Chickpea',
+                title: 'http://www.example.com/path/to/link',
+                body: 'I really like this URL and id ' + postId +
+                    ' because it reminds me of my time back in the pod.',
+                postTimeMs: (new goog.date.DateTime()).getTime(),
+                postId: 'post ' + (postId++)
+            });
           });
 
       // TODO(bslatkin): Add test buttons for system messages and

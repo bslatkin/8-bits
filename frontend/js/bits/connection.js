@@ -660,9 +660,10 @@ bits.connection.Connection.prototype.handleSubmitTopic_ =
       null,
       goog.bind(this.handleSubmitTopicSuccessful_, this, link, summary));
 
-  // Make a synthetic post announcing the new topic.
+  // Simulate a post announcing the new topic.
   var postMap = {
       'shardId': this.shardId_,
+      'nickname': goog.string.htmlEscape(this.nickname_),
       'title': goog.string.htmlEscape(link),
       'body': goog.string.htmlEscape(summary),
       'postTimeMs': (new goog.date.DateTime()).getTime(),

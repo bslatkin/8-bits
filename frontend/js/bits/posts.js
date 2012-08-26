@@ -128,8 +128,7 @@ goog.inherits(bits.posts.Post, goog.ui.Control);
  * Creates an initial DOM representation for the component.
  */
 bits.posts.Post.prototype.createDom = function() {
-  var element = this.dom_.createElement('div');
-  goog.dom.classes.add(element, goog.getCssName('bits-post'));
+  var element = this.dom_.createDom('div', 'bits-post');
 
   switch (this.archiveType) {
     case bits.posts.ArchiveType.CHAT:
@@ -149,6 +148,14 @@ bits.posts.Post.prototype.createDom = function() {
 
     case bits.posts.ArchiveType.ERROR:
       this.renderError(element);
+      break;
+
+    case bits.posts.ArchiveType.TOPIC_START:
+      this.renderTopic(element, true);
+      break;
+
+    case bits.posts.ArchiveType.TOPIC_CHANGE:
+      this.renderTopic(element, false);
       break;
 
     default:
@@ -236,6 +243,44 @@ bits.posts.Post.prototype.renderError = function(element) {
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-error-body'));
   bodyDiv.innerHTML = this.body;
 
+  element.appendChild(bodyDiv);
+};
+
+
+/**
+ * Render a topic change as a post.
+ * @param {Element} element HTML element to decorate.
+ * @param {boolean} newTopic True if this is a newly started topic.
+ */
+bits.posts.Post.prototype.renderTopic = function(element, newTopic) {
+  goog.dom.classes.add(element, 'bits-post-topic');
+
+  var nicknameDiv = this.dom_.createDom('span', 'bits-post-topic-nickname');
+  nicknameDiv.innerHTML = this.nickname;
+
+  var titleDiv = this.dom_.createDom('span', 'bits-post-topic-title');
+  titleDiv.innerHTML = this.title;
+
+  var bodyDiv = this.dom_.createDom('div', 'bits-post-topic-body');
+  bodyDiv.innerHTML = bits.util.rewriteLink(
+      this.body,
+      '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>');
+
+  element.appendChild(nicknameDiv);
+  element.appendChild(this.dom_.createTextNode(' '));
+
+  if (newTopic) {
+    element.appendChild(
+      this.dom_.createDom('span', 'bits-post-topic-happytext',
+                          'has started a new topic:'));
+  } else {
+    element.appendChild(
+      this.dom_.createDom('span', 'bits-post-topic-happytext',
+                          'has changed the topic:'));
+  }
+
+  element.appendChild(this.dom_.createTextNode(' '));
+  element.appendChild(titleDiv);
   element.appendChild(bodyDiv);
 };
 
