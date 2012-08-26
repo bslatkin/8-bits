@@ -532,6 +532,7 @@ def marshal_posts(shard, post_list):
   """Organizes a list of posts into a JSON-serializable list."""
   out = []
   for post in post_list:
+    # TODO(bslatkin): Put the 'title' field in here for topics.
     post_dict = dict(
       shardId=shard,
       archiveType=models.Post.ARCHIVE_REVERSE_MAPPING[post.archive_type],
@@ -1058,6 +1059,7 @@ class CreateTopicHandler(BaseRpcHandler):
         'title', unicode, '', html_escape=True)
     description = self.get_required(
         'description', unicode, '', html_escape=True)
+    post_id = self.get_required('post_id', str)
 
     login_record = self.require_active_login()
 
@@ -1071,6 +1073,7 @@ class CreateTopicHandler(BaseRpcHandler):
 
     insert_post(
         self.shard,
+        post_id=post_id,
         archive_type=models.Post.TOPIC_START,
         nickname=login_record.nickname,
         user_id=self.user_id,

@@ -31,6 +31,7 @@ goog.require('bits.footer.FooterBar');
 goog.require('bits.notifier.Notifier');
 goog.require('bits.settings.SettingsDialog');
 goog.require('bits.shorturl.ShortUrlDialog');
+goog.require('bits.topics.TopicPrompt');
 
 
 bits.startup = function(params) {
@@ -52,6 +53,9 @@ bits.startup = function(params) {
 
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));
+
+  var topicPrompt = new bits.topics.TopicPrompt(shardId);
+  topicPrompt.decorate(goog.dom.getElement('topic-prompt'));
 
   var footer = new bits.footer.FooterBar(shardId);
   footer.decorate(goog.dom.getElement('footer-bar'));

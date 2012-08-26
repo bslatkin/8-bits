@@ -154,20 +154,6 @@
           postAttachment: '/dead-link/foo'
       });
 
-      bits.events.PubSub.publish(
-        shardId, bits.events.EventType.SubmittedPostReceived,
-        {
-          shardId: 5,
-          archiveType: 'chat',
-          nickname: 'User post',
-          body: 'Acked by connection',
-          postTimeMs: (new goog.date.DateTime()).getTime(),
-          sequenceId: 567,
-          postId: 'post 2',
-          postName: 'my post title',
-          postAttachment: '/dead-link/foo'
-      });
-
       var postId = 500;
       var historicalPostId = 300;
       goog.events.listen(

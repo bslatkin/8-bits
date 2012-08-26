@@ -38,11 +38,6 @@ bits.events.EventType = {
   //   sequenceId missing.
   SubmittedPostSent: 'SubmittedPostSent',
 
-  // User-submitted post was received by the server side.
-  // Args:
-  //   JSON for bits.posts.Post instance with postId set and sequenceId missing.
-  SubmittedPostReceived: 'SubmittedPostReceived',
-
   // Post received from the server side.
   // Args:
   //   JSON for bits.posts.Post instance with postId and sequenceId both set.
@@ -106,15 +101,7 @@ bits.events.EventType = {
   // Args:
   //   link: URL that the user submitted.
   //   summary: Text summary of the topic.
-  SubmitTopic: 'SubmitTopic',
-
-  // User-submitted topic was sent to the server side.
-  // TODO args
-  SubmittedTopicSent: 'SubmittedTopicSent',
-
-  // User-submitted topic was received by the server side.
-  // TODO args
-  SubmittedTopicReceived: 'SubmittedTopicReceived'
+  SubmitTopic: 'SubmitTopic'
 };
 
 

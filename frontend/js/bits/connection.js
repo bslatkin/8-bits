@@ -144,6 +144,9 @@ bits.connection.Connection = function(shardId, nickname, soundsEnabled) {
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.RequestHistoricalPosts,
       this.requestOldPosts_, this);
+  bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.SubmitTopic,
+      this.handleSubmitTopic_, this);
 };
 
 
@@ -457,8 +460,6 @@ bits.connection.Connection.prototype.handleSubmitPostSuccessful_ =
     function(postMap, event) {
   if (!event.target.isSuccess()) {
     if (this.reportError_('Could not send post', true)) {
-      // This will also cause a new channel token to be issued if this
-      // fails more than once.
       this.setPresence_();
     }
     return;
@@ -467,8 +468,6 @@ bits.connection.Connection.prototype.handleSubmitPostSuccessful_ =
   var responseJson = event.target.getResponseJson();
   this.logger_.info('Post submitted successfully: postId=' +
                     responseJson['postId']);
-  bits.events.PubSub.publish(
-      this.shardId_, bits.events.EventType.SubmittedPostReceived, postMap);
 };
 
 
@@ -636,6 +635,65 @@ bits.connection.Connection.prototype.handleRequestHistoricalPostsSuccessful_ =
       this.shardId_,
       bits.events.EventType.HistoricalPostsReceived,
       responseJson['posts']);
+};
+
+
+/**
+ * Handles when the user submits a new topic.
+ * @param {string} link URL for the topic.
+ * @param {string} summary Summary text for the topic.
+ */
+bits.connection.Connection.prototype.handleSubmitTopic_ =
+    function(link, summary) {
+  var params = new goog.Uri.QueryData();
+  var postId = bits.connection.Connection.uuidCompact();
+  params.add('shard', this.shardId_);
+  params.add('title', link);
+  params.add('description', summary);
+  params.add('post_id', postId);
+  this.xhrManager_.send(
+      this.getNextMessageId_(),
+      '/rpc/create_topic',
+      opt_method='POST',
+      opt_content=params.toString(),
+      null,
+      null,
+      goog.bind(this.handleSubmitTopicSuccessful_, this, link, summary));
+
+  // Make a synthetic post announcing the new topic.
+  var postMap = {
+      'shardId': this.shardId_,
+      'title': goog.string.htmlEscape(link),
+      'body': goog.string.htmlEscape(summary),
+      'postTimeMs': (new goog.date.DateTime()).getTime(),
+      'archiveType': bits.posts.ArchiveType.TOPIC_START,
+      'postId': postId
+  };
+  bits.events.PubSub.publish(
+      this.shardId_, bits.events.EventType.SubmittedPostSent, postMap);
+};
+
+
+/**
+ * Handles when submitting a new topic is successful.
+ * @param {string} link URL for the topic.
+ * @param {string} summary Summary text for the topic.
+ * @param {goog.events.Event} event XHR request event.
+ */
+bits.connection.Connection.prototype.handleSubmitTopicSuccessful_ =
+    function(link, summary, event) {
+  if (!event.target.isSuccess()) {
+    if (this.reportError_('Could not start new topic', true)) {
+      this.setPresence_();
+    }
+    return;
+  }
+
+  var responseJson = event.target.getResponseJson();
+  var topicId = responseJson['shardId'];
+
+  this.logger_.info('New topic submitted successfully: link=' + link +
+                    ', topicId=' + topicId);
 };
 
 

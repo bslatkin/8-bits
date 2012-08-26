@@ -75,27 +75,32 @@ bits.posts.Post = function(postMap) {
   /**
    * @type {string}
    */
-  this.shardId = postMap.shardId || null;
+  this.shardId = postMap['shardId'] || null;
 
   /**
    * @type {bits.posts.ArchiveType}
    */
-  this.archiveType = postMap.archiveType || bits.posts.ArchiveType.UNKNOWN;
+  this.archiveType = postMap['archiveType'] || bits.posts.ArchiveType.UNKNOWN;
 
   /**
    * @type {string}
    */
-  this.nickname = postMap.nickname || null;
+  this.nickname = postMap['nickname'] || null;
 
   /**
    * @type {string}
    */
-  this.body = postMap.body || null;
+  this.title = postMap['title'] || null;
+
+  /**
+   * @type {string}
+   */
+  this.body = postMap['body'] || null;
 
   /**
    * @type {number?}
    */
-  this.postTimeMs = postMap.postTimeMs || null;
+  this.postTimeMs = postMap['postTimeMs'] || null;
 
   /**
    * @type {goog.date.DateTime}
@@ -109,17 +114,12 @@ bits.posts.Post = function(postMap) {
   /**
    * @type {string}
    */
-  this.postId = postMap.postId || null;
+  this.postId = postMap['postId'] || null;
 
   /**
    * @type {string}
    */
-  this.sequenceId = postMap.sequenceId || null;
-
-  /**
-   * @type {string}
-   */
-  this.postAttachment = postMap.postAttachment || null;
+  this.sequenceId = postMap['sequenceId'] || null;
 };
 goog.inherits(bits.posts.Post, goog.ui.Control);
 
@@ -403,9 +403,6 @@ bits.posts.PostContainer.prototype.enterDocument = function() {
 
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.SubmittedPostSent,
-      this.handlePostReceived, this);
-  bits.events.PubSub.subscribe(
-      this.shardId, bits.events.EventType.SubmittedPostReceived,
       this.handlePostReceived, this);
   bits.events.PubSub.subscribe(
       this.shardId, bits.events.EventType.RosterReceived,

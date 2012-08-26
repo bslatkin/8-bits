@@ -85,7 +85,7 @@
             postMap.nickname = 'Current user';
             postMap.postTimeMs = (new goog.date.DateTime()).getTime();
             bits.events.PubSub.publish(
-                shardId, bits.events.EventType.SubmittedPostReceived, postMap);
+                shardId, bits.events.EventType.PostReceived, postMap);
           });
 
     </script>
