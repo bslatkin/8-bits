@@ -10,6 +10,7 @@ v2 features:
 v2 polish:
 - Clean up code comments and style everywhere
 - Pass through error traceback to users
+- Have tooltip disappear after N seconds
 
 -----
 
