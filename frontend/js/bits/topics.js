@@ -18,6 +18,7 @@
 
 goog.provide('bits.topics.Topic');
 goog.provide('bits.topics.TopicMenu');
+goog.provide('bits.topics.TopicPrompt');
 
 goog.require('goog.array');
 goog.require('goog.date.DateTime');

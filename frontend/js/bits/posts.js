@@ -40,6 +40,7 @@ goog.require('goog.userAgent');
 
 goog.require('bits.events');
 goog.require('bits.ui.Scrollbar');
+goog.require('bits.util');
 
 
 /**
@@ -185,12 +186,9 @@ bits.posts.Post.prototype.renderChat = function(element) {
   var bodyDiv = this.dom_.createElement('span');
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-chat-body'));
 
-  // Apply filters to linkify it safely. The regex means we're very open to
-  // all kinds of crazy links here.
-  var rewritten = this.body.replace(
-      /(http(s?):\/\/[^ '"\)\(]+)/g,
+  bodyDiv.innerHTML = bits.util.rewriteLink(
+      this.body,
       '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>');
-  bodyDiv.innerHTML = rewritten;
 
   element.appendChild(nicknameDiv);
   element.appendChild(separatorDiv);

@@ -75,13 +75,6 @@ goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
 
 
 /**
- * Height of the chat input box, by default.
- * @type {number}
- */
-bits.chatbox.ChatBox.INPUT_DEFAULT_HEIGHT = 100;
-
-
-/**
  * Decorates an existing HTML DIV element as a ChatBox.
  *
  * @param {HTMLElement} element The DIV element to decorate.
