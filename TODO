@@ -13,7 +13,6 @@ v2 polish:
 -----
 
 v3 features:
-- Add a tutorial section on settings dialog on first join
 - Topics dissipate after 15 minutes of no activity
 - Add analytics events to link clicks & UI actions
 
@@ -25,7 +24,7 @@ v3 production:
 v4 features:
 - Add share buttons to "share this" dialog
 - Drag/drop image upload
-- New topic snippeting/preview based on OGP
+- New topic title snippeting/preview based on OGP, etc
 
 ---
 
