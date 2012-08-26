@@ -54,9 +54,15 @@
     <div>
       <input type="button" value="Send message" id="send-message">
       <input type="button" value="Historical message" id="historical-message">
+      <br>
+      <br>
       <input type="button" value="User login" id="user-login">
       <input type="button" value="User update" id="user-update">
       <input type="button" value="User logout" id="user-logout">
+      <br>
+      <br>
+      <input type="button" value="System error" id="system-error">
+      <input type="button" value="System info" id="system-info">
       <input type="button" value="Start topic" id="start-topic">
       <input type="button" value="Change topic" id="change-topic">
     </div>
@@ -268,6 +274,36 @@
           });
 
       goog.events.listen(
+          goog.dom.getElement('system-error'), goog.events.EventType.CLICK,
+          function(event) {
+            event.preventDefault();
+            bits.events.PubSub.publish(
+              shardId, bits.events.EventType.PostReceived,
+              {
+                shardId: 5,
+                archiveType: 'error',
+                body: 'This is system error ' + postId,
+                postTimeMs: (new goog.date.DateTime()).getTime(),
+                postId: 'post ' + (postId++)
+            });
+          });
+
+      goog.events.listen(
+          goog.dom.getElement('system-info'), goog.events.EventType.CLICK,
+          function(event) {
+            event.preventDefault();
+            bits.events.PubSub.publish(
+              shardId, bits.events.EventType.PostReceived,
+              {
+                shardId: 5,
+                archiveType: 'info',
+                body: 'This is system info ' + postId,
+                postTimeMs: (new goog.date.DateTime()).getTime(),
+                postId: 'post ' + (postId++)
+            });
+          });
+
+      goog.events.listen(
           goog.dom.getElement('start-topic'), goog.events.EventType.CLICK,
           function(event) {
             event.preventDefault();
@@ -285,8 +321,6 @@
             });
           });
 
-      // TODO(bslatkin): Add test buttons for system messages and
-      // connection errors.
     </script>
   </body>
 </html>
