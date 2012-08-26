@@ -183,6 +183,10 @@ bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
       this.handlePostReceived_, this);
 
   bits.events.PubSub.subscribe(
+      this.shardId_, bits.events.EventType.SubmitTopic,
+      this.handleTopicSent_, this);
+
+  bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.SubmitPresenceChange,
       this.handleSubmitPresenceChange_, this);
 
@@ -256,6 +260,19 @@ bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
   if (postMap['archiveType'] == bits.posts.ArchiveType.CHAT) {
     this.seenPosts_.add(postMap['postId']);
     this.playSound_(this.receiveChatAudio_);
+  }
+};
+
+
+/**
+ * Handles when a new topic is sent to the server side.
+ * @param {object} postMap Post that was received.
+ * @private
+ */
+bits.notifier.Notifier.prototype.handleTopicSent_ = function(postMap) {
+  if (postMap['archiveType'] == bits.posts.ArchiveType.TOPIC_START) {
+    this.seenPosts_.add(postMap['postId']);
+    this.playSound_(this.topicStartAudio_);
   }
 };
 

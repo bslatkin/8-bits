@@ -20,7 +20,7 @@
   padding: 0 10px;
   margin: 1px 0;
   outline: none;
-  position: relative;
+  /* Do not give this position or else the native scrollbar shows! */
 }
 
 .bits-post-tooltip {
@@ -29,7 +29,7 @@
   border: 1px solid #999;
   padding: 3px;
   font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
-  font-size: 10px;
+  font-size: 12px;
   border-radius: 5px;
   z-index: 100;
 }
@@ -77,7 +77,7 @@
 }
 
 .bits-post-presence {
-  color: #777;
+  color: #888;
 }
 .bits-post-error {
   color: #CF9400;
@@ -87,10 +87,10 @@
 }
 
 .bits-post-topic {
-  background-color: #e0e0e0;
-  padding: 2px 10px;
-  border-radius: 20px;
-  margin: 5px 0;
+  background-color: #eee;
+  border-top: 1px solid #ccc;
+  padding: 2px 10px 0 10px;
+  margin: 5px 0 1px 0;
   -webkit-transition: background-color 3s ease-out;
   -moz-transition: background-color 3s ease-out;
 }
@@ -100,14 +100,14 @@
 .bits-post-topic-type {
   float: right;
   vertical-align: baseline;
-  margin-left: 20px;
-  color: #777;
+  margin: 0 0 5px 20px;
+  color: #888;
+  line-height: 15px;
 }
 .bits-post-topic-title {
   display: block;
   margin: 0 0 5px 0;
-  font-size: 14px;
-  line-height: 16px;
+  line-height: 15px;
   vertical-align: baseline;
 }
 .bits-post-topic-title a:link,

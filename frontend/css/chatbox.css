@@ -45,8 +45,8 @@
   height: 86px;
 }
 .bits-chat-input,
-.bits-chat-input:focus  {
-  border-top: 1px solid #888;
+.bits-chat-input:focus {
+  border-top: 1px solid #555;
 }
 .bits-chat-input::-webkit-input-placeholder {
   color: #888;
