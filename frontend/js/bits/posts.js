@@ -271,20 +271,28 @@ bits.posts.Post.prototype.renderError = function(element) {
 bits.posts.Post.prototype.renderTopic = function(element, newTopic) {
   goog.dom.classes.add(element, 'bits-post-topic');
 
+  var typeEl = this.dom_.createDom('div', 'bits-post-topic-type');
+  typeEl.innerHTML = newTopic ? 'new topic' : 'change to topic';
+  element.appendChild(typeEl);
+
   var titleDiv = this.dom_.createDom('span', 'bits-post-topic-title');
   titleDiv.innerHTML = bits.util.rewriteLink(
       this.title, bits.posts.Post.LINK_REWRITE_)
   element.appendChild(titleDiv);
 
-  element.appendChild(this.dom_.createDom(
-      'span', 'bits-post-topic-happytext', 'Started by'));
-  element.appendChild(this.dom_.createTextNode(' '));
-
-  var nicknameDiv = this.dom_.createDom('span', 'bits-post-topic-nickname');
+  var nicknameDiv = this.dom_.createElement('span');
+  goog.dom.classes.add(nicknameDiv, goog.getCssName('bits-post-chat-nickname'));
   nicknameDiv.innerHTML = this.nickname;
   element.appendChild(nicknameDiv);
 
-  var bodyDiv = this.dom_.createDom('div', 'bits-post-topic-body');
+  var separatorDiv = this.dom_.createElement('span');
+  goog.dom.classes.add(separatorDiv,
+                       goog.getCssName('bits-post-chat-separator'));
+  this.dom_.setTextContent(separatorDiv, ': ');
+  element.appendChild(separatorDiv);
+
+  var bodyDiv = this.dom_.createElement('span');
+  goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-chat-body'));
   bodyDiv.innerHTML = bits.util.rewriteLink(
       this.body, bits.posts.Post.LINK_REWRITE_);
   element.appendChild(bodyDiv);

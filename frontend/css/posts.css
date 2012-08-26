@@ -20,6 +20,7 @@
   padding: 0 10px;
   margin: 1px 0;
   outline: none;
+  position: relative;
 }
 
 .bits-post-tooltip {
@@ -64,7 +65,6 @@
 .bits-post-info {
   line-height: 20px;
   height: 20px;  /* need height for strict overflow */
-  font-style: italic;
 }
 .bits-post-presence-body,
 .bits-post-error-body,
@@ -88,7 +88,7 @@
 
 .bits-post-topic {
   background-color: #D8EBEB;
-  padding: 10px;
+  padding: 2px 10px;
   text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   margin: 5px 0;
@@ -98,23 +98,22 @@
 .bits-post-topic.active {
   background-color: #00D5D7;
 }
+.bits-post-topic-type {
+  float: right;
+  vertical-align: baseline;
+  margin-left: 20px;
+}
 .bits-post-topic-title {
   display: block;
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  line-height: 16px;
+  vertical-align: baseline;
 }
 .bits-post-topic-title a:link,
 .bits-post-topic-title a:visited,
 .bits-post-topic-title a:hover,
 .bits-post-topic-title a:active {
-  color: #000;
-  font-size: 14px;
   text-decoration: underline;
-}
-.bits-post-topic-nickname {
-  font-style: italic;
-}
-.bits-post-topic-body {
-  padding: 0 16px;
-  margin: 0 0 0 2px;
-  background-image: url('../quotes.png');
-  background-repeat: no-repeat;
+  color: #000;
 }
