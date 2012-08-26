@@ -88,9 +88,8 @@
 
 .bits-post-topic {
   background-color: #eee;
-  border-top: 1px solid #ccc;
-  padding: 2px 10px 0 10px;
-  margin: 5px 0 1px 0;
+  padding: 0 10px;
+  margin: 15px 0 1px 0;
   -webkit-transition: background-color 3s ease-out;
   -moz-transition: background-color 3s ease-out;
 }
