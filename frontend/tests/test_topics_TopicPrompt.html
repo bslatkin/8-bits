@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+  <link rel="stylesheet" href="/static/1/css/common.css">
+  <link rel="stylesheet" href="/static/1/css/topics.css">
+
+  <style type="text/css" media="screen">
+  .topic-test-container {
+    width: 700px;
+    height: 500px;
+    position: relative;
+    padding: 10px;
+    margin: 10px;
+    border: 1px solid #000;
+  }
+  </style>
+
+  <script src="/js/closure/goog/base.js"></script>
+  <script src="/js/bits/deps.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    goog.require('bits.topics.TopicPrompt');
+    goog.require('goog.debug.Console');
+  </script>
+
+</head>
+<body>
+
+<button id="trigger-button">Trigger display</button>
+
+
+<div class="topic-test-container">
+  <div class="bits-topic-prompt">
+    <div class="bits-topic-prompt-title">Title here</div>
+    <div class="bits-topic-prompt-close">X</div>
+    <a class="bits-topic-prompt-link" href="#">Link here</a>
+    <div class="bits-topic-prompt-helptext">Help text here</div>
+    <textarea class="bits-topic-prompt-summary"></textarea>
+    <a class="bits-topic-prompt-submit fancy-button" href="#">Start</a>
+  </div>
+</div>
+
+<script>
+var c = new goog.debug.Console();
+c.setCapturing(true);
+
+var shardId = 'shard';
+
+var menu = new bits.topics.TopicPrompt(shardId);
+menu.decorate(goog.dom.getElementByClass('bits-topic-prompt'));
+
+goog.events.listen(
+    goog.dom.getElement('trigger-button'),
+    goog.events.EventType.CLICK,
+    function() {
+      bits.events.PubSub.publish(
+          shardId, bits.events.EventType.SubmitTopicLink,
+          'http://www.onebigfluke.com/2012/07/' +
+          'building-incorruptible-infrastructure.html');
+    });
+
+</script>
+
+</body>
+</html>

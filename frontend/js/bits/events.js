@@ -95,7 +95,12 @@ bits.events.EventType = {
 
   // The user's connection to the server is being reestablished after a
   // very long time being offline.
-  ConnectionReestablishing: 'ConnectionReestablishing'
+  ConnectionReestablishing: 'ConnectionReestablishing',
+
+  // User has submitted a URL for starting a new topic.
+  // Args:
+  //   link: URl that the user submitted.
+  SubmitTopicLink: 'SubmitTopicLink'
 };
 
 

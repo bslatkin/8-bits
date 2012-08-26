@@ -43,3 +43,18 @@
 .bits-topic-menu-dropdown {
   height: 100%;
 }
+
+.bits-topic-prompt {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding: 2px;
+  background-color: #eee;
+  z-index: 1;
+}
+.bits-topic-prompt.active {
+  display: block;
+}

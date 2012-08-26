@@ -20,13 +20,40 @@ goog.provide('bits.util');
 
 
 /**
+ * Pattern used to match links.
+ * @type {string}
+ * @private
+ * @const
+ */
+bits.util.LINK_PATTERN_ = '(http(s?):\\/\\/[^ \'"\\)\\(]+)';
+
+
+/**
  * Regular expression used to match links.
- *
  * @type {RegExp}
  * @private
  * @const
  */
-bits.util.LINK_RE_ = /(http(s?):\/\/[^ '"\)\(]+)/g;
+bits.util.LINK_MATCH_RE_ = new RegExp('^' + bits.util.LINK_PATTERN_ + '$');
+
+
+/**
+ * Regular expression used to replace links.
+ * @type {RegExp}
+ * @private
+ * @const
+ */
+bits.util.LINK_SUB_RE_ = new RegExp(bits.util.LINK_PATTERN_, 'g');
+
+
+/**
+ * Determines if the given string contains only a link.
+ * @param {string} text Text that is a link
+ * @return {boolean} True if the string is a link, false otherwise.
+ */
+bits.util.matchLink = function(text) {
+  return text.match(bits.util.LINK_MATCH_RE_);
+};
 
 
 /**
@@ -37,5 +64,6 @@ bits.util.LINK_RE_ = /(http(s?):\/\/[^ '"\)\(]+)/g;
  * @return {string} The rewritten string.
  */
 bits.util.rewriteLink = function(text, sub) {
-  return text.replace(bits.util.LINK_RE_, sub);
+  // TODO: Support obvious links that start with www or have 'w.xyz/' in them.
+  return text.replace(bits.util.LINK_SUB_RE_, sub);
 };

@@ -29,6 +29,7 @@ goog.require('goog.ui.LabelInput');
 
 goog.require('bits.events');
 goog.require('bits.posts.PostContainer');
+goog.require('bits.util');
 
 
 /**
@@ -57,7 +58,7 @@ bits.chatbox.ChatBox = function(shardId) {
    * @private
    */
   this.chatInput_ = new goog.ui.LabelInput(
-      'Type chat messages here');
+      bits.chatbox.ChatBox.PLACEHOLDER_TEXT_);
 
   /**
    * @type {goog.events.EventHandler}
@@ -75,6 +76,14 @@ goog.inherits(bits.chatbox.ChatBox, goog.ui.Component);
 
 
 /**
+ * @type {string}
+ * @private
+ */
+bits.chatbox.ChatBox.PLACEHOLDER_TEXT_ =
+    'Type chat messages here; paste a link to start a new topic';
+
+
+/**
  * Decorates an existing HTML DIV element as a ChatBox.
  *
  * @param {HTMLElement} element The DIV element to decorate.
@@ -84,11 +93,11 @@ bits.chatbox.ChatBox.prototype.decorateInternal = function(element) {
 
   var element = this.getElement();
 
-  var postElem = goog.dom.getElementByClass('bits-posts-scrollable', element);
-  this.postContainer_.decorate(postElem);
+  var postEl = goog.dom.getElementByClass('bits-posts-scrollable', element);
+  this.postContainer_.decorate(postEl);
 
-  var inputElem = goog.dom.getElementByClass('bits-chat-input', element);
-  this.chatInput_.decorate(inputElem);
+  var inputEl = goog.dom.getElementByClass('bits-chat-input', element);
+  this.chatInput_.decorate(inputEl);
 };
 
 
@@ -140,12 +149,17 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
       return;
     }
 
-    bits.events.PubSub.publish(
-        this.shardId_, bits.events.EventType.SubmitPost,
-        {
-          'archiveType': 'chat',
-          'body': chatText
-        });
+    if (bits.util.matchLink(chatText)) {
+      bits.events.PubSub.publish(
+          this.shardId_, bits.events.EventType.SubmitTopicLink, chatText);
+    } else {
+      bits.events.PubSub.publish(
+          this.shardId_, bits.events.EventType.SubmitPost,
+          {
+            'archiveType': 'chat',
+            'body': chatText
+          });
+    }
 
     goog.dom.forms.setValue(this.chatInput_.getElement(), '');
   }
