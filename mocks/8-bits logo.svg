@@ -270,14 +270,14 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.0652721"
-     inkscape:cx="365.55654"
-     inkscape:cy="761.0628"
+     inkscape:cx="307.81289"
+     inkscape:cy="826.30986"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1397"
      inkscape:window-height="849"
-     inkscape:window-x="0"
+     inkscape:window-x="11"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
      showguides="true"
@@ -570,5 +570,18 @@
            y="552.36218"
            style="font-size:56px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#00d5d7;fill-opacity:1;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter Bold" /></flowRegion><flowPara
          id="flowPara3143"
-         style="font-size:56px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#00d5d7;fill-opacity:1;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter Bold">e</flowPara></flowRoot>  </g>
+         style="font-size:56px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#00d5d7;fill-opacity:1;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter Bold">e</flowPara></flowRoot>    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3082"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#eeeeef;fill-opacity:0.94117647;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia;font-stretch:normal;font-variant:normal;text-anchor:start;text-align:start;writing-mode:lr"
+       inkscape:export-xdpi="91.099998"
+       inkscape:export-ydpi="91.099998"><flowRegion
+         id="flowRegion3084"><rect
+           id="rect3086"
+           width="129.18918"
+           height="90.040947"
+           x="365.38354"
+           y="148.69037"
+           style="-inkscape-font-specification:Georgia;font-family:Georgia;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:40px;text-anchor:start;text-align:start;writing-mode:lr;line-height:125%;fill:#eeeeef;fill-opacity:0.94117647" /></flowRegion><flowPara
+         id="flowPara3088">&quot;</flowPara></flowRoot>  </g>
 </svg>

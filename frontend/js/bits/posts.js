@@ -263,32 +263,22 @@ bits.posts.Post.prototype.renderError = function(element) {
 bits.posts.Post.prototype.renderTopic = function(element, newTopic) {
   goog.dom.classes.add(element, 'bits-post-topic');
 
-  var nicknameDiv = this.dom_.createDom('span', 'bits-post-topic-nickname');
-  nicknameDiv.innerHTML = this.nickname;
-
   var titleDiv = this.dom_.createDom('span', 'bits-post-topic-title');
   titleDiv.innerHTML = bits.util.rewriteLink(
       this.title, bits.posts.Post.LINK_REWRITE_)
+  element.appendChild(titleDiv);
+
+  element.appendChild(this.dom_.createDom(
+      'span', 'bits-post-topic-happytext', 'Started by'));
+  element.appendChild(this.dom_.createTextNode(' '));
+
+  var nicknameDiv = this.dom_.createDom('span', 'bits-post-topic-nickname');
+  nicknameDiv.innerHTML = this.nickname;
+  element.appendChild(nicknameDiv);
 
   var bodyDiv = this.dom_.createDom('div', 'bits-post-topic-body');
   bodyDiv.innerHTML = bits.util.rewriteLink(
       this.body, bits.posts.Post.LINK_REWRITE_);
-
-  element.appendChild(nicknameDiv);
-  element.appendChild(this.dom_.createTextNode(' '));
-
-  if (newTopic) {
-    element.appendChild(
-      this.dom_.createDom('span', 'bits-post-topic-happytext',
-                          'has started a new topic:'));
-  } else {
-    element.appendChild(
-      this.dom_.createDom('span', 'bits-post-topic-happytext',
-                          'has changed the topic:'));
-  }
-
-  element.appendChild(this.dom_.createTextNode(' '));
-  element.appendChild(titleDiv);
   element.appendChild(bodyDiv);
 };
 
