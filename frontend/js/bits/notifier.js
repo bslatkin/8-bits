@@ -121,6 +121,12 @@ bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
   this.userLeaveAudio_ = goog.dom.getElement('bits-sound-userleave');
 
   /**
+   * @type {HTMLMediaElement}
+   * @private
+   */
+  this.topicStartAudio_ = goog.dom.getElement('bits-sound-news');
+
+  /**
    * @type {boolean}
    * @private
    */
@@ -166,6 +172,7 @@ bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
   this.eh_.listen(this.receiveChatAudio_, 'ended', this.handleSoundEnded_);
   this.eh_.listen(this.userJoinAudio_, 'ended', this.handleSoundEnded_);
   this.eh_.listen(this.userLeaveAudio_, 'ended', this.handleSoundEnded_);
+  this.eh_.listen(this.topicStartAudio_, 'ended', this.handleSoundEnded_);
 
   bits.events.PubSub.subscribe(
       this.shardId_, bits.events.EventType.SubmitPost,
@@ -286,13 +293,14 @@ bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {
       break;
 
     case bits.posts.ArchiveType.CHAT:
+    case bits.posts.ArchiveType.TOPIC_CHANGE:
       this.playSound_(this.receiveChatAudio_);
+      this.notifyIcon_();
+      break;
 
-      // Only flash the icon for chat messages.
-      if (!this.active_ && !this.flashTimer_.enabled) {
-        this.setFlashing_(true);
-        this.flashTimer_.start();
-      }
+    case bits.posts.ArchiveType.TOPIC_START:
+      this.playSound_(this.topicStartAudio_);
+      this.notifyIcon_();
       break;
 
     default:
@@ -362,6 +370,18 @@ bits.notifier.Notifier.prototype.handleSubmitPresenceChange_ =
 bits.notifier.Notifier.prototype.handleReestablishing_ = function() {
   this.playSound_(this.loginAudio_);
 };
+
+
+/**
+ * Start notifying on the favicon if necessary.
+ * @private
+ */
+bits.notifier.Notifier.prototype.notifyIcon_ = function() {
+  if (!this.active_ && !this.flashTimer_.enabled) {
+    this.setFlashing_(true);
+    this.flashTimer_.start();
+  }
+}
 
 
 /**
