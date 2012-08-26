@@ -120,6 +120,11 @@ bits.posts.Post = function(postMap) {
    * @type {string}
    */
   this.sequenceId = postMap['sequenceId'] || null;
+
+  /**
+   * @type {boolean}
+   */
+  this.animateActivation = false;
 };
 goog.inherits(bits.posts.Post, goog.ui.Control);
 
@@ -139,6 +144,9 @@ bits.posts.Post.LINK_REWRITE_ =
  */
 bits.posts.Post.prototype.createDom = function() {
   var element = this.dom_.createDom('div', 'bits-post');
+  if (this.animateActivation) {
+      goog.dom.classes.add(element, 'active');
+  }
 
   switch (this.archiveType) {
     case bits.posts.ArchiveType.CHAT:
@@ -569,8 +577,14 @@ bits.posts.PostContainer.prototype.addOrUpdatePost = function(post) {
     return;
   }
 
+  // Mark the post as needing animation, since this is being appended.
+  post.animateActivation = true;
+
   this.postIdMap.set(post.postId, post);
   this.container.addChildAt(post, this.postIdMap.getCount() - 1, true);
+
+  // Remove the active CSS class, to kick off any CSS3 transitions.
+  goog.dom.classes.remove(post.getElement(), 'active');
 
   if (scrollAtBottom) {
     // When the scrollbar is at the bottom, continue to automatically
