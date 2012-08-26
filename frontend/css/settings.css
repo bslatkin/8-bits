@@ -29,3 +29,10 @@
 .welcome-detail {
   margin-top: 0.5em;
 }
+
+.modal-dialog.bits-first-time {
+  background-image: url(../tutorial.png);
+  background-repeat: no-repeat;
+  background-position-x: 90px;
+  background-position-y: -60px;
+}
