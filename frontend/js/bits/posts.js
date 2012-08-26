@@ -125,6 +125,16 @@ goog.inherits(bits.posts.Post, goog.ui.Control);
 
 
 /**
+ * What post links should be written to.
+ * @type {string}
+ * @private
+ * @const
+ */
+bits.posts.Post.LINK_REWRITE_ =
+    '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>';
+
+
+/**
  * Creates an initial DOM representation for the component.
  */
 bits.posts.Post.prototype.createDom = function() {
@@ -192,10 +202,8 @@ bits.posts.Post.prototype.renderChat = function(element) {
 
   var bodyDiv = this.dom_.createElement('span');
   goog.dom.classes.add(bodyDiv, goog.getCssName('bits-post-chat-body'));
-
   bodyDiv.innerHTML = bits.util.rewriteLink(
-      this.body,
-      '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>');
+      this.body, bits.posts.Post.LINK_REWRITE_);
 
   element.appendChild(nicknameDiv);
   element.appendChild(separatorDiv);
@@ -259,12 +267,12 @@ bits.posts.Post.prototype.renderTopic = function(element, newTopic) {
   nicknameDiv.innerHTML = this.nickname;
 
   var titleDiv = this.dom_.createDom('span', 'bits-post-topic-title');
-  titleDiv.innerHTML = this.title;
+  titleDiv.innerHTML = bits.util.rewriteLink(
+      this.title, bits.posts.Post.LINK_REWRITE_)
 
   var bodyDiv = this.dom_.createDom('div', 'bits-post-topic-body');
   bodyDiv.innerHTML = bits.util.rewriteLink(
-      this.body,
-      '<a href="$1" target="_blank" class="bits-chatroom-link">$1</a>');
+      this.body, bits.posts.Post.LINK_REWRITE_);
 
   element.appendChild(nicknameDiv);
   element.appendChild(this.dom_.createTextNode(' '));
