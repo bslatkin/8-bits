@@ -1,4 +1,5 @@
 Bugs:
+- Add a heartbeat in the other direction, so users can re-request a channel if they haven't gotten a server heartbeat in N seconds. This is helpful sometimes when the token expires server side and the server doesn't realize it
 
 -----
 
