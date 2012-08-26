@@ -532,11 +532,11 @@ def marshal_posts(shard, post_list):
   """Organizes a list of posts into a JSON-serializable list."""
   out = []
   for post in post_list:
-    # TODO(bslatkin): Put the 'title' field in here for topics.
     post_dict = dict(
       shardId=shard,
       archiveType=models.Post.ARCHIVE_REVERSE_MAPPING[post.archive_type],
       nickname=post.nickname,
+      title=post.title,
       body=post.body,
       postTimeMs=models.datetime_to_stamp_ms(post.post_time),
       sequenceId=getattr(post, 'sequence', None),

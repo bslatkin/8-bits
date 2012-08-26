@@ -31,7 +31,7 @@
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   width: 100%;
-  padding: 5px 2px;
+  padding: 5px 10px;
   margin: 0;
   overflow: hidden;  /* Don't show a scrollbar */
   resize: none;  /* Disable webkit textarea resize control */
