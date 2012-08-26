@@ -6,6 +6,8 @@
 
   <style type="text/css" media="screen">
   .topic-test-container {
+    font-family: Helvetica;
+    font-size: 13px;
     width: 700px;
     height: 500px;
     position: relative;
@@ -30,12 +32,19 @@
 <div class="topic-test-container">
 
   <div class="bits-topic-prompt">
-    <div class="bits-topic-prompt-title">Title here</div>
-    <div class="bits-topic-prompt-close">X</div>
-    <a class="bits-topic-prompt-link" href="#" target="_blank">Link here</a>
-    <div class="bits-topic-prompt-helptext">Help text here</div>
-    <textarea class="bits-topic-prompt-summary"></textarea>
-    <a class="bits-topic-prompt-submit fancy-button" href="#">Start</a>
+    <div class="bits-topic-prompt-wrapper">
+      <div class="bits-topic-prompt-title">Start a new topic</div>
+      <div class="bits-topic-prompt-close">&#215;</div>
+      <div class="bits-topic-prompt-helptext">
+        Provide a summary for the link you're about to share. This sets the tone
+        and lets people know if you're serious or joking. You won't be able to
+        edit this later, so be careful. Like everything else, what you write
+        here will fade away in ten days.
+      </div>
+      <a class="bits-topic-prompt-link" href="#" target="_blank">Link here</a>
+      <textarea class="bits-topic-prompt-summary"></textarea>
+      <a class="bits-topic-prompt-submit fancy-button" href="#">Start</a>
+    </div>
   </div>
 
 </div>

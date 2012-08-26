@@ -7,6 +7,12 @@
   position: absolute;
   border-radius: 3px;
   z-index: 100;
+  font-size: 13px;
+}
+.modal-dialog input[type="text"] {
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  max-width: 325px;
+  font-size: 16px;
 }
 .modal-dialog-bg {
   left: 0;
@@ -49,6 +55,8 @@
       linear, 0% 40%, 0% 70%, from(#f0f0f0), to(#dcdcdc));
   background-image: -moz-linear-gradient(
         top, #f0f0f0 40%, #dcdcdc 70%);
+  text-decoration: none;
+  color: #000;
 }
 .modal-dialog-buttons button:active,
 .fancy-button:active {
@@ -56,4 +64,6 @@
       linear, 0% 40%, 0% 70%, from(#dcdcdc), to(#f0f0f0));
   background-image: -moz-linear-gradient(
         top, #dcdcdc 40%, #f0f0f0 70%);
+  text-decoration: none;
+  color: #000;
 }

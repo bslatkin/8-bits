@@ -2,12 +2,9 @@
 #settings-dialog {
   max-width: 350px;
 }
-#settings-dialog input[type="text"] {
-  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
-  max-width: 325px;
-}
 #settings-terms {
   display: none;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 #welcome-text {
   display: none;
@@ -25,9 +22,11 @@
 .welcome-title {
   font-size: 16px;
   font-weight: bold;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 .welcome-detail {
   margin-top: 0.5em;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 
 .modal-dialog.bits-first-time {

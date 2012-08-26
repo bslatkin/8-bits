@@ -510,10 +510,11 @@ bits.topics.TopicPrompt.prototype.exitDocument = function() {
  * @private
  */
 bits.topics.TopicPrompt.prototype.handleKey_ = function(event) {
-  if (event.keyCode == goog.events.KeyCodes.ENTER) {
-    event.preventDefault();
-    this.submit();
-  }
+  // TODO(bslatkin): Consider reenabling this.
+  // if (event.keyCode == goog.events.KeyCodes.ENTER) {
+  //   event.preventDefault();
+  //   this.submit();
+  // }
 };
 
 
@@ -529,6 +530,7 @@ bits.topics.TopicPrompt.prototype.start = function(link) {
   goog.dom.setTextContent(this.linkEl_, this.pendingLink_);
 
   goog.dom.classes.add(this.getElement(), 'active');
+  this.summaryInput_.focusAndSelect();
 };
 
 
@@ -544,11 +546,21 @@ bits.topics.TopicPrompt.prototype.stop = function() {
 
 /**
  * Submit the user's input as a new topic.
- * @param
+ * @param {goog.events.Event=} opt_event Event that triggered the submit. Will
+ *   be stopped from performing the default action.
  */
-bits.topics.TopicPrompt.prototype.submit = function() {
+bits.topics.TopicPrompt.prototype.submit = function(opt_event) {
+  if (opt_event) {
+    opt_event.preventDefault();
+  }
+
   var summaryText = goog.string.trim(
       goog.dom.forms.getValue(this.summaryInput_.getElement()));
+
+  // TODO(bslatkin): Notify the user that they have to type something
+  if (summaryText.length == 0) {
+    return;
+  }
 
   bits.events.PubSub.publish(
       this.shardId_, bits.events.EventType.SubmitTopic,

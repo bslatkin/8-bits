@@ -58,3 +58,82 @@
 .bits-topic-prompt.active {
   display: block;
 }
+
+.bits-topic-prompt-wrapper {
+  width: 70%;
+  margin: 50px auto 0 auto;
+  position: relative;
+}
+
+.bits-topic-prompt-title {
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.bits-topic-prompt-close {
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  text-align: center;
+  vertical-align: center;
+  line-height: 16px;
+  border-radius: 8px;
+  color: #ccc;
+  font-size: 16px;
+  font-weight: bold;
+  position: absolute;
+  top: -18px;
+  right: -18px;
+}
+.bits-topic-prompt-close:hover {
+  background-color: #ccc;
+  color: #eee;
+}
+.bits-topic-prompt-close:active {
+  background-color: #ccc;
+  color: #888;
+}
+
+.bits-topic-prompt-link {
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  margin: 15px 0;
+  display: block;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.bits-topic-prompt-helptext {
+  margin: 15px 0;
+}
+
+
+.bits-topic-prompt-summary {
+  border: 0;
+  display: block;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px 0;
+  margin: 0;
+  overflow: hidden;  /* Don't show a scrollbar */
+  resize: none;  /* Disable webkit textarea resize control */
+  outline: none;  /* Remove focus ring */
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  height: 120px;
+  background-color: #eee;
+}
+.bits-topic-prompt-summary,
+.bits-topic-prompt-summary:focus {
+  border-top: 1px solid #555;
+}
+.bits-topic-prompt-summary::-webkit-input-placeholder {
+  color: #888;
+}
+.bits-topic-prompt-summary:-moz-placeholder {
+  color: #888;
+}
