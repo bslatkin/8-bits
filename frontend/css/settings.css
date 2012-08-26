@@ -33,6 +33,5 @@
 .modal-dialog.bits-first-time {
   background-image: url(../tutorial.png);
   background-repeat: no-repeat;
-  background-position-x: 90px;
-  background-position-y: -60px;
+  background-position: 90px -60px;
 }
