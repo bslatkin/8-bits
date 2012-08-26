@@ -64,6 +64,9 @@ bits.util.matchLink = function(text) {
  * @return {string} The rewritten string.
  */
 bits.util.rewriteLink = function(text, sub) {
+  if (!text) {
+    return text;
+  }
   // TODO: Support obvious links that start with www or have 'w.xyz/' in them.
   return text.replace(bits.util.LINK_SUB_RE_, sub);
 };
