@@ -1040,6 +1040,7 @@ class ListPostsHandler(BaseRpcHandler):
 
     post_key_list = [ndb.Key(post_kind, ref.post_id) for ref in ref_list]
     post_list = ndb.get_multi(post_key_list)
+    adjusted_post_list = []
     for post, ref in zip(post_list, ref_list):
       # PostReference entities may point to non-existent Post entities once the
       # cleanup job has run. Filter them out here. The client side won't try to
@@ -1049,8 +1050,9 @@ class ListPostsHandler(BaseRpcHandler):
         continue
 
       post.sequence = ref.sequence
+      adjusted_post_list.append(post)
 
-    self.json_response['posts'] = marshal_posts(self.shard, post_list)
+    self.json_response['posts'] = marshal_posts(self.shard, adjusted_post_list)
 
 
 class CreateTopicHandler(BaseRpcHandler):
