@@ -49,21 +49,23 @@
   color: #000;
 }
 .modal-dialog-buttons button:hover,
-.fancy-button:hover {
+.fancy-button:hover,
+.modal-dialog-buttons button:focus,
+.fancy-button:focus {
   background-color: #dcdcdc;
   background-image: -webkit-gradient(
-      linear, 0% 40%, 0% 70%, from(#f0f0f0), to(#dcdcdc));
+      linear, 0% 40%, 0% 70%, from(#E6E6E6), to(#D1D1D1));
   background-image: -moz-linear-gradient(
-        top, #f0f0f0 40%, #dcdcdc 70%);
+        top, #E6E6E6 40%, #D1D1D1 70%);
   text-decoration: none;
   color: #000;
 }
 .modal-dialog-buttons button:active,
 .fancy-button:active {
   background-image: -webkit-gradient(
-      linear, 0% 40%, 0% 70%, from(#dcdcdc), to(#f0f0f0));
+      linear, 0% 40%, 0% 70%, from(#D1D1D1), to(#E6E6E6));
   background-image: -moz-linear-gradient(
-        top, #dcdcdc 40%, #f0f0f0 70%);
+        top, #D1D1D1 40%, #E6E6E6 70%);
   text-decoration: none;
   color: #000;
 }

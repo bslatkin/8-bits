@@ -406,8 +406,12 @@ def apply_posts(shard=None,
     # assignment will be ignored.
     new_topic = params.get('new_topic') or new_topic
 
-    post_id_list = params['post_ids']
-    if not isinstance(post_id_list, list):
+    post_id_list = params.get('post_ids')
+    if post_id_list is None:
+      # This may happen on replica shards if it turns out there are no
+      # unapplied post IDs but an apply task still ran.
+      post_id_list = []
+    elif not isinstance(post_id_list, list):
       post_id_list = [post_id_list]
 
     for post_id in post_id_list:
