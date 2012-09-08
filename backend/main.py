@@ -275,7 +275,7 @@ def enqueue_apply_task(shard, post_id=None):
 
 
 def enqueue_cleanup_task(shard):
-  """Enqueues a task to invoke the ShardCleanupHandler periodically."""
+  """Enqueues a task to invoke the ShardCleanupWorker periodically."""
   try:
     taskqueue.Task(
       url='/work/cleanup',
@@ -811,7 +811,7 @@ class ApplyWorker(BaseHandler):
     apply_posts()
 
 
-class ShardCleanupHandler(BaseHandler):
+class ShardCleanupWorker(BaseHandler):
   """Handles periodic cleanup requests for a specific shard.
 
   This handler will run periodically (~minute) for all shards that have
@@ -835,6 +835,33 @@ class ShardCleanupHandler(BaseHandler):
     # clean them up.
     if active_users_set:
       enqueue_cleanup_task(shard)
+
+
+class DigestWorker(BaseHandler):
+  """TODO
+  """
+
+  def post(self):
+    shard = self.get_required('shard', str)
+
+    # use the root shard's ID as the user ID for read state
+    # get read state for all topics
+    # get posts for each sub-topic within the given range
+    # figure out which nicknames have participated on each thread
+    # render parameter payload into task
+    # start transaction on user ID, update read state, enqueue email task
+
+
+class SendEmailWorker(BaseHandler):
+  """TODO
+  """
+
+  def post(self):
+    # Render the email template
+    # list all users who are part of the shard, extract emails, dedupe
+    # lookup email records and find email preferences, drop users on policy
+    pass
+
 
 ################################################################################
 # RPC handlers
@@ -1055,6 +1082,72 @@ class ListPostsHandler(BaseRpcHandler):
     self.json_response['posts'] = marshal_posts(self.shard, adjusted_post_list)
 
 
+################################################################################
+# Topic functions, handlers
+
+def list_topics(root_shard_id, user_id):
+  """TODO
+
+  Returns the root shard, followed by a list of child topics an the
+  read state for each topic for the given user
+  """
+  root_shard_future = models.Shard.get_by_id_async(
+      root_shard_id, use_cache=False, use_memcache=False)
+
+  oldest_update_time = (
+      datetime.datetime.now() -
+      datetime.timedelta(seconds=config.ephemeral_lifetime_seconds))
+
+  query = models.Shard.query()
+  query = query.filter(models.Shard.root_shard == root_shard_id)
+  query = query.filter(models.Shard.update_time > oldest_update_time)
+  query = query.order(-models.Shard.update_time)
+  shard_list = query.fetch(100);
+
+  # Get the current user's readstate for each shard that was found.
+  read_state_key_list = [
+      ndb.Key(models.LoginRecord._get_kind(), user_id,
+              models.ReadState._get_kind(), root_shard_id)
+      for shard in shard_list]
+  read_state_list = ndb.get_multi(read_state_key_list)
+
+  root_shard = root_shard_future.get_result()
+
+  return root_shard, zip(shard_list, read_state_list)
+
+
+def update_read_state(topic_dict, user_id):
+  """TODO
+
+  will inherit transaction state on user_id's LoginRecord if this is
+  called from within an existing transition.
+  """
+
+  # TODO(bslatkin): Consider validating the topic list provided here
+  # to ensure they are actually associated with the current logged-in shard.
+  # The possible damage here is restricted to the user so we don't care much.
+  read_state_keys = [
+      ndb.Key(models.LoginRecord._get_kind(), user_id,
+              models.ReadState._get_kind(), topic)
+      for topic in topic_dict]
+
+  def txn():
+    read_state_list = ndb.get_multi(read_state_keys)
+    to_put = []
+    for key, read_state in zip(read_state_keys, read_state_list):
+      if read_state is None:
+        read_state = models.ReadState(key=key)
+      read_state.last_read_sequence = topic_dict[key.id]
+      to_put.append(read_state)
+
+    ndb.put_multi(to_put)
+
+  if ndb.in_transaction():
+    txn()
+  else:
+    ndb.transaction(txn)
+
+
 class CreateTopicHandler(BaseRpcHandler):
   """Create a new topic shard and returns its ID."""
 
@@ -1096,28 +1189,11 @@ class ListTopicsHandler(BaseRpcHandler):
   require_shard = True
 
   def handle(self):
-    root_shard_future = models.Shard.get_by_id_async(
-        self.shard, use_cache=False, use_memcache=False)
-
-    oldest_update_time = (
-        datetime.datetime.now() -
-        datetime.timedelta(seconds=config.ephemeral_lifetime_seconds))
-
-    query = models.Shard.query()
-    query = query.filter(models.Shard.root_shard == self.shard)
-    query = query.filter(models.Shard.update_time > oldest_update_time)
-    query = query.order(-models.Shard.update_time)
-    shard_list = query.fetch(100);
-
-    # Get the current user's readstate for each shard that was found.
-    read_state_key_list = [
-        ndb.Key(models.LoginRecord._get_kind(), self.user_id,
-                models.ReadState._get_kind(), shard.shard_id)
-        for shard in shard_list]
-    read_state_list = ndb.get_multi(read_state_key_list)
+    shard_record, shard_and_state_list = list_topics(
+        self.shard, self.user_id)
 
     out = []
-    for shard, read_state in zip(shard_list, read_state_list):
+    for shard, read_state in shard_and_state_list:
       shard_dict = dict(
         shardId=shard.shard_id,
         title=shard.title,
@@ -1138,8 +1214,6 @@ class ListTopicsHandler(BaseRpcHandler):
                 read_state.last_read_time))
 
       out.append(shard_dict)
-
-    shard_record = root_shard_future.get_result()
 
     self.json_response['currentTopicId'] = shard_record.current_topic
     if shard_record.topic_change_time:
@@ -1167,28 +1241,9 @@ class ReadStateHandler(BaseRpcHandler):
           'Must supply the same number of topics and positions')
     position_dict = dict(zip(topic_list, position_list))
 
-    login_record = self.require_active_login()
+    self.require_active_login()
 
-    # TODO(bslatkin): Consider validating the topic list provided here
-    # to ensure they are actually associated with the current logged-in shard.
-    # The possible damage here is restricted to the user so we don't care much.
-    read_state_keys = [
-        ndb.Key(models.LoginRecord._get_kind(), self.user_id,
-                models.ReadState._get_kind(), topic)
-        for topic in topic_list]
-
-    def txn():
-      read_state_list = ndb.get_multi(read_state_keys)
-      to_put = []
-      for key, read_state in zip(read_state_keys, read_state_list):
-        if read_state is None:
-          read_state = models.ReadState(key=key)
-        read_state.last_read_sequence = position_dict[key.id]
-        to_put.append(read_state)
-
-      ndb.put_multi(to_put)
-
-    ndb.transaction(txn)
+    update_read_state(position_dict, self.user_id)
 
 ################################################################################
 # UI handlers
@@ -1287,6 +1342,17 @@ class ChatroomHandler(BaseHandler):
     self.render('chatroom.html', context)
 
 
+class EmailPreferencesHandler(BaseHandler):
+  """TODO
+  """
+
+  def get(self):
+    pass
+
+  def post(self):
+    pass
+
+
 class WarmupHandler(BaseHandler):
   """Handles warm-up requests by doing nothing."""
 
@@ -1312,7 +1378,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/terms', TermsHandler),
   (r'/_ah/warmup', WarmupHandler),
   (r'/work/apply_posts', ApplyWorker),
-  (r'/work/cleanup', ShardCleanupHandler),
+  (r'/work/cleanup', ShardCleanupWorker),
   (r'/rpc/show_roster', ShowRosterHandler),
   (r'/rpc/list_posts', ListPostsHandler),
   (r'/rpc/post', PostHandler),

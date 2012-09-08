@@ -37,3 +37,6 @@ user_token_lifetime_seconds =  6 * 60 * 60  # 6 hours
 
 # Current version of the terms of service
 terms_version = 1
+
+# Email address to use for sending notification emails.
+notification_from_email = 'notify@8-bits.us'

@@ -136,9 +136,38 @@ class LoginRecord(ndb.Model):
   browser_token = ndb.TextProperty()
   browser_token_issue_time = ndb.DateTimeProperty(indexed=False)
   sounds_enabled = ndb.BooleanProperty(default=True, indexed=False)
+  email_address = ndb.StringProperty()
 
   # Zero means no terms accepted.
   accepted_terms_version = ndb.IntegerProperty(default=0, indexed=False)
+
+
+class EmailPreference(ndb.Model):
+  """A user's email preferences for a shard."""
+
+  root_shard = ndb.StringProperty(required=True)
+  opt_out = ndb.BooleanProperty(default=False)
+  creation_time = ndb.DateTimeProperty(auto_now_add=True)
+  last_update_time = ndb.DateTimeProperty(auto_now=True)
+
+
+class EmailRecord(ndb.Model):
+  """Record of an email address used for notifications.
+
+  Key name is the destination email address.
+  """
+
+  @classmethod
+  def _get_kind(cls):
+    return 'ER'
+
+  @property
+  def email_address(self):
+    return self.key.id()
+
+  preferences = ndb.LocalStructuredProperty(EmailPreference, repeated=True)
+  creation_time = ndb.DateTimeProperty(auto_now_add=True)
+  last_update_time = ndb.DateTimeProperty(auto_now=True)
 
 
 class ReadState(ndb.Model):
@@ -153,7 +182,7 @@ class ReadState(ndb.Model):
 
   @property
   def shard_id(self):
-    return self.key.id
+    return self.key.id()
 
   first_read_time = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
   last_read_sequence = ndb.IntegerProperty(default=1, indexed=False)
