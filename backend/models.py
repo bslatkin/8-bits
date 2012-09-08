@@ -36,6 +36,7 @@
 """
 
 import datetime
+import hashlib
 import time
 
 # Local imports
@@ -51,9 +52,26 @@ def datetime_to_stamp_seconds(when):
   stamp += when.microsecond / 1000000.0
   return stamp
 
+
 def datetime_to_stamp_ms(when):
   """Converts a datetime to a timestamp in milliseconds since the epoch."""
   return int(datetime_to_stamp_seconds(when) * 1000.0)
+
+
+def human_bytes(byte_string):
+  """Generates more human friendly representation of a byte string."""
+  return base64.b32encode(byte_string).strip('=').lower()
+
+
+def human_uuid():
+  """Generates a more human friendly UUID."""
+  return human_bytes(uuid.uuid4().bytes)
+
+
+def human_hash(data):
+  """Generates a more human friendly hash of data."""
+  return human_hash(hashlib.sha1(data).digest())
+
 
 ################################################################################
 
@@ -165,9 +183,15 @@ class EmailRecord(ndb.Model):
   def email_address(self):
     return self.key.id()
 
-  preferences = ndb.LocalStructuredProperty(EmailPreference, repeated=True)
+  sequence_number = ndb.IntegerProperty(default=1, indexed=False)
   creation_time = ndb.DateTimeProperty(auto_now_add=True)
   last_update_time = ndb.DateTimeProperty(auto_now=True)
+  last_notified_time = ndb.DateTimeProperty()
+  secret = ndb.TextProperty()
+
+  global_opt_out = ndb.BooleanProperty(default=False)
+  min_notify_period_seconds = ndb.IntegerProperty(indexed=False, 900)
+  preferences = ndb.LocalStructuredProperty(EmailPreference, repeated=True)
 
 
 class ReadState(ndb.Model):

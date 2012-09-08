@@ -22,6 +22,7 @@ apply_queue = 'apply-posts'
 cleanup_queue = 'cleanup-shard'
 notify_queue = 'notify-posts'
 pending_queue = 'pending-posts'
+email_digest_queue = 'email-digests'
 
 # How long posts stay alive before being deleted. About 10 days.
 ephemeral_lifetime_seconds = 60 * 60 * 256

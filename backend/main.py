@@ -220,11 +220,6 @@ class BaseRpcHandler(BaseHandler):
     return shard
 
 
-def human_uuid():
-  """Generates a more human friendly UUID."""
-  return base64.b32encode(uuid.uuid4().bytes).strip('=').lower()
-
-
 ################################################################################
 # Posts and sequencing
 
@@ -311,7 +306,7 @@ def insert_post(shard, **kwargs):
   # Create the posting and insert it.
   post_id = kwargs.pop('post_id', None)
   if not post_id:
-    post_id = human_uuid()
+    post_id = models.human_uuid()
 
   new_topic = kwargs.get('new_topic', None)
 
@@ -626,14 +621,27 @@ def notify_posts(shard, post_list, sequence_numbers=None):
                       'browser_token=%r. %s: %s', login_record.user_id,
                       browser_token, e.__class__.__name__, str(e))
 
+
+class ApplyWorker(BaseHandler):
+  """Applies pending posts."""
+
+  def post(self):
+    shard = self.request.get('shard')
+    post_id = self.request.get('post_id')
+    apply_posts(shard=shard, insertion_post_id=post_id)
+
+  def get(self):
+    apply_posts()
+
 ################################################################################
 # User login and presence
 
 def invalidate_user_cache(shard):
   """Invalidates the present user cache for the given shard."""
-  shard_key = 'users-shard-%s' % shard
-  memcache.delete(shard_key)
-  # TODO(bslatkin): Consider refilling the cache in a background task.
+  # Memcache keys from get_present_users()
+  memcache.delete_multi([
+      'users-shard-%s' % shard,
+      'users-shard-%s-stale' % shard])
 
 
 def marshal_users(user_list):
@@ -705,7 +713,7 @@ def maybe_update_token(login_record, force=False):
   return True
 
 
-def get_present_users(shard, include_stale=False):
+def get_present_users(shard, include_stale=False, limit=1000):
   """Returns a list of present users for a shard in descending log-in order.
 
   Notably, this query is going to be eventually consistent and miss the folks
@@ -714,20 +722,28 @@ def get_present_users(shard, include_stale=False):
   historical queries.
   """
   shard_key = 'users-shard-%s' % shard
+  if include_stale:
+    shard_key = '%s-stale' % shard_key
+
   user_list = memcache.get(shard_key)
   if user_list:
     return user_list
 
-  user_list = (models.LoginRecord.query()
-      .filter(models.LoginRecord.shard_id == shard)
-      .filter(models.LoginRecord.online == True)
-      .order(-models.LoginRecord.last_update_time)
-      .fetch(1000))
+  query = models.LoginRecord.query()
+  query = query.filter(models.LoginRecord.shard_id == shard)
+
+  # When we don't care about stale users, select everyone in the query,
+  # including users we know are already logged out.
+  if not include_stale:
+    query = query.filter(models.LoginRecord.online == True)
+
+  query.order(-models.LoginRecord.last_update_time)
+  user_list = query.fetch(limit)
 
   if not include_stale:
-    # Only cache this query for the case where we're pruning stale users.
     user_list = only_active_users(*user_list)
-    memcache.set(shard_key, user_list, config.user_max_inactive_seconds)
+
+  memcache.set(shard_key, user_list, config.user_max_inactive_seconds)
 
   return user_list
 
@@ -753,7 +769,7 @@ def user_logged_in(shard, user_id):
   # User is logging in for the first time or somehow state was deleted.
   if not login_record:
     login_record = models.LoginRecord(
-      key=ndb.Key(models.LoginRecord._get_kind(), human_uuid()),
+      key=ndb.Key(models.LoginRecord._get_kind(), models.human_uuid()),
       shard_id=shard,
       online=True)
     login_record.put()
@@ -796,20 +812,6 @@ def get_token(user_id):
   """Gets the channel token for the given user."""
   return user_id
 
-################################################################################
-# Workers
-
-class ApplyWorker(BaseHandler):
-  """Applies pending posts."""
-
-  def post(self):
-    shard = self.request.get('shard')
-    post_id = self.request.get('post_id')
-    apply_posts(shard=shard, insertion_post_id=post_id)
-
-  def get(self):
-    apply_posts()
-
 
 class ShardCleanupWorker(BaseHandler):
   """Handles periodic cleanup requests for a specific shard.
@@ -817,51 +819,99 @@ class ShardCleanupWorker(BaseHandler):
   This handler will run periodically (~minute) for all shards that have
   active participants. It's meant to do state cleanup for the shard, such as
   forcing logouts for users who have not heartbeated in N seconds.
+
+  This handler will also enqueue any other periodic tasks that need to
+  happen for the shard.
   """
 
   def post(self):
     shard = self.get_required('shard', str)
 
-    all_users_list = get_present_users(shard, include_stale=True)
-    active_users_list = only_active_users(*all_users_list)
+    all_users_list = get_present_users(shard, include_stale=True, limit=10000)
 
+    # Find users who are now stale and log them out.
+    active_users_list = only_active_users(*all_users_list)
     all_users_set = set(u.user_id for u in all_users_list)
     active_users_set = set(u.user_id for u in active_users_list)
 
     for user_id in (all_users_set - active_users_set):
       user_logged_out(shard, user_id)
 
+    # Enqueue email notification tasks for users
+    enqueue_email_tasks(all_users_list)
+
     # As long as there are still active users, continue to try to
     # clean them up.
     if active_users_set:
       enqueue_cleanup_task(shard)
 
+################################################################################
+# Email notifications
 
-class DigestWorker(BaseHandler):
+def enqueue_email_tasks(all_users_list):
+  """TODO
+  """
+  emails_set = set(u.email_address for u in all_users_list if u.email_address)
+  if not emails_set:
+    return
+
+  email_record_keys = [
+      ndb.Key(models.EmailRecord._get_kind(), email_address)
+      for email_address in emails_set]
+  email_record_list = ndb.get_multi(email_record_keys)
+
+  task_list = []
+  for email_address, email_record in zip(emails_set, email_record_list):
+    sequence_number = 1
+    countdown = 0
+    if email_record:
+      if email_record.global_opt_out:
+        logging.debug('Not sending email to globally opted out user: %s',
+                      email_address)
+        continue
+
+      sequence_number = email_record.sequence_number
+      countdown = email_record.min_notify_period_seconds
+
+    task = taskqueue.Task(
+        url='/work/email_digest',
+        params=dict(sequence_number=sequence_number,
+                    email_address=email_address),
+        name='email-notify-%s' % models.human_hash(email_address),
+        countdown=countdown)
+    task_list.append(task)
+
+  logging.debug('Enqueuing email notification tasks for %d users',
+                len(task_list))
+  try:
+    taskqueue.Queue(config.email_digest_queue).add(task_list)
+  except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
+    logging.debug('Enqueued email tasks for emails=%r; '
+                  'at least one task already present', emails_set)
+
+
+class EmailDigestWorker(BaseHandler):
   """TODO
   """
 
   def post(self):
-    shard = self.get_required('shard', str)
+    sequence_number = self.get_required('sequence_number', int)
+    email_address = self.get_required('email_address', str)
 
-    # use the root shard's ID as the user ID for read state
-    # get read state for all topics
+    query = models.LoginRecord.query()
+    query = query.filter(models.LoginRecord.email_address == email_address)
+    login_record_list = query.fetch(1000)
+
+    # get read state for all topics associated with that email for this root
+    # if the read state has updated in the last N hours
     # get posts for each sub-topic within the given range
-    # figure out which nicknames have participated on each thread
+    # figure out which nicknames have participated on each thread since
     # render parameter payload into task
     # start transaction on user ID, update read state, enqueue email task
 
 
-class SendEmailWorker(BaseHandler):
-  """TODO
-  """
-
-  def post(self):
-    # Render the email template
     # list all users who are part of the shard, extract emails, dedupe
     # lookup email records and find email preferences, drop users on policy
-    pass
-
 
 ################################################################################
 # RPC handlers
@@ -888,7 +938,7 @@ class PresenceHandler(BaseRpcHandler):
     user_id = self.session['shards'].get(shard)
     if not user_id:
       # First login to this shard.
-      user_id = human_uuid()
+      user_id = models.human_uuid()
       self.session['shards'][shard] = user_id
 
     def txn():
@@ -1085,6 +1135,7 @@ class ListPostsHandler(BaseRpcHandler):
 ################################################################################
 # Topic functions, handlers
 
+@ndb.tasklet
 def list_topics(root_shard_id, user_id):
   """TODO
 
@@ -1102,18 +1153,19 @@ def list_topics(root_shard_id, user_id):
   query = query.filter(models.Shard.root_shard == root_shard_id)
   query = query.filter(models.Shard.update_time > oldest_update_time)
   query = query.order(-models.Shard.update_time)
-  shard_list = query.fetch(100);
+  shard_list = yield query.fetch_async(100)
 
   # Get the current user's readstate for each shard that was found.
   read_state_key_list = [
       ndb.Key(models.LoginRecord._get_kind(), user_id,
               models.ReadState._get_kind(), root_shard_id)
       for shard in shard_list]
-  read_state_list = ndb.get_multi(read_state_key_list)
+  read_state_list = yield ndb.get_multi_async(read_state_key_list)
+  shard_and_state_list = zip(shard_list, read_state_list)
 
-  root_shard = root_shard_future.get_result()
+  root_shard = yield root_shard_future
 
-  return root_shard, zip(shard_list, read_state_list)
+  return root_shard, shard_and_state_list
 
 
 def update_read_state(topic_dict, user_id):
@@ -1163,7 +1215,7 @@ class CreateTopicHandler(BaseRpcHandler):
     login_record = self.require_active_login()
 
     shard = models.Shard(
-        id=human_uuid(),
+        id=models.human_uuid(),
         title=title,
         description=description,
         creation_nickname=login_record.nickname,
@@ -1190,7 +1242,7 @@ class ListTopicsHandler(BaseRpcHandler):
 
   def handle(self):
     shard_record, shard_and_state_list = list_topics(
-        self.shard, self.user_id)
+        self.shard, self.user_id).get_result()
 
     out = []
     for shard, read_state in shard_and_state_list:
@@ -1271,7 +1323,7 @@ class CreateChatroomHandler(BaseHandler):
     shard_id = None
     while True:
       def txn():
-        shard_id = human_uuid()
+        shard_id = models.human_uuid()
         shard = models.Shard.get_by_id(
             shard_id, use_cache=False, use_memcache=False)
         if shard:
@@ -1379,6 +1431,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/_ah/warmup', WarmupHandler),
   (r'/work/apply_posts', ApplyWorker),
   (r'/work/cleanup', ShardCleanupWorker),
+  (r'/work/email_digest', EmailDigestWorker),
   (r'/rpc/show_roster', ShowRosterHandler),
   (r'/rpc/list_posts', ListPostsHandler),
   (r'/rpc/post', PostHandler),

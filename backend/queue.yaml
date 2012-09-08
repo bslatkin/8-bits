@@ -32,3 +32,11 @@ queue:
   retry_parameters:
     min_backoff_seconds: 1
     max_backoff_seconds: 60
+
+- name: email-digests
+  rate: 10/s
+  bucket_size: 10
+  max_concurrent_requests: 10
+  retry_parameters:
+    min_backoff_seconds: 1
+    max_backoff_seconds: 4

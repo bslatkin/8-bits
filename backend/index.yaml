@@ -7,6 +7,11 @@ indexes:
   - name: shard_id
   - name: last_update_time
     direction: desc
+- kind: LR
+  properties:
+  - name: shard_id
+  - name: last_update_time
+    direction: desc
 
 # For fetching historical PostReferences, from newest to oldest.
 - kind: PR
