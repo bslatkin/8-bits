@@ -23,7 +23,9 @@
       in order. Allows one Post to existing in multiple shards at a time.
 
 - LoginRecord: Record of a user who's logged in. Periodically cleaned up
-    if the user has not been active for some number of hours.
+    if the user has not been active for some number of hours. May be a pseudo
+    entity that's only present in the key of children (e.g., for maintaining
+    the read state of an email address to notify).
 
   - ReadState (child): Saves the state of what the user has read on a given
       shard. Lets the UI scroll the history to that starting position when the
@@ -35,9 +37,11 @@
       written under the Shard whenever fan-in occurs.
 """
 
+import base64
 import datetime
 import hashlib
 import time
+import uuid
 
 # Local imports
 import config
@@ -70,7 +74,7 @@ def human_uuid():
 
 def human_hash(data):
   """Generates a more human friendly hash of data."""
-  return human_hash(hashlib.sha1(data).digest())
+  return human_bytes(hashlib.sha1(data).digest())
 
 
 ################################################################################
@@ -181,7 +185,7 @@ class EmailRecord(ndb.Model):
   secret = ndb.TextProperty()
 
   global_opt_out = ndb.BooleanProperty(default=False)
-  min_notify_period_seconds = ndb.IntegerProperty(indexed=False, 900)
+  min_notify_period_seconds = ndb.IntegerProperty(indexed=False, default=900)
 
 
 class ReadState(ndb.Model):

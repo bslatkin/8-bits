@@ -16,16 +16,13 @@
 
 """Primary user-facing functionality of the 8-bits chat system."""
 
-import base64
 import cgi
 import datetime
-import hashlib
 import json
 import logging
 import os
 import time
 import traceback
-import uuid
 import wsgiref.handlers
 import xml.sax.saxutils
 
@@ -109,8 +106,9 @@ class BaseHandler(webapp.RequestHandler):
     """Retrieves a required parameter with the given name and default."""
     value_list = self.request.get_all(name)
 
-    if default is None and not value_list:
-      raise MissingParameterError('Parameter "%s" is required' % name)
+    if default is None:
+      if not value_list:
+        raise MissingParameterError('Parameter "%s" is required' % name)
     else:
       value_list.append(default)
 
@@ -838,7 +836,7 @@ class ShardCleanupWorker(BaseHandler):
       user_logged_out(shard, user_id)
 
     # Enqueue email notification tasks for users
-    enqueue_email_tasks(all_users_list)
+    enqueue_email_tasks(shard, all_users_list)
 
     # As long as there are still active users, continue to try to
     # clean them up.
@@ -848,13 +846,16 @@ class ShardCleanupWorker(BaseHandler):
 ################################################################################
 # Email notifications
 
-def enqueue_email_tasks(all_users_list):
+def enqueue_email_tasks(shard, all_users_list):
   """TODO
   """
   emails_set = set(u.email_address for u in all_users_list if u.email_address)
   if not emails_set:
+    logging.debug('No email addresses to notify for shard=%r', shard)
     return
 
+  logging.debug('Found %d email addresses to notify for shard=%r',
+                len(emails_set), shard)
   email_record_keys = [
       ndb.Key(models.EmailRecord._get_kind(), email_address)
       for email_address in emails_set]
@@ -872,7 +873,8 @@ def enqueue_email_tasks(all_users_list):
         url='/work/email_digest',
         params=dict(sequence_number=sequence_number,
                     email_address=email_address),
-        name='email-notify-%s' % models.human_hash(email_address),
+        name='email-notify-%s-%s' % (
+            models.human_hash(email_address), sequence_number),
         countdown=countdown)
     task_list.append(task)
 
@@ -889,13 +891,14 @@ class EmailDigestWorker(BaseHandler):
   """TODO
   """
 
-  @ndb.tasklet
   @staticmethod
+  @ndb.tasklet
   def get_topic_info(root_shard_id, email_address):
     """TODO
     """
-    root_shard, shard_and_state_list = yield list_topics(
-          root_shard_id, email_address)
+    user_id = '%s:%s' % (root_shard_id, email_address)
+    _, shard_and_state_list = yield list_topics(
+        root_shard_id, user_id)
 
     topic_list = []
     update_dict = {}
@@ -934,7 +937,6 @@ class EmailDigestWorker(BaseHandler):
     # we will still always send email, but we don't risk sending the same
     # email twice. Right now we risk never sending an email at all.
     if update_dict:
-      user_id = '%s:%s' % (root_shard_id, email_address)
       txn = lambda: update_read_state(update_dict, user_id)
       yield ndb.transaction_async(txn)
 

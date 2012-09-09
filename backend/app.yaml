@@ -23,6 +23,10 @@ libraries:
 
 handlers:
 
+- url: /_ah/admin.*
+  script: google.appengine.ext.admin.application
+  login: admin
+
 # Various raw files which are only used in debug. Do not upload.
 - url: /js/closure/([^\.]+\.js)
   static_files: ../closure/closure/\1
