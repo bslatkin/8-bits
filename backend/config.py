@@ -4,9 +4,13 @@
 
 import os
 import random
+import threading
 
 # Run in debug mode. Raw JS locally, pretty-print exceptions.
 debug = True
+
+# Used for global state and preferences local to a single request.
+request = threading.local()
 
 # The timestamp of the current deployment, or a cache buster locally.
 version_id = (

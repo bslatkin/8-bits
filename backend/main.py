@@ -21,6 +21,7 @@ import datetime
 import json
 import logging
 import os
+import threading
 import time
 import traceback
 import wsgiref.handlers
@@ -30,6 +31,7 @@ from google.appengine.api import api_base_pb
 from google.appengine.api import apiproxy_stub_map
 from google.appengine.api.channel import channel
 from google.appengine.api.channel import channel_service_pb
+from google.appengine.api import mail
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext.appstats import recording
@@ -269,6 +271,14 @@ def enqueue_apply_task(shard, post_id=None):
 
 def enqueue_cleanup_task(shard):
   """Enqueues a task to invoke the ShardCleanupWorker periodically."""
+  # In case the ShardCleanupWorker runs early, make sure that the task name
+  # it generates for continuation is guaranteed to run.
+  offset = time.time() / config.shard_cleanup_period_seconds
+  name = 'cleanup-%s-time-%d' % (shard, offset)
+  if name == config.request.environ.get('HTTP_X_APPENGINE_TASKNAME'):
+    offset += 1
+    name = 'cleanup-%s-time-%d' % (shard, offset)
+
   try:
     taskqueue.Task(
       url='/work/cleanup',
@@ -992,6 +1002,7 @@ class EmailDigestWorker(BaseHandler):
       email_record = models.EmailRecord.get_by_id(email_address)
       email_record.sequence_number = sequence_number + 1
       email_record.last_notified_time = datetime.datetime.now()
+      email_record.put()
       return email_record
 
     email_record = ndb.transaction(txn)
@@ -1293,7 +1304,7 @@ def update_read_state(topic_dict, user_id):
     read_state_list = ndb.get_multi(read_state_keys)
     to_put = []
     for key, read_state in zip(read_state_keys, read_state_list):
-      next_read_sequence = topic_dict[key.id]
+      next_read_sequence = topic_dict[key.id()]
       if read_state is None:
         read_state = models.ReadState(key=key)
         read_state.last_read_sequence = next_read_sequence
@@ -1535,6 +1546,17 @@ class DebugLoggingMiddleware(object):
     return self.app(environ, start_response)
 
 
+class ThreadEnvironMiddleware(object):
+  """Makes the current thread's environment available as a global constant."""
+
+  def __init__(self, app):
+    self.app = app
+
+  def __call__(self, environ, start_response):
+    config.request.environ = environ
+    return self.app(environ, start_response)
+
+
 ROUTES = webapp.WSGIApplication([
   (r'/', LandingHandler),
   (r'/create', CreateChatroomHandler),
@@ -1566,6 +1588,7 @@ SESSION_OPTS = {
 
 
 APP = middleware.SessionMiddleware(ROUTES, SESSION_OPTS)
+APP = ThreadEnvironMiddleware(APP)
 
 if config.debug:
   APP = DebugLoggingMiddleware(APP)
