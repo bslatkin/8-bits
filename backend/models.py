@@ -160,15 +160,6 @@ class LoginRecord(ndb.Model):
   accepted_terms_version = ndb.IntegerProperty(default=0, indexed=False)
 
 
-class EmailPreference(ndb.Model):
-  """A user's email preferences for a shard."""
-
-  root_shard = ndb.StringProperty(required=True)
-  opt_out = ndb.BooleanProperty(default=False)
-  creation_time = ndb.DateTimeProperty(auto_now_add=True)
-  last_update_time = ndb.DateTimeProperty(auto_now=True)
-
-
 class EmailRecord(ndb.Model):
   """Record of an email address used for notifications.
 
@@ -191,7 +182,6 @@ class EmailRecord(ndb.Model):
 
   global_opt_out = ndb.BooleanProperty(default=False)
   min_notify_period_seconds = ndb.IntegerProperty(indexed=False, 900)
-  preferences = ndb.LocalStructuredProperty(EmailPreference, repeated=True)
 
 
 class ReadState(ndb.Model):
