@@ -491,14 +491,15 @@ def apply_posts(shard=None,
 
     ndb.put_multi(to_put)
 
-    return shard_record.current_topic, new_sequence_numbers
+    return shard_record, new_sequence_numbers
 
   # Have this only attempt a transaction a single time. If the transaction
   # fails the task queue will retry this task within 4 seconds. Because
   # apply tasks are always named by the current Shard.sequence_number we
   # can be reasonably sure that no other apply task for this shard will be
   # running concurrently when this fails.
-  replica_shard, new_sequence_numbers = ndb.transaction(txn, retries=1)
+  shard_record, new_sequence_numbers = ndb.transaction(txn, retries=1)
+  replica_shard = shard_record.current_topic
 
   logging.debug('Applied %d posts for shard=%r, sequence_numbers=%r',
                 len(unapplied_receipts), shard, new_sequence_numbers)
@@ -529,10 +530,11 @@ def apply_posts(shard=None,
   # Wait on all pending futures in case they raise errors.
   ndb.Future.wait_all(futures)
 
-  # Add shard cleanup task to check for user presence and cause notification
-  # of user logouts if the channel API did not detect the user closing the
-  # connection.
-  enqueue_cleanup_task(shard)
+  # For root shards, add shard cleanup task to check for user presence and
+  # cause notification of user logouts if the channel API did not detect the
+  # user closing the connection.
+  if not shard_record.root_shard:
+    enqueue_cleanup_task(shard)
 
 
 def marshal_posts(shard, post_list):
@@ -846,7 +848,8 @@ class ShardCleanupWorker(BaseHandler):
       user_logged_out(shard, user_id)
 
     # Enqueue email notification tasks for users
-    enqueue_email_tasks(shard, all_users_list)
+    emails_set = set(u.email_address for u in all_users_list if u.email_address)
+    enqueue_email_tasks(emails_set)
 
     # As long as there are still active users, continue to try to
     # clean them up.
@@ -856,16 +859,14 @@ class ShardCleanupWorker(BaseHandler):
 ################################################################################
 # Email notifications
 
-def enqueue_email_tasks(shard, all_users_list):
+def enqueue_email_tasks(emails_set):
   """TODO
   """
-  emails_set = set(u.email_address for u in all_users_list if u.email_address)
   if not emails_set:
-    logging.debug('No email addresses to notify for shard=%r', shard)
+    logging.debug('No email addresses to notify')
     return
 
-  logging.debug('Found %d email addresses to notify for shard=%r',
-                len(emails_set), shard)
+  logging.debug('Found %d email addresses to notify', len(emails_set))
   email_record_keys = [
       ndb.Key(models.EmailRecord._get_kind(), email_address)
       for email_address in emails_set]
@@ -1015,19 +1016,24 @@ class EmailDigestWorker(BaseHandler):
     # there are any bugs in the rendering code or sending step that it does
     # not result in us repeatedly sending emails to users. The transaction
     # above acts as a guard on this task.
-    context = dict(email_record=email_record)
+    context = dict(email_record=email_record,
+                   shards=param_dict)
     text_data = template.render('templates/digest_email.txt', context)
     html_data = template.render('templates/digest_email.html', context)
     sender = '8-bits of ephemera <notify@8-bits.us>'
     # TODO(bslatkin): Put how many new posts there are in the subject line.
     subject = 'Digest of new topics'
+
+    logging.debug('Sending email digest to=%r, sender=%r, subject=%r',
+                  email_address, sender, subject)
+    logging.debug('Text:\n%s', text_data)
+    logging.debug('HTML:\n%s', html_data)
     message = mail.EmailMessage(
         sender=sender,
         to=email_address,
         subject=subject,
         body=text_data,
         html=html_data)
-    logging.debug('Sending email digest to %s', email_address)
     message.send()
 
 ################################################################################
@@ -1275,7 +1281,7 @@ def list_topics(root_shard_id, user_id):
   # Get the current user's readstate for each shard that was found.
   read_state_key_list = [
       ndb.Key(models.LoginRecord._get_kind(), user_id,
-              models.ReadState._get_kind(), root_shard_id)
+              models.ReadState._get_kind(), shard.shard_id)
       for shard in shard_list]
   read_state_list = yield ndb.get_multi_async(read_state_key_list)
   shard_and_state_list = zip(shard_list, read_state_list)

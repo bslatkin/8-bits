@@ -1,1 +1,7 @@
 text here
+{% for shard, topic_info_list in shards.iteritems %}
+Shard: {{shard}}
+{% for topic_info in topic_info_list %}
+{{topic_info.title}}
+{% endfor %}
+{% endfor %}
