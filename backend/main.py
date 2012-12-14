@@ -860,7 +860,12 @@ class ShardCleanupWorker(BaseHandler):
 # Email notifications
 
 def enqueue_email_tasks(emails_set):
-  """TODO
+  """Enqueues a set of email notification tasks for the given users.
+
+  Notifies these users across multiple shards.
+
+  Args:
+    emails_set: Set of user email addresses to notify.
   """
   if not emails_set:
     logging.debug('No email addresses to notify')
@@ -899,13 +904,21 @@ def enqueue_email_tasks(emails_set):
 
 
 class EmailDigestWorker(BaseHandler):
-  """TODO
-  """
+  """Sends email digests of shard activities to users."""
 
   @staticmethod
   @ndb.tasklet
   def get_topic_info(root_shard_id, email_address):
-    """TODO
+    """Gets detail about topics for a root shard, updates read state.
+
+    Args:
+      root_shard_id: Shard ID to list topics for.
+      email_address: Address of the user whose read state should be updated
+        after getting info.
+
+    Returns:
+      List of dictionaries, one for each topic, suitable for rendering
+      email digest updates.
     """
     user_id = '%s:%s' % (root_shard_id, email_address)
     _, shard_and_state_list = yield list_topics(
@@ -1260,10 +1273,18 @@ class ListPostsHandler(BaseRpcHandler):
 
 @ndb.tasklet
 def list_topics(root_shard_id, user_id):
-  """TODO
+  """Lists topics for a root shard and associated read state for the user.
 
-  Returns the root shard, followed by a list of child topics an the
-  read state for each topic for the given user
+  Args:
+    root_shard_id: Shard ID of the root with associated topics.
+    user_id: User ID that is requesting the list of topics and read states.
+
+  Returns:
+    Tuple (root_shard, shard_and_state_list) where:
+      root_shard: Shard entity for the root.
+      shard_and_state_list: List of pairs (Shard, ReadState) for associated
+        topics and read states for the given user_id. Will be in order
+        of update_time with most recently updated shards first.
   """
   root_shard_future = models.Shard.get_by_id_async(
       root_shard_id, use_cache=False, use_memcache=False)
@@ -1292,10 +1313,15 @@ def list_topics(root_shard_id, user_id):
 
 
 def update_read_state(topic_dict, user_id):
-  """TODO
+  """Updates a user's read state for a given set of topics.
 
-  will inherit transaction state on user_id's LoginRecord if this is
+  Will inherit transaction state on user_id's LoginRecord if this is
   called from within an existing transition.
+
+  Args:
+    topic_dict: Maps topioc shard IDs to the new sequence number to assign
+      for that shard.
+    user_id: User ID that is being updated.
   """
 
   # TODO(bslatkin): Consider validating the topic list provided here
