@@ -12,7 +12,10 @@ participants in the project, respectively, not to their employers or clients.
 
 # Directions
 
-You'll need Python 2.7 and the [App Engine SDK](https://developers.google.com/appengine/downloads).
+You'll need Python 2.7 and the [App Engine SDK](https://developers.google.com/appengine/downloads). And you'll need PyCrypto to make the session cookie library work.
+
+    cd pycrypto
+    python setup.py install
 
 #### To run the app locally, be sure to use these flags for dev_appserver:
 
