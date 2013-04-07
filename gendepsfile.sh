@@ -16,5 +16,5 @@
 
 # Generates a Closure deps.js file for the bits.* namespaces.
 python ./closure-library/closure/bin/build/depswriter.py  \
---root_with_prefix="frontend/js/bits ../../bits" \
---output_file="frontend/js/bits/deps.js"
+--root_with_prefix="./frontend/js/bits ../../bits" \
+--output_file="./frontend/js/bits/deps.js"

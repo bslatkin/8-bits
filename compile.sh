@@ -15,8 +15,8 @@
 # limitations under the License.
 
 # Generates a Closure compiled.js file for the bits.* namespaces.
-python ../closure/closure/bin/build/closurebuilder.py  \
---root="frontend/js/bits" \
+python ./closure-library/closure/bin/build/closurebuilder.py  \
+--root="./frontend/js/bits" \
 --root="./closure-library" \
 --namespace="bits.startup" \
 --namespace="bits.landing" \
