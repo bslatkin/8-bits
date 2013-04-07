@@ -25,7 +25,7 @@ handlers:
 
 # Various raw files which are only used in debug. Do not upload.
 - url: /js/closure/([^\.]+\.js)
-  static_files: ../closure/closure/\1
+  static_files: ../closure-library/closure/\1
   upload: does_not_exist
 - url: /js/bits/([^\.]+\.js)
   static_files: ../frontend/js/bits/\1

@@ -1,0 +1,15 @@
+[submodule "beaker"]
+	path = beaker
+	url = https://github.com/bbangert/beaker
+[submodule "closure-library"]
+	path = closure-library
+	url = https://code.google.com/p/closure-library
+[submodule "nose"]
+	path = nose
+	url = https://github.com/nose-devs/nose
+[submodule "pycrypto"]
+	path = pycrypto
+	url = https://github.com/dlitz/pycrypto
+[submodule "blueprint-css"]
+	path = blueprint-css
+	url = https://github.com/joshuaclayton/blueprint-css
