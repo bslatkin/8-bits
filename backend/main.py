@@ -848,7 +848,8 @@ class ShardCleanupWorker(BaseHandler):
       user_logged_out(shard, user_id)
 
     # Enqueue email notification tasks for users
-    emails_set = set(u.email_address for u in all_users_list if u.email_address)
+    emails_set = set(u.email_address
+                     for u in all_users_list if u.email_address)
     enqueue_email_tasks(emails_set)
 
     # As long as there are still active users, continue to try to
@@ -856,7 +857,7 @@ class ShardCleanupWorker(BaseHandler):
     if active_users_set:
       enqueue_cleanup_task(shard)
 
-################################################################################
+###############################################################################
 # Email notifications
 
 def enqueue_email_tasks(emails_set):
@@ -1268,7 +1269,7 @@ class ListPostsHandler(BaseRpcHandler):
     self.json_response['posts'] = marshal_posts(self.shard, adjusted_post_list)
 
 
-################################################################################
+###############################################################################
 # Topic functions, handlers
 
 @ndb.tasklet
