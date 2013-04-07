@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-# 
+#
 # Copyright 2012 Brett Slatkin
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ from mapreduce import mapreduce_pipeline
 from mapreduce.lib import pipeline
 import models
 
-################################################################################
+###############################################################################
 
 # TODO(bslatkin): Use an upstream version of this instead.
 class DeleteNdb(operation.Operation):
@@ -82,7 +82,7 @@ class DeleteOldPostsPipeline(pipeline.Pipeline):
                     before_timestamp_seconds=before_timestamp_seconds),
         shards=8)
 
-################################################################################
+###############################################################################
 
 class PeriodicHandler(webapp.RequestHandler):
   """Handler for periodically kicking off pipelines."""
@@ -98,7 +98,7 @@ class PeriodicHandler(webapp.RequestHandler):
     logging.info('Started DeleteOldPostsPipeline with pipeline_id=%r',
                  job.pipeline_id)
 
-################################################################################
+###############################################################################
 
 APP = webapp.WSGIApplication([
   (r'/jobs/periodic', PeriodicHandler),

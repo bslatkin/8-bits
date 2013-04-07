@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-# 
+#
 # Copyright 2010 Brett Slatkin, Nathan Naze
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ import config
 import models
 import ndb
 
-################################################################################
+###############################################################################
 
 class Error(Exception):
   """Base class for exceptions."""
@@ -67,7 +67,7 @@ class TopicShardError(Error):
 class PostError(Error):
   """A posting could not be made."""
 
-################################################################################
+###############################################################################
 # Utility classes, functions.
 
 # TODO(bslatkin): Add XSRF protection to this class.
@@ -220,7 +220,7 @@ class BaseRpcHandler(BaseHandler):
     return shard
 
 
-################################################################################
+###############################################################################
 # Posts and sequencing
 
 def dirty_bit(shard, set=False, check=False, clear=False):
@@ -288,8 +288,8 @@ def enqueue_cleanup_task(shard):
       countdown=config.shard_cleanup_period_seconds
     ).add(config.cleanup_queue)
   except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
-    logging.debug('Enqueued cleanup task for shard=%r but task already present',
-                  shard)
+    logging.debug('Enqueued cleanup task for shard=%r but task '
+                  'already present', shard)
 
 
 def enqueue_post_task(shard, post_ids, new_topic=None):
@@ -625,7 +625,7 @@ def notify_posts(shard, post_list, sequence_numbers=None):
     except channel.Error, e:
       # NOTE: When receiving an InvalidChannelKeyError the message may still
       # be available the next time the user connects to the channel with that
-      # same application key due to buffering in the backends. The 
+      # same application key due to buffering in the backends. The
       # dev_appserver mimics this behavior, but it's not reliable in prod.
       logging.warning('Could not send JSON message to user=%r with '
                       'browser_token=%r. %s: %s', login_record.user_id,
@@ -643,7 +643,7 @@ class ApplyWorker(BaseHandler):
   def get(self):
     apply_posts()
 
-################################################################################
+###############################################################################
 # User login and presence
 
 def invalidate_user_cache(shard):
@@ -1049,7 +1049,7 @@ class EmailDigestWorker(BaseHandler):
         html=html_data)
     message.send()
 
-################################################################################
+###############################################################################
 # RPC handlers
 
 class PresenceHandler(BaseRpcHandler):
@@ -1451,7 +1451,7 @@ class ReadStateHandler(BaseRpcHandler):
 
     update_read_state(position_dict, self.user_id)
 
-################################################################################
+###############################################################################
 # UI handlers
 
 class LandingHandler(BaseHandler):
@@ -1565,7 +1565,7 @@ class WarmupHandler(BaseHandler):
   def get(self):
     pass
 
-################################################################################
+###############################################################################
 
 class DebugLoggingMiddleware(object):
   """Sets the log level to debug on each request. Used in dev_appserver."""
