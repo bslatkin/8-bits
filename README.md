@@ -12,50 +12,18 @@ participants in the project, respectively, not to their employers or clients.
 
 # Directions
 
+You'll need Python 2.7 and the [App Engine SDK](https://developers.google.com/appengine/downloads).
+
 #### To run the app locally, be sure to use these flags for dev_appserver:
 
-    --require_indexes --high_replication
-
-  Along with Python 2.7
-
-
-####  To get a new install working on your machine:
-
-NOTE: If you are using Mac OS X 10.7, you should use "brew install python" to
-build an alternative version of Python that has much more sane site packages.
-Learn about brew here (http://mxcl.github.com/homebrew/). Be sure to update
-the Launcher application to point at /usr/local/bin/python2.7.
-
-You'll need setuptools installed in your environment.
-
-The following commands don't use sudo because "brew" doesn't require it.
-
-    svn checkout http://8-bits.googlecode.com/svn/trunk/ 8-bits  
-    cd 8-bits  
-    cd pycrypto-2.3  
-    python2.7 setup.py install  
-    cd ../  
-    cd nose-1*  
-    python2.7 setup.py install  
-    cd ../  
-    cd nose-gae  
-    python2.7 setup.py install  
-    cd ../  
-
-
-####  To run the backend tests:
-
-    cd backend  
-    ./run_tests.sh
+    ./run_server.sh
 
 ####  To run frontend tests:
 
-    cd backend  
-    dev_appserver.py -a 0.0.0.0 .
+    ./run_server.sh
     # Navigate to http://localhost:8080/tests/index.html
 
 #### To compile the Closure JS into a binary:
 
-    cd frontend
     ./gendepsfile.sh
     ./compile.sh
