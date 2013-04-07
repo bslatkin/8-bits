@@ -25,9 +25,12 @@
 from google.appengine.tools import os_compat  # pylint: disable-msg=W0611
 
 import cStringIO
+import logging
 from testlib import mox
 import os
+import random
 import string
+import tempfile
 import time
 import unittest
 import zipfile
@@ -37,8 +40,8 @@ from google.appengine.api.blobstore import blobstore_stub
 from google.appengine.api.blobstore import dict_blob_storage
 from google.appengine.api import datastore
 from google.appengine.api import datastore_file_stub
-from mapreduce.lib import files
-from mapreduce.lib.files import records
+from google.appengine.api import files
+from google.appengine.api.files import records
 from google.appengine.api import logservice
 from google.appengine.api.logservice import log_service_pb
 from google.appengine.api.logservice import logservice_stub
@@ -48,6 +51,7 @@ from google.appengine.ext import db
 from mapreduce.lib import key_range
 from google.appengine.ext.blobstore import blobstore as blobstore_internal
 from mapreduce import errors
+from mapreduce import file_format_root
 from mapreduce import input_readers
 from mapreduce import model
 from mapreduce import namespace_range
@@ -317,6 +321,9 @@ class DatastoreInputReaderTest(unittest.TestCase):
         "FooHandler",
         "mapreduce.input_readers.DatastoreInputReader",
         params, 1)
+    input_readers.DatastoreInputReader.validate(mapper_spec)
+
+    params["filters"] = [["a", "=", 1]]
     input_readers.DatastoreInputReader.validate(mapper_spec)
 
     params["filters"] = {"a": "1"}
@@ -2217,10 +2224,16 @@ class LogInputReaderTest(unittest.TestCase):
     """Simplistic test for stringification of LogInputReader."""
     readers = input_readers.LogInputReader.split_input(self.mapper_spec)
     self.assertEqual(
-        "LogInputReader(include_incomplete=True, minimum_log_level=1, "
-        "start_time=96, prototype_request='app_id: \"app1\"\n', "
-        "version_ids=['1'], end_time=128, offset='%s', "
-        "include_app_logs=True)" % self.offset, str(readers[-1]))
+        "LogInputReader"
+        "(end_time=128,"
+        " include_app_logs=True,"
+        " include_incomplete=True,"
+        " minimum_log_level=1,"
+        " offset=\'%s',"
+        " prototype_request=\'app_id: \"app1\"\n\',"
+        " start_time=96,"
+        " version_ids=[\'1\']"
+        ")" % self.offset, str(readers[-1]))
 
   def testEvenLogSplit(self):
     readers = input_readers.LogInputReader.split_input(self.mapper_spec)
@@ -2287,31 +2300,26 @@ class LogInputReaderTest(unittest.TestCase):
     """Create a set of test log records."""
     # Prepare the data.
     apiproxy_stub_map.apiproxy = apiproxy_stub_map.APIProxyStubMap()
-    apiproxy_stub_map.apiproxy.RegisterStub(
-        "datastore_v3",
-        datastore_file_stub.DatastoreFileStub(self.app_id, None))
-    apiproxy_stub_map.apiproxy.RegisterStub(
-        "logservice", logservice_stub.LogServiceStub(persist=False))
+    stub = logservice_stub.LogServiceStub()
+    apiproxy_stub_map.apiproxy.RegisterStub("logservice", stub)
 
     # Write test data.
-    writer = logservice_stub.RequestLogWriter(persist=True)
     expected = []
     for i in xrange(count):
-      os.environ["REQUEST_ID_HASH"] = str(i)  # Required by logservice_stub.
-      writer.write_request_info(ip="127.0.0.1",
-                                app_id=self.app_id,
-                                version_id=self.version_id,
-                                nickname="test@example.com",
-                                user_agent="Chrome/15.0.874.106",
-                                host="127.0.0.1:8080",
-                                start_time=i * 1000000,
-                                end_time=i * 1000000 + 500)
-      writer.write("GET", "/", 200, 0, "HTTP/1.1")
+      stub.start_request(request_id=i,
+                         user_request_id="",
+                         ip="127.0.0.1",
+                         app_id=self.app_id,
+                         version_id=self.version_id,
+                         nickname="test@example.com",
+                         user_agent="Chrome/15.0.874.106",
+                         host="127.0.0.1:8080",
+                         method="GET",
+                         resource="/",
+                         http_version="HTTP/1.1",
+                         start_time=i * 1000000)
+      stub.end_request(i, 200, 0, end_time=i * 1000000 + 500)
       expected.append({"start_time": i, "end_time": i + .0005})
-    # NOTE(user): write_request_info() calls set_namespace(), and has a long
-    # comment on why it can't restore the previous namespace, but I don't
-    # understand it.  Manually resetting here to avoid test state leakage.
-    namespace_manager.set_namespace(None)
     expected.reverse()  # Results come back in most-recent-first order.
 
     return expected
@@ -2375,6 +2383,216 @@ class LogInputReaderTest(unittest.TestCase):
                                             start_time=0, end_time=101 * 1e6,
                                             offset=log.offset)
       self.verifyLogs(expected, fetched_logs + list(reader))
+
+
+class FileInputReaderTest(unittest.TestCase):
+  """Tests for FileInputReader."""
+
+  def setUp(self):
+    unittest.TestCase.setUp(self)
+
+    self._files_open = files.file.open
+    self._files_stat = files.file.stat
+    files.file.open = open
+    files.file.stat = os.stat
+    self.__created_files = []
+
+    self.mox = mox.Mox()
+
+  def tearDown(self):
+    self.mox.UnsetStubs()
+    self.mox.VerifyAll()
+    files.file.open = self._files_open
+    files.file.stat = self._files_stat
+    for filename in self.__created_files:
+      os.remove(filename)
+
+  def createTmp(self):
+    _, path = tempfile.mkstemp()
+    self.__created_files.append(path)
+    return path
+
+  def createReader(self, filenames, format_string):
+    root = file_format_root.split(filenames, format_string, 1)[0]
+    return input_readers.FileInputReader(root)
+
+  def assertEqualsAfterJson(self, expected, input_reader):
+    contents = []
+
+    while True:
+      try:
+        contents.append(input_reader.next())
+        input_reader = input_readers.FileInputReader.from_json(
+            input_reader.to_json())
+      except StopIteration:
+        break
+
+    self.assertEquals(expected, contents)
+
+  def testIter(self):
+    filenames = []
+    for _ in range(3):
+      path = self.createTmp()
+      filenames.append(path)
+      f = open(path, "w")
+      f.write("l1\nl2\nl3\n")
+      f.close()
+
+    input_reader = self.createReader(filenames, "lines")
+    self.assertEqualsAfterJson(["l1\n", "l2\n", "l3\n"]*3, input_reader)
+
+  def setUpForEndToEndTest(self, num_shards):
+    """Setup mox for end to end test.
+
+    Create 100 zip files, each of which has 10 member files.
+
+    Args:
+      num_shards: number of shards from mapper_spec.
+
+    Returns:
+      mapper_spec: a mapper spec model with attributes set accordingly.
+    """
+
+    def _random_filename():
+      return "".join(random.choice(string.ascii_letters) for _ in range(10))
+
+    tmp_filenames = []
+    for i in range(100):
+      path = self.createTmp()
+      tmp_filenames.append(path)
+      archive = zipfile.ZipFile(path, "w")
+      for i in range(10):
+        archive.writestr(_random_filename(), (string.ascii_letters + "\n")*100)
+      archive.close()
+    input_filenames = ["/gs/bucket/" + name for name in tmp_filenames]
+
+    self.mox.StubOutWithMock(files.gs, "parseGlob")
+    # Once for validate.
+    for i, input_filename in enumerate(input_filenames):
+      files.gs.parseGlob(input_filename).AndReturn(tmp_filenames[i])
+
+    # Once for split input.
+    for i, input_filename in enumerate(input_filenames):
+      files.gs.parseGlob(input_filename).AndReturn(tmp_filenames[i])
+
+    self.mox.ReplayAll()
+
+    return model.MapperSpec(
+        "test_handler",
+        input_readers.__name__ + ".FileInputReader",
+        {
+            "input_reader": {
+                "format": "zip[lines]",
+                "files": input_filenames
+            }
+        },
+        num_shards)
+
+  def runEndToEndTest(self, num_shards):
+    """Create FileInputReaders and run them through their phases.
+
+    FileInputReader has these phases: validate, split input, __init__, __iter__,
+    to_json, from_json, __iter__.
+
+    Args:
+      num_shards: number of shards to run mappers.
+    """
+    mapper_spec = self.setUpForEndToEndTest(num_shards)
+    input_readers.FileInputReader.validate(mapper_spec)
+    mr_input_readers = input_readers.FileInputReader.split_input(mapper_spec)
+
+    # Check we can read all inputs.
+    counter = 0
+    logging.warning("FileInputReader shards %d readers %d",
+                    num_shards, len(mr_input_readers))
+    for reader in mr_input_readers:
+      for line in reader:
+        self.assertEquals(string.ascii_letters + "\n", line)
+        counter += 1
+        # This single line will increase test time by 100 magnitude.
+        # The reason is that all the cached zipfiles have to be reread.
+        # reader = input_readers.FileInputReader.from_json(reader.to_json())
+    self.assertEquals(100*10*100, counter)
+
+  def testEndToEnd1(self):
+    self.runEndToEndTest(1)
+
+  def testEndToEnd3(self):
+    self.runEndToEndTest(3)
+
+  def testEndToEnd33(self):
+    self.runEndToEndTest(33)
+
+  def testEndToEnd66(self):
+    self.runEndToEndTest(66)
+
+  def testEndToEnd100(self):
+    self.runEndToEndTest(100)
+
+  def testEndToEnd1000(self):
+    self.runEndToEndTest(1000)
+
+  def testValidateMissingFiles(self):
+    params = {"format": "zip"}
+    mapper_spec = model.MapperSpec(
+        "FooHandler",
+        input_readers.__name__ + ".FileInputReader",
+        params,
+        1)
+    self.assertRaises(input_readers.BadReaderParamsError,
+                      input_readers.FileInputReader.validate,
+                      mapper_spec)
+
+  def testValidateInvalidFiles(self):
+    params = {"files": None}
+    mapper_spec = model.MapperSpec(
+        "FooHandler",
+        input_readers.__name__ + ".FileInputReader",
+        params,
+        1)
+    self.assertRaises(input_readers.BadReaderParamsError,
+                      input_readers.FileInputReader.validate,
+                      mapper_spec)
+
+    mapper_spec.params = {"files": "/gs/bucket/file", "format": "line"}
+    self.assertRaises(input_readers.BadReaderParamsError,
+                      input_readers.FileInputReader.validate,
+                      mapper_spec)
+
+    mapper_spec.params = {"files": ["/gs/bucket/file",
+                                    "/typoe/bucket/file"],
+                          "format": "line"}
+    self.assertRaises(input_readers.BadReaderParamsError,
+                      input_readers.FileInputReader.validate,
+                      mapper_spec)
+
+  def testValidateMissingFormats(self):
+    params = {"files": ["/gs/bucket1/file1"]}
+    mapper_spec = model.MapperSpec(
+        "FooHandler",
+        input_readers.__name__ + ".FileInputReader",
+        params,
+        1)
+    self.assertRaises(input_readers.BadReaderParamsError,
+                      input_readers.FileInputReader.validate,
+                      mapper_spec)
+
+  def testValidateInvalidFormats(self):
+    params = {"format": 1,
+              "files": ["/gs/bucket/file"]}
+    mapper_spec = model.MapperSpec(
+        "FooHandler",
+        input_readers.__name__ + ".FileInputReader",
+        params,
+        1)
+    self.assertRaises(input_readers.BadReaderParamsError,
+                      input_readers.FileInputReader.validate,
+                      mapper_spec)
+
+    mapper_spec.params["format"] = "foo"
+    self.assertRaises(input_readers.BadReaderParamsError,
+                      input_readers.FileInputReader.validate,
+                      mapper_spec)
 
 
 if __name__ == "__main__":

@@ -33,9 +33,9 @@ import time
 
 from mapreduce.lib import pipeline
 from mapreduce.lib.pipeline import common as pipeline_common
-from mapreduce.lib import files
-from mapreduce.lib.files import file_service_pb
-from mapreduce.lib.files import records
+from google.appengine.api import files
+from google.appengine.api.files import file_service_pb
+from google.appengine.api.files import records
 from google.appengine.ext import db
 from mapreduce import base_handler
 from mapreduce import context
@@ -441,13 +441,13 @@ class _HashingBlobstoreOutputWriter(output_writers.BlobstoreOutputWriterBase):
     return {"filenames": self._filenames}
 
   @classmethod
-  def create(cls, mapreduce_state, shard_number):
+  def create(cls, mapreduce_state, shard_state):
     """Create new writer for a shard.
 
     Args:
       mapreduce_state: an instance of model.MapreduceState describing current
       job. State can be modified.
-      shard_number: shard number as integer.
+      shard_state: shard state.
     """
     return cls(mapreduce_state.writer_state["filenames"])
 

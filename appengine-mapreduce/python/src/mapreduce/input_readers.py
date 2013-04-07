@@ -31,6 +31,7 @@ __all__ = [
     "DatastoreEntityInputReader",
     "DatastoreInputReader",
     "DatastoreKeyInputReader",
+    "FileInputReader",
     "RandomStringInputReader",
     "Error",
     "InputReader",
@@ -51,10 +52,14 @@ import time
 import zipfile
 
 from google.net.proto import ProtocolBuffer
+try:
+  from google.appengine.ext import ndb
+except ImportError:
+  ndb = None
 from google.appengine.api import datastore
-from mapreduce.lib import files
+from google.appengine.api import files
 from google.appengine.api import logservice
-from mapreduce.lib.files import records
+from google.appengine.api.files import records
 from google.appengine.api.logservice import log_service_pb
 from google.appengine.datastore import datastore_query
 from google.appengine.datastore import datastore_rpc
@@ -64,6 +69,8 @@ from mapreduce.lib import key_range
 from google.appengine.ext.db import metadata
 from mapreduce import context
 from mapreduce import errors
+from mapreduce import file_format_parser
+from mapreduce import file_format_root
 from mapreduce import model
 from mapreduce import namespace_range
 from mapreduce import operation
@@ -196,13 +203,11 @@ def _get_params(mapper_spec, allowed_keys=None):
         "input_reader subdictionary.")
     if allowed_keys:
       raise errors.BadReaderParamsError(message)
-    else:
-      logging.warning(message)
     params = mapper_spec.params
     params = dict((str(n), v) for n, v in params.iteritems())
   else:
     if not isinstance(mapper_spec.params.get("input_reader"), dict):
-      raise BadReaderParamsError(
+      raise errors.BadReaderParamsError(
           "Input reader parameters should be a dictionary")
     params = mapper_spec.params.get("input_reader")
     params = dict((str(n), v) for n, v in params.iteritems())
@@ -212,6 +217,143 @@ def _get_params(mapper_spec, allowed_keys=None):
         raise errors.BadReaderParamsError(
             "Invalid input_reader parameters: %s" % ",".join(params_diff))
   return params
+
+
+class FileInputReader(InputReader):
+  """Reader to read Files API files of user specified format.
+
+  This class currently only supports Google Storage files. It will be extended
+  to support blobstore files in the future.
+
+  Reader Parameters:
+  files: a list of filenames or filename patterns.
+    filename must be of format '/gs/bucket/filename'.
+    filename pattern has format '/gs/bucket/prefix*'.
+    filename pattern will be expanded to filenames with the given prefix.
+    Please see parseGlob in the file api.files.gs.py which is included in the
+    App Engine SDK for supported patterns.
+
+    Example:
+      ["/gs/bucket1/file1", "/gs/bucket2/*", "/gs/bucket3/p*"]
+      includes "file1", all files under bucket2, and files under bucket3 with
+      a prefix "p" in its name.
+
+  format: format string determines what your map function gets as its input.
+    format string can be "lines", "bytes", "zip", or a cascade of them plus
+    optional parameters. See file_formats.FORMATS for all supported formats.
+    See file_format_parser._FileFormatParser for format string syntax.
+
+    Example:
+      "lines": your map function gets files' contents line by line.
+      "bytes": your map function gets files' contents entirely.
+      "zip": InputReader unzips files and feeds your map function each of
+        the archive's member files as a whole.
+      "zip[bytes]: same as above.
+      "zip[lines]": InputReader unzips files and feeds your map function
+        files' contents line by line.
+      "zip[lines(encoding=utf32)]": InputReader unzips files, reads each
+        file with utf32 encoding and feeds your map function line by line.
+      "base64[zip[lines(encoding=utf32)]]: InputReader decodes files with
+        base64 encoding, unzips each file, reads each of them with utf32
+        encoding and feeds your map function line by line.
+
+    Note that "encoding" only teaches InputReader how to interpret files.
+    The input your map function gets is always a Python str.
+  """
+
+  # Reader Parameters
+  FILES_PARAM = "files"
+  FORMAT_PARAM = "format"
+
+  def __init__(self, format_root):
+    """Initialize input reader.
+
+    Args:
+      format_root: a FileFormatRoot instance.
+    """
+    self._file_format_root = format_root
+
+  def __iter__(self):
+    """Inherit docs."""
+    return self
+
+  def next(self):
+    """Inherit docs."""
+    ctx = context.get()
+    start_time = time.time()
+
+    content = self._file_format_root.next().read()
+
+    if ctx:
+      operation.counters.Increment(
+          COUNTER_IO_READ_MSEC, int((time.time() - start_time) * 1000))(ctx)
+      operation.counters.Increment(COUNTER_IO_READ_BYTES, len(content))(ctx)
+
+    return content
+
+  @classmethod
+  def split_input(cls, mapper_spec):
+    """Inherit docs."""
+    params = _get_params(mapper_spec)
+
+    # Expand potential file patterns to a list of filenames.
+    filenames = []
+    for f in params[cls.FILES_PARAM]:
+      parsedName = files.gs.parseGlob(f)
+      if isinstance(parsedName, tuple):
+        filenames.extend(files.gs.listdir(parsedName[0],
+                                          {"prefix": parsedName[1]}))
+      else:
+        filenames.append(parsedName)
+
+    file_format_roots = file_format_root.split(filenames,
+                                               params[cls.FORMAT_PARAM],
+                                               mapper_spec.shard_count)
+
+    return [cls(root) for root in file_format_roots]
+
+  @classmethod
+  def validate(cls, mapper_spec):
+    """Inherit docs."""
+    if mapper_spec.input_reader_class() != cls:
+      raise BadReaderParamsError("Mapper input reader class mismatch")
+
+    # Check parameters.
+    params = _get_params(mapper_spec)
+    if cls.FILES_PARAM not in params:
+      raise BadReaderParamsError("Must specify %s" % cls.FILES_PARAM)
+    if cls.FORMAT_PARAM not in params:
+      raise BadReaderParamsError("Must specify %s" % cls.FORMAT_PARAM)
+
+    format_string = params[cls.FORMAT_PARAM]
+    if not isinstance(format_string, basestring):
+      raise BadReaderParamsError("format should be string but is %s" %
+                                 cls.FORMAT_PARAM)
+    try:
+      file_format_parser.parse(format_string)
+    except ValueError, e:
+      raise BadReaderParamsError(e)
+
+    paths = params[cls.FILES_PARAM]
+    if not (paths and isinstance(paths, list)):
+      raise BadReaderParamsError("files should be a list of filenames.")
+
+    # Further validations are done by parseGlob().
+    try:
+      for path in paths:
+        files.gs.parseGlob(path)
+    except files.InvalidFileNameError:
+      raise BadReaderParamsError("Invalid filename %s." % path)
+
+  @classmethod
+  def from_json(cls, json):
+    """Inherit docs."""
+    return cls(
+        file_format_root.FileFormatRoot.from_json(json["file_format_root"]))
+
+  def to_json(self):
+    """Inherit docs."""
+    return {"file_format_root": self._file_format_root.to_json()}
 
 
 # TODO(user): This should probably be renamed something like
@@ -529,8 +671,8 @@ class AbstractDatastoreInputReader(InputReader):
       if not isinstance(filters, list):
         raise BadReaderParamsError("Expected list for filters parameter")
       for f in filters:
-        if not isinstance(f, tuple):
-          raise BadReaderParamsError("Filter should be a tuple: %s", f)
+        if not isinstance(f, (tuple, list)):
+          raise BadReaderParamsError("Filter should be a tuple or list: %s", f)
         if len(f) != 3:
           raise BadReaderParamsError("Filter should be a 3-tuple: %s", f)
         if not isinstance(f[0], basestring):
@@ -759,8 +901,10 @@ class DatastoreInputReader(AbstractDatastoreInputReader):
   def _get_raw_entity_kind(cls, entity_kind):
     """Returns an entity kind to use with datastore calls."""
     entity_type = util.for_name(entity_kind)
-    if isinstance(entity_kind, db.Model):
+    if isinstance(entity_type, db.Model):
       return entity_type.kind()
+    elif ndb and isinstance(entity_type, (ndb.Model, ndb.MetaModel)):
+      return entity_type._get_kind()
     else:
       return util.get_short_name(entity_kind)
 
@@ -2048,7 +2192,8 @@ class LogInputReader(InputReader):
   def __str__(self):
     """Returns the string representation of this LogInputReader."""
     params = []
-    for key, value in self.__params.iteritems():
+    for key in sorted(self.__params.keys()):
+      value = self.__params[key]
       if key is self._PROTOTYPE_REQUEST_PARAM:
         params.append("%s='%s'" % (key, value))
       elif key is self._OFFSET_PARAM:

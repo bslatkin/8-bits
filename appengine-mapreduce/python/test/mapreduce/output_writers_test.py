@@ -11,9 +11,9 @@ from testlib import mox
 import unittest
 
 from google.appengine.api import apiproxy_stub_map
-from mapreduce.lib import files
-from mapreduce.lib.files import testutil as files_testutil
-from mapreduce.lib.files import records
+from google.appengine.api import files
+from google.appengine.api.files import testutil as files_testutil
+from google.appengine.api.files import records
 from mapreduce import errors
 from mapreduce import model
 from mapreduce import output_writers
@@ -172,7 +172,7 @@ class FileOutputWriterTest(testutil.HandlerTestBase):
     filenames = output_writers.FileOutputWriter.get_filenames(mapreduce_state)
     self.assertEqual(10, len(filenames))
     for filename in filenames:
-      self.assertTrue(filename.startswith("/blobstore/writable:"))
+      self.assertEqual(None, filename)
 
   def testInitJob_GoogleStorage(self):
     mapreduce_state = self.create_mapreduce_state(
