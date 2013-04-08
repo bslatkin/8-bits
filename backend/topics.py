@@ -23,6 +23,7 @@ import base
 import config
 import models
 import ndb
+import posts
 
 
 @ndb.tasklet
@@ -130,7 +131,7 @@ class CreateTopicHandler(base.BaseRpcHandler):
         root_shard=self.shard)
     shard.put()
 
-    insert_post(
+    posts.insert_post(
         self.shard,
         post_id=post_id,
         archive_type=models.Post.TOPIC_START,
