@@ -1,9 +1,6 @@
-html,
-body {
+body.bits-page-chatroom {
   height: 100%;
   width: 100%;
-}
-body {
   background-color: #eee;
 }
 a.bits-chatroom-link {

@@ -1,0 +1,629 @@
+.bits-chatbox-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.bits-chatbox {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.bits-chatbox-posts {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 2px;
+  bottom: 90px;
+}
+.bits-chatbox-posts .bits-posts-scrollable {
+  height: 100%;
+}
+
+.bits-chat-input {
+  border: 0;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px 10px;
+  margin: 0;
+  overflow: hidden;  /* Don't show a scrollbar */
+  resize: none;  /* Disable webkit textarea resize control */
+  outline: none;  /* Remove focus ring */
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  height: 86px;
+}
+.bits-chat-input,
+.bits-chat-input:focus {
+  border-top: 1px solid #555;
+}
+.bits-chat-input::-webkit-input-placeholder {
+  color: #888;
+}
+.bits-chat-input:-moz-placeholder {
+  color: #888;
+}
+body.bits-page-chatroom {
+  height: 100%;
+  width: 100%;
+  background-color: #eee;
+}
+a.bits-chatroom-link {
+  word-wrap: break-word;
+  word-break: break-all;
+}
+a.bits-chatroom-link:link,
+a.bits-chatroom-link:visited,
+a.bits-chatroom-link:hover,
+a.bits-chatroom-link:active {
+  color: #555;
+  text-decoration: underline;
+}
+
+.content-wrapper {
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 30px;
+  width: 100%;
+}
+
+.bits-chatbox-container {
+  display: block;
+  width: 700px;
+  height: 100%;
+  border: 0;
+  margin: 0 auto;
+}
+
+.bits-chatbox,
+.bits-post-container,
+.bits-chat-input {
+  color: #000;
+  background-color: #eee;
+}
+/* goog.ui.Dialog styling */
+.modal-dialog {
+  background: #fff;
+  border: 0;
+  color: #000;
+  padding: 3px;
+  position: absolute;
+  border-radius: 3px;
+  z-index: 100;
+  font-size: 13px;
+}
+.modal-dialog input[type="text"] {
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  max-width: 325px;
+  font-size: 16px;
+}
+.modal-dialog-bg {
+  left: 0;
+  position: absolute;
+  top: 0;
+  background: #666;
+  /* From http://www.colorzilla.com/gradient-editor/ */
+  background: -moz-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%, rgba(54,54,54,0.9) 75%, rgba(0,0,0,0.9) 100%); /* FF3.6+ */
+  background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgba(214,214,214,1)), color-stop(75%,rgba(54,54,54,0.9)), color-stop(100%,rgba(0,0,0,0.9))); /* Chrome,Safari4+ */
+  background: -webkit-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* Opera 12+ */
+  background: -ms-radial-gradient(center, ellipse cover,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* IE10+ */
+  background: radial-gradient(ellipse at center,  rgba(214,214,214,1) 0%,rgba(54,54,54,0.9) 75%,rgba(0,0,0,0.9) 100%); /* W3C */
+}
+.modal-dialog-buttons,
+.modal-dialog-content {
+  padding: 8px;
+}
+.modal-dialog-buttons button,
+.fancy-button {
+  display: inline-block;
+  padding: 6px;
+  border: 1px solid rgba(80, 80, 80, 0.5);
+  background-color: #e3e3e3;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));
+  background-image: -moz-linear-gradient(
+        top, #f9f9f9 40%, #e3e3e3 70%);
+  cursor: pointer;
+  border-radius: 3px;
+  margin-right: 20px;
+  font-size: 16px;
+  text-decoration: none;
+  color: #000;
+}
+.modal-dialog-buttons button:hover,
+.fancy-button:hover,
+.modal-dialog-buttons button:focus,
+.fancy-button:focus {
+  background-color: #dcdcdc;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#E6E6E6), to(#D1D1D1));
+  background-image: -moz-linear-gradient(
+        top, #E6E6E6 40%, #D1D1D1 70%);
+  text-decoration: none;
+  color: #000;
+}
+.modal-dialog-buttons button:active,
+.fancy-button:active {
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#D1D1D1), to(#E6E6E6));
+  background-image: -moz-linear-gradient(
+        top, #D1D1D1 40%, #E6E6E6 70%);
+  text-decoration: none;
+  color: #000;
+}
+.bits-footer-bar {
+  text-align: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border: 0;
+  height: 29px;
+  line-height: 29px;
+  vertical-align: baseline;
+}
+
+.bits-footer-settings-left,
+.bits-footer-settings-right {
+  position: absolute;
+  top: 0;
+  line-height: 29px;
+  height: 29px;
+  padding: 0 8px;
+}
+
+.bits-footer-settings-left {
+  left: 0;
+}
+.bits-footer-settings-right {
+  right: 0;
+}
+
+.bits-footer-settings-left .bits-setting-link {
+  margin-right: 6px;
+}
+.bits-footer-settings-right .bits-setting-link {
+  margin-left: 6px;
+}
+
+.footer-logo {
+  padding: 2px 0;
+}
+
+.bits-footer-bar a:link,
+.bits-footer-bar a:visited,
+.bits-footer-bar a:hover,
+.bits-footer-bar a:active {
+  color: #555;
+  text-decoration: none;
+}
+body.bits-page-landing {
+  height: 100%;
+  width: 100%;
+  background-color: #555;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+  font-size: 20px;
+}
+
+.landing-wrapper {
+  background-color: #ccc;
+}
+
+.landing-message {
+  width: 650px;
+  min-height: 450px;
+  padding: 0 0 50px 0;
+}
+
+.landing-image {
+  display: block;
+  margin: 0 auto;
+  padding: 70px 0 30px 0;
+}
+
+.landing-button-container {
+  text-align: center;
+  padding-top: 50px;
+}
+
+.landing-create-image-c {
+  display: inline-block;
+  padding: 10px 30px;
+  border: 1px solid rgba(80, 80, 80, 0.5);
+  background-color: #e3e3e3;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#f9f9f9), to(#e3e3e3));
+  background-image: -moz-linear-gradient(
+        top, #f9f9f9 40%, #e3e3e3 70%);
+  cursor: pointer;
+  border-radius: 20px;
+}
+.landing-create-image-c:hover {
+  background-color: #dcdcdc;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#f0f0f0), to(#dcdcdc));
+  background-image: -moz-linear-gradient(
+        top, #f0f0f0 40%, #dcdcdc 70%);
+}
+.landing-create-image-c:active {
+  background-color: #dcdcdc;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#cccccc), to(#dcdcdc));
+  background-image: -moz-linear-gradient(
+        top, #cccccc 40%, #dcdcdc 70%);
+}
+.landing-create-image {
+  padding: 0;
+  -webkit-transform: rotate(-3deg);
+  -moz-transform: rotate(-3deg);
+}
+
+.landing-footer {
+  height: 150px;
+  width: 100%;
+}
+
+.landing-footer-message {
+  margin: 0 auto;
+  padding: 0 10px 50px 10px;
+}
+.bits-page-landing a:link,
+.bits-page-landing a:visited,
+.bits-page-landing a:active,
+.bits-page-landing a:hover {
+  color: #bbb;
+  text-decoration: none;
+}
+.landing-footer-message a {
+  margin-left: 8px;
+  font-size: 13px;
+  line-height: 13px;
+  font-family: Helvetica, sans-serif;
+}.bits-posts-scrollable {
+  position: relative;
+  overflow: hidden;
+}
+
+.bits-post-container {
+  border: 0;
+  padding: 0;  /* Padding-right set by scrollbar.js to hide scrollbar */
+  margin: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  height: 100%;
+  width: 100%;
+}
+
+.bits-post {
+  clear: both;
+  padding: 0 10px;
+  margin: 1px 0;
+  outline: none;
+  /* Do not give this position or else the native scrollbar shows! */
+}
+
+.bits-post-tooltip {
+  background: #fff;
+  color: infotext;
+  border: 1px solid #999;
+  padding: 3px;
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  border-radius: 5px;
+  z-index: 100;
+}
+
+.bits-post-chat-nickname {
+  display: block;
+  float: left;
+  padding: 0;
+  margin: 0;
+  width: 112px;  /* 16 characters wide; 7px each */
+  line-height: 15px;
+  height: 15px;  /* need height for strict overflow */
+  overflow: hidden;
+  text-align: right;
+  word-wrap: break-word;
+  white-space: nowrap;
+}
+.bits-post-chat-separator {
+  float: left;
+  display: block;
+  line-height: 15px;
+}
+.bits-post-chat-body {
+  /* line height here must be a pixel value or else 'em' rounding causes
+     the page to jump inconsistent heights on each newly added post line. */
+  line-height: 15px;
+  margin-left: 126px; /* Two characters of margin, 7px each */
+  display: block;
+  word-wrap: break-word;
+}
+
+.bits-post-presence,
+.bits-post-error,
+.bits-post-info {
+  line-height: 20px;
+  height: 20px;  /* need height for strict overflow */
+}
+.bits-post-presence-body,
+.bits-post-error-body,
+.bits-post-info-body {
+  /* line height here must be a pixel value or else 'em' rounding causes
+     the page to jump inconsistent heights on each newly added post line. */
+  line-height: 20px;
+  display: block;
+  clear: both;
+}
+
+.bits-post-presence {
+  color: #888;
+}
+.bits-post-error {
+  color: #CF9400;
+}
+.bits-post-info {
+  color: #3B9ED3;
+}
+
+.bits-post-topic {
+  background-color: #eee;
+  padding: 0 10px;
+  margin: 15px 0 1px 0;
+  -webkit-transition: background-color 3s ease-out;
+  -moz-transition: background-color 3s ease-out;
+}
+.bits-post-topic.active {
+  background-color: #00D5D7;
+}
+.bits-post-topic-type {
+  float: right;
+  vertical-align: baseline;
+  margin: 0 0 5px 20px;
+  color: #888;
+  line-height: 15px;
+}
+.bits-post-topic-title {
+  display: block;
+  margin: 0 0 5px 0;
+  line-height: 15px;
+  vertical-align: baseline;
+}
+.bits-post-topic-title a:link,
+.bits-post-topic-title a:visited,
+.bits-post-topic-title a:hover,
+.bits-post-topic-title a:active {
+  text-decoration: underline;
+  color: #000;
+}
+.goog-slider-vertical {
+  overflow: hidden;
+  outline: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  border-radius: 5px;
+  opacity: 0;
+  background-color: #ccc;
+  -webkit-transition: opacity .3s ease-out;
+  -moz-transition: opacity .3s ease-out;
+}
+.goog-slider-thumb {
+  outline: 0;
+  position: absolute;
+  background-color: #555;
+  border: 1px solid #000;
+  overflow: hidden;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.goog-slider-vertical .goog-slider-thumb {
+  left: 0;
+  width: 100%;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-transition: opacity .4s ease-out;
+  -moz-transition: opacity .4s ease-out;
+  opacity: 0;
+}
+.goog-slider-vertical:hover .goog-slider-thumb,
+.active .goog-slider-thumb,
+.goog-slider-vertical.active,
+.goog-slider-vertical:hover {
+  opacity: 0.5;
+}
+/* SettingsDialog. */
+#settings-dialog {
+  max-width: 350px;
+}
+#settings-terms {
+  display: none;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+#welcome-text {
+  display: none;
+}
+.bits-first-time .settings-section {
+  margin-top: 15px;
+}
+
+.bits-first-time #settings-terms,
+.bits-first-time #welcome-text,
+.bits-first-time .tutorial-step {
+  display: block;
+}
+
+.welcome-title {
+  font-size: 16px;
+  font-weight: bold;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+.welcome-detail {
+  margin-top: 0.5em;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.modal-dialog.bits-first-time {
+  background-image: url(../tutorial.png);
+  background-repeat: no-repeat;
+  background-position: 90px -30px;
+}
+.bits-topic {
+  height: 75px;
+  background-color: #fff;
+}
+.bits-topic + .bits-topic {
+  border-top: 1px solid #ccc;
+}
+.bits-topic-selected {
+  border-bottom: 1px solid #ccc;
+}
+.bits-topic-title-c {
+  height: 25px;
+  line-height: 25px;
+  padding: 0 10px;
+}
+.bits-topic.goog-control-hover {
+  background-color: #eee;
+}
+.bits-topic-description {
+  width: 650px;
+  height: 40px;
+  line-height: 15px;
+  vertical-align: top;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  white-space: wrap;
+}
+
+.bits-topic-menu {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ddd;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  outline: none;
+}
+.bits-topic-menu-dropdown {
+  height: 100%;
+}
+
+.bits-topic-prompt {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding: 2px;
+  background-color: #eee;
+  z-index: 1;
+}
+.bits-topic-prompt.active {
+  display: block;
+}
+
+.bits-topic-prompt-wrapper {
+  width: 70%;
+  margin: 50px auto 0 auto;
+  position: relative;
+}
+
+.bits-topic-prompt-title {
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.bits-topic-prompt-close {
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  text-align: center;
+  vertical-align: center;
+  line-height: 16px;
+  border-radius: 8px;
+  color: #ccc;
+  font-size: 16px;
+  font-weight: bold;
+  position: absolute;
+  top: -18px;
+  right: -18px;
+}
+.bits-topic-prompt-close:hover {
+  background-color: #ccc;
+  color: #eee;
+}
+.bits-topic-prompt-close:active {
+  background-color: #ccc;
+  color: #888;
+}
+
+.bits-topic-prompt-link {
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  margin: 15px 0;
+  display: block;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.bits-topic-prompt-helptext {
+  margin: 15px 0;
+}
+
+
+.bits-topic-prompt-summary {
+  border: 0;
+  display: block;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px 0;
+  margin: 0;
+  overflow: hidden;  /* Don't show a scrollbar */
+  resize: none;  /* Disable webkit textarea resize control */
+  outline: none;  /* Remove focus ring */
+  font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+  font-size: 12px;
+  height: 120px;
+  background-color: #eee;
+}
+.bits-topic-prompt-summary,
+.bits-topic-prompt-summary:focus {
+  border-top: 1px solid #555;
+}
+.bits-topic-prompt-summary::-webkit-input-placeholder {
+  color: #888;
+}
+.bits-topic-prompt-summary:-moz-placeholder {
+  color: #888;
+}

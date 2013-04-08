@@ -21,6 +21,7 @@
       <link rel="stylesheet" href="/static/{{cache_buster}}/css/ie.css"
           type="text/css" media="screen, projection">
     <![endif]-->
+
     {% block additional_css %}{% endblock %}
 
     {% block additional_js %}{% endblock %}
@@ -37,7 +38,7 @@
       })();
     </script>
   </head>
-  <body>
+  <body class="bits-page-{{page_name}}">
     {% block body %}{% endblock %}
   </body>
 </html>

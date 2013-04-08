@@ -126,6 +126,7 @@ class BaseHandler(webapp.RequestHandler):
       'cache_buster': config.version_id,
       'host_url': self.request.host_url,
       'js_mode': js_mode,
+      'page_name': 'base',
     }
     if context:
       my_context.update(context)

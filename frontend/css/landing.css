@@ -1,5 +1,4 @@
-html,
-body {
+body.bits-page-landing {
   height: 100%;
   width: 100%;
   background-color: #555;
@@ -70,10 +69,10 @@ body {
   margin: 0 auto;
   padding: 0 10px 50px 10px;
 }
-a:link,
-a:visited,
-a:active,
-a:hover {
+.bits-page-landing a:link,
+.bits-page-landing a:visited,
+.bits-page-landing a:active,
+.bits-page-landing a:hover {
   color: #bbb;
   text-decoration: none;
 }

@@ -8,17 +8,21 @@
 
 {% block additional_css %}
 
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/chatbox.css">
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/chatroom.css">
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/common.css">
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/footer.css">
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/posts.css">
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/scrollbar.css">
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/settings.css">
-<link rel="stylesheet" href="/static/{{cache_buster}}/css/topics.css">
+{% if js_mode == 'raw' %}
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatbox.css">
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatroom.css">
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/common.css">
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/footer.css">
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/posts.css">
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/scrollbar.css">
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/settings.css">
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/topics.css">
+{% endif %}
+{% if js_mode == 'compiled' %}
+  <link rel="stylesheet" href="/static/{{cache_buster}}/css/compiled.css">
+{% endif %}
 
 {% endblock additional_css %}
-
 
 {% block additional_js %}
 

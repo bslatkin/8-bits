@@ -37,14 +37,14 @@ class LandingHandler(base.BaseHandler):
       handler.initialize(self.request, self.response)
       return handler.get(host_parts[0])
 
-    self.render('landing.html')
+    self.render('landing.html', dict(page_name='landing'))
 
 
 class TermsHandler(base.BaseHandler):
   """Renders the terms of service page."""
 
   def get(self):
-    self.render('terms.html')
+    self.render('terms.html', dict(page_name='terms'))
 
 
 class CreateChatroomHandler(base.BaseHandler):
@@ -125,6 +125,7 @@ class ChatroomHandler(base.BaseHandler):
       'first_login': first_login,
       'must_accept_terms': must_accept_terms,
       'nickname': xml.sax.saxutils.unescape(nickname),
+      'page_name': 'chatroom',
       'shard_id': shard_id,
       'short_url': self.request.path_url,
       'sounds_enabled': sounds_enabled,

@@ -15,21 +15,23 @@
 # limitations under the License.
 
 # Generates a Closure compiled.js file for the bits.* namespaces.
+echo "Compiling JavaScript"
 python ./closure-library/closure/bin/build/closurebuilder.py  \
---root="./frontend/js/bits" \
---root="./closure-library" \
---namespace="bits.startup" \
---output_mode="compiled" \
---compiler_jar="./closure-compiler.jar" \
---output_file="frontend/js/bits/compiled.js" \
---compiler_flags="--compilation_level=SIMPLE_OPTIMIZATIONS"
+  --root="./frontend/js/bits" \
+  --root="./closure-library" \
+  --namespace="bits.startup" \
+  --output_mode="compiled" \
+  --compiler_jar="./closure-compiler.jar" \
+  --output_file="frontend/js/bits/compiled.js" \
+  --compiler_flags="--compilation_level=SIMPLE_OPTIMIZATIONS"
 
 # TODO(bslatkin): Use --compilation_level=ADVANCED_OPTIMIZATIONS
 
-# TODO(bslatkin): Compile the CSS with something like:
-# find css -name '*.css' \
-# > -and -not -name 'compiled.css' \
-# > -and -not -name 'ie.css' \
-# > -and -not -name 'print.css' \
-# > -and -not -name 'screen.css' \
-# > | xargs cat > css/compiled.css
+# Put all the CSS in one file.
+echo "Combining CSS"
+find frontend/css -name '*.css' \
+  -and -not -name 'compiled.css' \
+  -and -not -name 'ie.css' \
+  -and -not -name 'screen.css' \
+  -and -not -name 'print.css' \
+  | xargs cat > frontend/css/compiled.css
