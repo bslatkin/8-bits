@@ -29,6 +29,7 @@ import base
 import config
 import models
 import ndb
+import topics
 
 
 def enqueue_email_tasks(emails_set):
@@ -93,7 +94,7 @@ class EmailDigestWorker(base.BaseHandler):
       email digest updates.
     """
     user_id = '%s:%s' % (root_shard_id, email_address)
-    _, shard_and_state_list = yield list_topics(
+    _, shard_and_state_list = yield topics.list_topics(
         root_shard_id, user_id)
 
     topic_list = []
