@@ -2,8 +2,7 @@
 
 {% block additional_meta %}
 
-<title>8-bits of ephemera</title>
-<meta name="description" content="Create a private stream with close friends. Each post is auto-deleted after ten days, fading like memories.">
+<meta name="description" content="Have a private chat with close friends. Each post is auto-deleted after ten days, fading like memories.">
 <meta property="og:image"
     content="{{host_url}}/static/{{cache_buster}}/logo.png">
 {% endblock additional_meta %}
@@ -35,7 +34,7 @@
 <div class="landing-wrapper">
   <div class="landing-message container">
     <img class="landing-image clear" src="/static/{{cache_buster}}/logo.png"
-        width="300" height="78" alt="8-bits of ephemera">
+        width="600" height="92" alt="ephemeral.im">
 
     <div class="prepend-2 append-2">
       Have a private chat with close friends. Only people with the secret link can join. Share silly websites, images, and stories. Be serious when you need to. Each post is auto-deleted after ten days, fading like memories.
@@ -44,8 +43,8 @@
     <div class="landing-button-container clear">
       <form action="/create" method="post" id="create-form">
         <div class="landing-create-image-c">
-          <img class="landing-create-image" width="250" height="43"
-              title="Create your own" alt="Create your own"
+          <img class="landing-create-image" width="300" height="49"
+              title="Create your space" alt="Create your space"
               src="/static/{{cache_buster}}/create.png">
         </div>
       </form>
@@ -56,7 +55,7 @@
 <div class="landing-footer">
   <div class="landing-footer-message" align="right">
     <a href="https://github.com/bslatkin/8-bits"
-        title="About 8-bits of ephemera">about</a>
+        title="About ephemeral.im">about</a>
     <a href="/terms" title="Terms of service">terms</a>
   </div>
 </div>

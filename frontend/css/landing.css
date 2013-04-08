@@ -3,8 +3,9 @@ body {
   height: 100%;
   width: 100%;
   background-color: #555;
-  font-family: Helvetica, sans-serif;
-  font-size: 13px;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+  font-size: 20px;
 }
 
 .landing-wrapper {
@@ -12,7 +13,7 @@ body {
 }
 
 .landing-message {
-  width: 400px;
+  width: 650px;
   min-height: 450px;
   padding: 0 0 50px 0;
 }
@@ -20,7 +21,7 @@ body {
 .landing-image {
   display: block;
   margin: 0 auto;
-  padding: 50px 0 30px 0;
+  padding: 70px 0 30px 0;
 }
 
 .landing-button-container {
@@ -47,6 +48,13 @@ body {
   background-image: -moz-linear-gradient(
         top, #f0f0f0 40%, #dcdcdc 70%);
 }
+.landing-create-image-c:active {
+  background-color: #dcdcdc;
+  background-image: -webkit-gradient(
+      linear, 0% 40%, 0% 70%, from(#cccccc), to(#dcdcdc));
+  background-image: -moz-linear-gradient(
+        top, #cccccc 40%, #dcdcdc 70%);
+}
 .landing-create-image {
   padding: 0;
   -webkit-transform: rotate(-3deg);
@@ -54,7 +62,7 @@ body {
 }
 
 .landing-footer {
-  height: 200px;
+  height: 150px;
   width: 100%;
 }
 
@@ -71,6 +79,7 @@ a:hover {
 }
 .landing-footer-message a {
   margin-left: 8px;
-  font-size: 12px;
-  line-height: 12px;
+  font-size: 13px;
+  line-height: 13px;
+  font-family: Helvetica, sans-serif;
 }
