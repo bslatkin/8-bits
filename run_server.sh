@@ -19,4 +19,5 @@ PYTHONPATH=$PYTHONPATH:$CRYPTOLIB \
 dev_appserver.py \
     --require_indexes \
     --high_replication \
-    backend
+    backend \
+    $@

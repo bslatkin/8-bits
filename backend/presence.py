@@ -181,8 +181,13 @@ def user_logged_out(shard, user_id):
   """Notifies other users that the given user has logged out of a shard."""
   def txn():
     login_record = models.LoginRecord.get_by_id(user_id)
+
     if not login_record:
-        raise ndb.Rollback()
+      raise ndb.Rollback()
+
+    if not login_record.online:
+      raise ndb.Rollback()
+
     login_record.online = False
     login_record.put()
     return login_record
@@ -252,9 +257,10 @@ class ShardCleanupWorker(base.BaseHandler):
     # Find users who are now stale and log them out.
     active_users_list = only_active_users(*all_users_list)
     all_users_set = set(u.user_id for u in all_users_list)
+    logged_out_set = set(u.user_id for u in all_users_list if not u.online)
     active_users_set = set(u.user_id for u in active_users_list)
 
-    for user_id in (all_users_set - active_users_set):
+    for user_id in (all_users_set - active_users_set - logged_out_set):
       user_logged_out(shard, user_id)
 
     # Enqueue email notification tasks for users
@@ -280,7 +286,7 @@ class PresenceHandler(base.BaseRpcHandler):
 
     # Make sure this shard can be logged into.
     shard_record = models.Shard.get_by_id(shard)
-    if shard_record.root_shard:
+    if shard_record and shard_record.root_shard:
       raise base.TopicShardError('Cannot login to topic shard')
 
     if 'shards' not in self.session:
