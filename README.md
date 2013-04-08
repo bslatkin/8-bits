@@ -12,21 +12,27 @@ participants in the project, respectively, not to their employers or clients.
 
 # Directions
 
-You'll need Python 2.7 and the [App Engine SDK](https://developers.google.com/appengine/downloads). And you'll need PyCrypto to make the session cookie library work.
+You'll need Python 2.7 and the [App Engine SDK](https://developers.google.com/appengine/downloads).
+
+Run this command to build PyCrypto. It's built locally so it won't pollute your global site-packages. Using Brew is fine too.
 
     cd pycrypto
-    python setup.py install
+    python setup.py build
 
-#### To run the app locally, be sure to use these flags for dev_appserver:
+You need some secret keys for the session cookie library and XSRF protection. Run this script once to generate them.
+
+    make_secrets.sh
+
+#### To run the app locally:
 
     ./run_server.sh
 
-####  To run frontend tests:
+####  To see frontend tests:
 
     ./run_server.sh
     # Navigate to http://localhost:8080/tests/index.html
 
-#### To compile the Closure JS into a binary:
+#### To compile the JS into a binary:
 
     ./gendepsfile.sh
     ./compile.sh

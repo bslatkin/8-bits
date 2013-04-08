@@ -13,10 +13,6 @@ version_id = (
     (os.environ.get('VERSION_ID', '').split('.', 1) + [''])[0]
     or random.randint(0, 10**10))
 
-# Beaker keys
-session_encrypt_key = 'asdf'
-session_validate_key = 'asdfasdf'
-
 # Queues
 apply_queue = 'apply-posts'
 cleanup_queue = 'cleanup-shard'
@@ -37,3 +33,6 @@ user_token_lifetime_seconds =  6 * 60 * 60  # 6 hours
 
 # Current version of the terms of service
 terms_version = 1
+
+# Import all secret keys
+from secrets import *

@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+CRYPTOLIB=`ls -d pycrypto/build/lib.*`
+PYTHONPATH=$PYTHONPATH:$CRYPTOLIB \
 dev_appserver.py \
     --require_indexes \
     --high_replication \
