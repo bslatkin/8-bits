@@ -21,11 +21,12 @@ Run this command to build PyCrypto. It's built locally so it won't pollute your 
 
 You need some secret keys for the session cookie library and XSRF protection. Run this script once to generate them.
 
-    make_secrets.sh
+    ./make_secrets.sh
 
 #### To run the app locally:
 
     ./run_server.sh
+    # Navigate to http://localhost:8080
 
 ####  To see frontend tests:
 
@@ -36,3 +37,4 @@ You need some secret keys for the session cookie library and XSRF protection. Ru
 
     ./gendepsfile.sh
     ./compile.sh
+    # Notice that deps.js and compiled.js have changed
