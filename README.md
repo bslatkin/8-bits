@@ -47,3 +47,11 @@ You need some secret keys for the session cookie library and XSRF protection. Ru
     ./gendepsfile.sh
     ./compile.sh
     # Notice that deps.js and compiled.js have changed
+
+#### To deploy
+
+Make sure you change `backend/app.yaml` to use your app ID and version number. Then run:
+
+    appcfg.py update backend
+
+You can test a new version on a URL like `http://www.your-version-id.your-app-id.appspot.com/`

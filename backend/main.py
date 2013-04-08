@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-# 
+#
 # Copyright 2010 Brett Slatkin, Nathan Naze
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,6 @@ class BaseHandler(webapp.RequestHandler):
   post_enabled = True
 
   def get(self, *args):
-    self.response.headers['Strict-Transport-Security'] = 'max-age=31536000'
     if not self.get_enabled:
       self.response.set_status(405)
       return
@@ -90,7 +89,6 @@ class BaseHandler(webapp.RequestHandler):
     self.handle_request(*args)
 
   def post(self, *args):
-    self.response.headers['Strict-Transport-Security'] = 'max-age=31536000'
     if not self.post_enabled:
       self.response.set_status(405)
       return
@@ -141,8 +139,7 @@ class BaseHandler(webapp.RequestHandler):
   def render(self, template_name, context=None):
     """Renders the given template and context."""
     js_mode = 'compiled'
-    if (config.debug and
-        self.request.environ.get('SERVER_SOFTWARE').startswith('Dev')):
+    if config.debug and config.is_dev_appserver:
       js_mode = self.request.get('js_mode', 'raw')
 
     my_context = {
@@ -620,7 +617,7 @@ def notify_posts(shard, post_list, sequence_numbers=None):
     except channel.Error, e:
       # NOTE: When receiving an InvalidChannelKeyError the message may still
       # be available the next time the user connects to the channel with that
-      # same application key due to buffering in the backends. The 
+      # same application key due to buffering in the backends. The
       # dev_appserver mimics this behavior, but it's not reliable in prod.
       logging.warning('Could not send JSON message to user=%r with '
                       'browser_token=%r. %s: %s', login_record.user_id,
@@ -1197,6 +1194,13 @@ class LandingHandler(BaseHandler):
   """Renders the landing page."""
 
   def get(self):
+    # Treat xyz.example.com/the same as www.example.com/chat/xyz
+    host_parts = self.request.host.split('.')
+    if len(host_parts) > 2 and host_parts[0] != 'www':
+      handler = ChatroomHandler()
+      handler.initialize(self.request, self.response)
+      return handler.get(host_parts[0])
+
     self.render('landing.html')
 
 
@@ -1229,7 +1233,14 @@ class CreateChatroomHandler(BaseHandler):
       if shard_id:
         break
 
-    self.redirect('/chat/' + shard_id)
+    # For dev_appserver use the URL path. Otherwise use a sub-domain.
+    if config.is_dev_appserver:
+      self.redirect('/chat/' + shard_id)
+    else:
+      host_parts = self.request.host.split('.', 1)
+      target_url = '%s://%s.%s/' % (
+          self.request.scheme, shard_id, host_parts[1])
+      self.redirect(target_url)
 
 
 class ChatroomHandler(BaseHandler):
@@ -1320,7 +1331,7 @@ ROUTES = webapp.WSGIApplication([
   (r'/rpc/create_topic', CreateTopicHandler),
   (r'/rpc/list_topics', ListTopicsHandler),
   (r'/rpc/read_state', ReadStateHandler),
-  (r'/chat/([a-zA-Z0-9_-]{1,100})', ChatroomHandler)
+  (r'/chat/([a-zA-Z0-9-]{1,100})', ChatroomHandler)
 ], debug=config.debug)
 
 
@@ -1340,5 +1351,5 @@ APP = middleware.SessionMiddleware(ROUTES, SESSION_OPTS)
 if config.debug:
   APP = DebugLoggingMiddleware(APP)
 
-## Enable appstats
-# APP = recording.appstats_wsgi_middleware(APP)
+if config.appstats:
+  APP = recording.appstats_wsgi_middleware(APP)
