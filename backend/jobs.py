@@ -14,15 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Background workers for the 8-bits chat system."""
+"""Background mapreduce and periodic jobs."""
 
 import datetime
 import logging
 import time
-import wsgiref.handlers
 
 from google.appengine.ext import webapp
-from google.appengine.ext.appstats import recording
 
 # Local libs
 import config
@@ -32,7 +30,6 @@ from mapreduce import mapreduce_pipeline
 from mapreduce.lib import pipeline
 import models
 
-###############################################################################
 
 # TODO(bslatkin): Use an upstream version of this instead.
 class DeleteNdb(operation.Operation):
@@ -82,7 +79,6 @@ class DeleteOldPostsPipeline(pipeline.Pipeline):
                     before_timestamp_seconds=before_timestamp_seconds),
         shards=8)
 
-###############################################################################
 
 class PeriodicHandler(webapp.RequestHandler):
   """Handler for periodically kicking off pipelines."""
@@ -98,11 +94,7 @@ class PeriodicHandler(webapp.RequestHandler):
     logging.info('Started DeleteOldPostsPipeline with pipeline_id=%r',
                  job.pipeline_id)
 
-###############################################################################
 
-APP = webapp.WSGIApplication([
+ROUTES = [
   (r'/jobs/periodic', PeriodicHandler),
-], debug=config.debug)
-
-## Enable appstats
-# APP = recording.appstats_wsgi_middleware(APP)
+]

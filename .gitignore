@@ -4,3 +4,4 @@
 *~
 .hg
 .idea
+backend/secrets.py

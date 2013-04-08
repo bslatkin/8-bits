@@ -14,9 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CRYPTOLIB=`ls -d pycrypto/build/lib.*`
-PYTHONPATH=$PYTHONPATH:$CRYPTOLIB \
-dev_appserver.py \
-    --require_indexes \
-    --high_replication \
-    backend
+TARGET=backend/secrets2.py
+
+if [ -e $TARGET ]
+then
+    echo "backend/secrets.py already exists! Doing nothing"
+else
+    touch $TARGET
+    echo "#!/usr/bin/env python" >> $TARGET
+    echo "session_encrypt_key = '$(openssl rand -base64 32)'" >> $TARGET
+    echo "session_validate_key = '$(openssl rand -base64 32)'" >> $TARGET
+fi

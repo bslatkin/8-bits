@@ -1,5 +1,5 @@
 application: 8-bits-live
-version: push-08-28-a
+version: push-04-07-a
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -43,19 +43,16 @@ handlers:
   static_files: static/\1
   expiration: 90d
   upload: static
-  secure: always
 
 # Static files that need to be at a specific URL with no cache buster.
 - url: /robots\.txt
   static_files: static/robots.txt
   expiration: 1s
   upload: static
-  secure: optional
 - url: /favicon\.ico
   static_files: static/favicon.ico
   expiration: 1d
   upload: static
-  secure: optional
 
 # Task queues serving the user-facing app.
 - url: /work/.*
@@ -74,8 +71,7 @@ handlers:
 - url: /_ah/pipeline(/.*)?
   script: mapreduce.main.APP
   login: admin
-  secure: always
 
+# Everything else is not authenticated.
 - url: /.*
   script: main.APP
-  secure: always

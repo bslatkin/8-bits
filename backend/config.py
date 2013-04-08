@@ -12,14 +12,16 @@ debug = True
 # Used for global state and preferences local to a single request.
 request = threading.local()
 
+# Run appstats RPC profiling for requests.
+appstats = False
+
 # The timestamp of the current deployment, or a cache buster locally.
 version_id = (
     (os.environ.get('VERSION_ID', '').split('.', 1) + [''])[0]
     or random.randint(0, 10**10))
 
-# Beaker keys
-session_encrypt_key = 'asdf'
-session_validate_key = 'asdfasdf'
+# Is this running in the dev_appserver or production?
+is_dev_appserver = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
 # Queues
 apply_queue = 'apply-posts'
@@ -45,3 +47,6 @@ terms_version = 1
 
 # Email address to use for sending notification emails.
 notification_from_email = 'notify@8-bits.us'
+
+# Import all secret keys
+from secrets import *
