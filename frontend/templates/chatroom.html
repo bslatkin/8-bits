@@ -31,6 +31,10 @@
     goog.require('bits.startup');
   </script>
 {% endif %}
+{% if js_mode == 'compiled' %}
+  <script type="text/javascript"
+      src="/static/{{cache_buster}}/compiled.js"></script>
+{% endif %}
 
 {% endblock additional_js %}
 

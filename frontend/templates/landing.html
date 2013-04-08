@@ -15,19 +15,15 @@
 
 {% endblock additional_css %}
 
-
 {% block additional_js %}
 
-{% if js_mode == 'raw' %}
-  <script type="text/javascript" src="/js/closure/goog/base.js"></script>
-  <script type="text/javascript" src="/js/bits/deps.js"></script>
-  <script type="text/javascript">
-    goog.require('bits.landing');
-  </script>
+{# Async load the script to try to warm up the cache. #}
+{% if js_mode == 'compiled' %}
+  <script type="text/javascript" async
+      src="/static/{{cache_buster}}/compiled.js"></script>
 {% endif %}
 
 {% endblock additional_js %}
-
 
 {% block body %}
 
@@ -42,11 +38,13 @@
 
     <div class="landing-button-container clear">
       <form action="/create" method="post" id="create-form">
-        <div class="landing-create-image-c">
+        {# TODO: XSRF protection #}
+        <a href="javascript:void(0)" onclick="document.getElementById('create-form').submit();"
+            class="landing-create-image-c">
           <img class="landing-create-image" width="300" height="49"
               title="Create your space" alt="Create your space"
               src="/static/{{cache_buster}}/create.png">
-        </div>
+        </a>
       </form>
     </div>
   </div>
@@ -59,9 +57,5 @@
     <a href="/terms" title="Terms of service">terms</a>
   </div>
 </div>
-
-<script>
-  bits.landing();
-</script>
 
 {% endblock body %}

@@ -19,10 +19,12 @@ python ./closure-library/closure/bin/build/closurebuilder.py  \
 --root="./frontend/js/bits" \
 --root="./closure-library" \
 --namespace="bits.startup" \
---namespace="bits.landing" \
 --output_mode="compiled" \
 --compiler_jar="./closure-compiler.jar" \
---output_file="frontend/js/bits/compiled.js"
+--output_file="frontend/js/bits/compiled.js" \
+--compiler_flags="--compilation_level=SIMPLE_OPTIMIZATIONS"
+
+# TODO(bslatkin): Use --compilation_level=ADVANCED_OPTIMIZATIONS
 
 # TODO(bslatkin): Compile the CSS with something like:
 # find css -name '*.css' \

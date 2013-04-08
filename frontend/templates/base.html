@@ -23,10 +23,6 @@
     <![endif]-->
     {% block additional_css %}{% endblock %}
 
-    {% if js_mode == 'compiled' %}
-      <script type="text/javascript"
-          src="/static/{{cache_buster}}/compiled.js"></script>
-    {% endif %}
     {% block additional_js %}{% endblock %}
 
     <script type="text/javascript">

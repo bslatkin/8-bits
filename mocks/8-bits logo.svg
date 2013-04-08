@@ -380,7 +380,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.5"
      inkscape:cx="318.34375"
-     inkscape:cy="570.35839"
+     inkscape:cy="410.35839"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -893,5 +893,34 @@
            width="58.064518"
            id="rect3296" /></flowRegion><flowPara
          id="flowPara3298"
-         style="font-size:48px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;font-family:American Typewriter;-inkscape-font-specification:American Typewriter;fill:#00d5d7;fill-opacity:1">e</flowPara></flowRoot>  </g>
+         style="font-size:48px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;font-family:American Typewriter;-inkscape-font-specification:American Typewriter;fill:#00d5d7;fill-opacity:1">e</flowPara></flowRoot>    <path
+       inkscape:export-ydpi="587.37"
+       inkscape:export-xdpi="587.37"
+       inkscape:export-filename="/Users/bslatkin/Desktop/output.png"
+       transform="matrix(0.86363637,0,0,0.86363637,296.59368,278.87026)"
+       d="m 228.2258,505.58798 a 26.612904,26.612904 0 1 1 -53.2258,0 26.612904,26.612904 0 1 1 53.2258,0 z"
+       sodipodi:ry="26.612904"
+       sodipodi:rx="26.612904"
+       sodipodi:cy="505.58798"
+       sodipodi:cx="201.6129"
+       id="path4083"
+       style="opacity:0.95999995000000005;fill:#00d5d7;fill-opacity:0.09803922"
+       sodipodi:type="arc" />
+    <flowRoot
+       inkscape:export-ydpi="587.37"
+       inkscape:export-xdpi="587.37"
+       inkscape:export-filename="/Users/bslatkin/Desktop/output.png"
+       transform="translate(80.539658,265.26269)"
+       style="font-size:48px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;opacity:0.95999995000000005;fill:#000000;fill-opacity:0.09803922;stroke:none;font-family:American Typewriter;-inkscape-font-specification:American Typewriter Light"
+       id="flowRoot4085"
+       xml:space="preserve"><flowRegion
+         id="flowRegion4087"><rect
+           style="font-size:48px;font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:0.09803922;font-family:American Typewriter;-inkscape-font-specification:American Typewriter Light"
+           y="415.26541"
+           x="377.41934"
+           height="56.451614"
+           width="58.064518"
+           id="rect4089" /></flowRegion><flowPara
+         id="flowPara4091"
+         style="font-size:48px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;font-family:American Typewriter;-inkscape-font-specification:American Typewriter;fill-opacity:0.09803922">e</flowPara></flowRoot>  </g>
 </svg>
