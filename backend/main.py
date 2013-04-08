@@ -930,6 +930,15 @@ class PresenceHandler(BaseRpcHandler):
 
     self.json_response['userConnected'] = user_connected
     self.json_response['browserToken'] = browser_token
+
+    # Always assign the cookie on the top domain, so the user doesn't have
+    # to accept the terms of service repeatedly.
+    if not config.is_dev_appserver:
+      host_parts = self.request.host.split('.')
+      suffix = '.'.join(host_parts[-2:])
+      self.session.domain = '.' + suffix
+      self.session.path = '/'
+
     self.session.save()
 
 
@@ -1233,7 +1242,7 @@ class CreateChatroomHandler(BaseHandler):
       if shard_id:
         break
 
-    # For dev_appserver use the URL path. Otherwise use a sub-domain.
+    # For dev_appserver use the relative path. Otherwise use a sub-domain.
     if config.is_dev_appserver:
       self.redirect('/chat/' + shard_id)
     else:
@@ -1290,7 +1299,7 @@ class ChatroomHandler(BaseHandler):
       'must_accept_terms': must_accept_terms,
       'nickname': xml.sax.saxutils.unescape(nickname),
       'shard_id': shard_id,
-      'short_url_prefix': self.request.host_url,
+      'short_url': self.request.path_url,
       'sounds_enabled': sounds_enabled,
     }
     context['params'] = json.dumps(context)
