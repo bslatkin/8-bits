@@ -5,7 +5,6 @@ Bugs:
 
 v2 features:
 - Add email notifications for new topics
-- Add SPF records http://support.google.com/a/bin/answer.py?hl=en&answer=33786
 
 v2 polish:
 - Clean up code comments and style everywhere
