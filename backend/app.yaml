@@ -1,5 +1,5 @@
 application: 8-bits-live
-version: push-04-07-a
+version: push-04-24-a
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -52,6 +52,10 @@ handlers:
 - url: /favicon\.ico
   static_files: static/favicon.ico
   expiration: 1d
+  upload: static
+- url: /(trustwave_.*)\.html
+  static_files: static/\1.html
+  expiration: 0s
   upload: static
 
 # Task queues serving the user-facing app.
