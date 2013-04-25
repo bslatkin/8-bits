@@ -26,6 +26,7 @@ handlers:
 - url: /admin(/.*)?
   script: google.appengine.ext.admin.application
   login: admin
+  secure: always
 
 # Various raw files which are only used in debug. Do not upload.
 - url: /js/closure/([^\.]+\.js)
@@ -43,39 +44,48 @@ handlers:
   static_files: static/\1
   expiration: 90d
   upload: static
+  secure: always
 
 # Static files that need to be at a specific URL with no cache buster.
 - url: /robots\.txt
   static_files: static/robots.txt
   expiration: 1s
   upload: static
+  secure: always
 - url: /favicon\.ico
   static_files: static/favicon.ico
   expiration: 1d
   upload: static
+  secure: always
 - url: /(trustwave_.*)\.html
   static_files: static/\1.html
   expiration: 0s
   upload: static
+  secure: always
 
 # Task queues serving the user-facing app.
 - url: /work/.*
   script: main.APP
   login: admin
+  secure: always
 
 # Background jobs and work that is not user-facing.
 - url: /jobs/.*
   script: jobs.APP
   login: admin
+  secure: always
 
 - url: /mapreduce(/.*)?
   script: mapreduce.main.APP
   login: admin
+  secure: always
 
 - url: /_ah/pipeline(/.*)?
   script: mapreduce.main.APP
   login: admin
+  secure: always
 
 # Everything else is not authenticated.
 - url: /.*
   script: main.APP
+  secure: always
