@@ -1,0 +1,1 @@
+Code in here may have funky licenses, like LGPL3. Do *not* include these modules in the production application. These modules are only meant for tooling and generating static resources, thus keeping the rest of this codebase Apache 2.0 compatible.
