@@ -14,14 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ALL_TESTS=$(find backend/tests -name '*_test.py')
+ALL_TESTS="$1"
 CRYPTOLIB=`ls -d pycrypto/build/lib.*`
 DEV_APPSERVER=$(readlink `which dev_appserver.py`)
 APP_ENGINE=$(dirname $DEV_APPSERVER)
 
+if [ -z "$ALL_TESTS" ]; then
+    ALL_TESTS=$(find backend/tests -name '*_test.py')
+fi
+
 for testpath in $ALL_TESTS; do
   echo "Running $testpath"
-  PYTHONPATH=$PYTHONPATH:backend:$APP_ENGINE:$APP_ENGINE/lib:$CRYPTOLIB \
-  python -c "import dev_appserver; dev_appserver.fix_sys_path(); \
-    dev_appserver.run_file('$testpath', globals(), 'backend/tests');"
+    PYTHONPATH=$PYTHONPATH:backend:$APP_ENGINE:$APP_ENGINE/lib:$CRYPTOLIB \
+    python -c "import dev_appserver; dev_appserver.fix_sys_path(); \
+        dev_appserver.run_file('$testpath', globals(), 'backend/tests');"
 done
