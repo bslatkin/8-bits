@@ -5,6 +5,7 @@ Bugs:
 
 v2 features:
 - Add email notifications for activity digests
+- XSRF protection
 
 v2 polish:
 - Clean up code comments and style everywhere

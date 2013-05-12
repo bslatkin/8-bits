@@ -1,11 +1,11 @@
 // Copyright 2012 Brett Slatkin
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ bits.ui.Scrollbar = function() {
 
   this.setOrientation(goog.ui.Slider.Orientation.VERTICAL);
   this.setMoveToPointEnabled(true);
+  this.setUnitIncrement(8);
 
   /**
    * @type {Element}
@@ -73,8 +74,11 @@ goog.inherits(bits.ui.Scrollbar, goog.ui.Slider);
  */
 bits.ui.Scrollbar.prototype.setTarget = function(target) {
   this.target_ = target;
-  var scrollbarWidth = goog.style.getScrollbarWidth();
-  this.target_.style.paddingRight = '' + scrollbarWidth + 'px';
+  // goog.style.getScrollbarWidth returns 0px on Mac OS X 10.8 Chrome, causing
+  // the Mac scrollbar to keep showing. Just setting a really high padding
+  // here seems to solve the issue in general since the container of the
+  // scrollbar will always have a fixed width and hidden overflow.
+  this.target_.style.paddingRight = '40px';
 };
 
 

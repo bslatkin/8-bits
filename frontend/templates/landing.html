@@ -2,7 +2,8 @@
 
 {% block additional_meta %}
 
-<meta name="description" content="Have a private chat with close friends. Each post is auto-deleted after ten days, fading like memories.">
+<meta name="description"
+    content="Have a private chat with close friends. Each post is auto-deleted after ten days, fading like memories.">
 <meta property="og:image"
     content="{{host_url}}/static/{{cache_buster}}/logo.png">
 {% endblock additional_meta %}
@@ -19,8 +20,8 @@
 
 {# Async load the script to try to warm up the cache. #}
 {% if js_mode == 'compiled' %}
-  <script type="text/javascript" async
-      src="/static/{{cache_buster}}/compiled.js"></script>
+    <script type="text/javascript" async
+        src="/static/{{cache_buster}}/compiled.js"></script>
 {% endif %}
 
 {% endblock additional_js %}
@@ -28,34 +29,34 @@
 {% block body %}
 
 <div class="landing-wrapper">
-  <div class="landing-message container">
-    <img class="landing-image clear" src="/static/{{cache_buster}}/logo.png"
-        width="600" height="92" alt="ephemeral.im">
+    <div class="landing-message container">
+        <img class="landing-image clear" src="/static/{{cache_buster}}/logo.png"
+            width="600" height="92" alt="ephemeral.im">
 
-    <div class="prepend-2 append-2">
-      Have a private chat with close friends. Only people with the secret link can join. Share silly websites, images, and stories. Be serious when you need to. Each post is auto-deleted after ten days, fading like memories.
-    </div>
+        <div class="prepend-2 append-2">
+            Have a private chat with close friends. Only people with the secret link can join. Share silly websites, images, and stories. Be serious when you need to. Each post is auto-deleted after ten days, fading like memories.
+        </div>
 
-    <div class="landing-button-container clear">
-      <form action="/create" method="post" id="create-form">
-        {# TODO: XSRF protection #}
-        <a href="javascript:void(0)" onclick="document.getElementById('create-form').submit();"
-            class="landing-create-image-c">
-          <img class="landing-create-image" width="300" height="49"
-              title="Create your space" alt="Create your space"
-              src="/static/{{cache_buster}}/create.png">
-        </a>
-      </form>
+        <div class="landing-button-container clear">
+            <form action="/create" method="post" id="create-form">
+                {# TODO: XSRF protection #}
+                <a href="javascript:void(0)" onclick="document.getElementById('create-form').submit();"
+                    class="landing-create-image-c">
+                    <img class="landing-create-image" width="300" height="49"
+                        title="Create your space" alt="Create your space"
+                        src="/static/{{cache_buster}}/create.png">
+                </a>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 
 <div class="landing-footer">
-  <div class="landing-footer-message" align="right">
-    <a href="https://github.com/bslatkin/8-bits"
-        title="About ephemeral.im">about</a>
-    <a href="/terms" title="Terms of service">terms</a>
-  </div>
+    <div class="landing-footer-message" align="right">
+        <a href="https://github.com/bslatkin/8-bits"
+            title="About ephemeral.im">about</a>
+        <a href="/terms" title="Terms of service">terms</a>
+    </div>
 </div>
 
 {% endblock body %}

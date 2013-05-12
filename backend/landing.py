@@ -27,117 +27,118 @@ import ndb
 
 
 class LandingHandler(base.BaseHandler):
-  """Renders the landing page."""
+    """Renders the landing page."""
 
-  def get(self):
-    # Treat xyz.example.com/the same as www.example.com/chat/xyz
-    host_parts = self.request.host.split('.')
-    if len(host_parts) > 2 and host_parts[0] != 'www':
-      handler = ChatroomHandler()
-      handler.initialize(self.request, self.response)
-      return handler.get(host_parts[0])
+    def get(self):
+        # Treat xyz.example.com/the same as www.example.com/chat/xyz
+        host_parts = self.request.host.split('.')
+        if len(host_parts) > 2 and host_parts[0] != 'www':
+            handler = ChatroomHandler()
+            handler.initialize(self.request, self.response)
+            return handler.get(host_parts[0])
 
-    self.render('landing.html', dict(page_name='landing'))
+        self.render('landing.html', dict(page_name='landing'))
 
 
 class TermsHandler(base.BaseHandler):
-  """Renders the terms of service page."""
+    """Renders the terms of service page."""
 
-  def get(self):
-    self.render('terms.html', dict(page_name='terms'))
+    def get(self):
+        self.render('terms.html', dict(page_name='terms'))
 
 
 class CreateChatroomHandler(base.BaseHandler):
-  """Creates a new chatroom URL and redirects the user to it."""
+    """Creates a new chatroom URL and redirects the user to it."""
 
-  def post(self):
-    # TODO(bslatkin): Add XSRF protection
+    def post(self):
+        # TODO(bslatkin): Add XSRF protection
 
-    shard_id = None
-    while True:
-      def txn():
-        shard_id = models.human_uuid()
-        shard = models.Shard.get_by_id(
-            shard_id, use_cache=False, use_memcache=False)
-        if shard:
-          raise ndb.Rollback()
-        shard = models.Shard(id=shard_id)
-        shard.put()
-        return shard_id
+        shard_id = None
+        while True:
+            def txn():
+                shard_id = models.human_uuid()
+                shard = models.Shard.get_by_id(
+                    shard_id, use_cache=False, use_memcache=False)
+                if shard:
+                    raise ndb.Rollback()
+                shard = models.Shard(id=shard_id)
+                shard.put()
+                return shard_id
 
-      shard_id = ndb.transaction(txn)
-      if shard_id:
-        break
+            shard_id = ndb.transaction(txn)
+            if shard_id:
+                break
 
-    # For dev_appserver use the relative path. Otherwise use a sub-domain.
-    if config.is_dev_appserver:
-      self.redirect('/chat/' + shard_id)
-    else:
-      host_parts = self.request.host.split('.', 1)
-      target_url = '%s://%s.%s/' % (
-          self.request.scheme, shard_id, host_parts[1])
-      self.redirect(target_url)
+        # For dev_appserver use the relative path. Otherwise use a sub-domain.
+        if config.is_dev_appserver:
+            self.redirect('/chat/' + shard_id)
+        else:
+            host_parts = self.request.host.split('.', 1)
+            target_url = '%s://%s.%s/' % (
+                self.request.scheme, shard_id, host_parts[1])
+            self.redirect(target_url)
 
 
 class ChatroomHandler(base.BaseHandler):
-  """Renders a specific chatroom with the given shard ID."""
+    """Renders a specific chatroom with the given shard ID."""
 
-  def handle_request(self, shard_id):
-    shard = models.Shard.get_by_id(shard_id)
-    if not shard:
-      # If the shard doesn't exist, then just create it. Makes it ridiculously
-      # easy for people to create a new chat with the name of their choice.
-      def txn():
-        shard = models.Shard.get_by_id(
-            shard_id, use_cache=False, use_memcache=False)
+    def handle_request(self, shard_id):
+        shard = models.Shard.get_by_id(shard_id)
         if not shard:
-          shard = models.Shard(id=shard_id)
-          shard.put()
-        return shard
+            # If the shard doesn't exist, then just create it. Makes it
+            # ridiculously easy for people to create a new chat with the name
+            # of their choice.
+            def txn():
+                shard = models.Shard.get_by_id(
+                    shard_id, use_cache=False, use_memcache=False)
+                if not shard:
+                    shard = models.Shard(id=shard_id)
+                    shard.put()
+                return shard
 
-      shard = ndb.transaction(txn)
+            shard = ndb.transaction(txn)
 
-    # Do not allow users to directly access topic shards.
-    if shard.root_shard:
-      # TODO(bslatkin): Make this pretty.
-      self.response.set_status(404)
-      return
+        # Do not allow users to directly access topic shards.
+        if shard.root_shard:
+            # TODO(bslatkin): Make this pretty.
+            self.response.set_status(404)
+            return
 
-    nickname = 'Anonymous'
-    first_login = True
-    must_accept_terms = True
-    sounds_enabled = True
+        nickname = 'Anonymous'
+        first_login = True
+        must_accept_terms = True
+        sounds_enabled = True
 
-    if 'shards' in self.session:
-      # TODO(bslatkin): Reuse presence code here.
-      user_id = self.session['shards'].get(shard_id)
-      if user_id:
-        login_record = models.LoginRecord.get_by_id(user_id)
-        if login_record and login_record.shard_id == shard_id:
-          nickname = login_record.nickname
-          first_login = False
-          must_accept_terms = bool(
-              login_record.accepted_terms_version !=
-              config.terms_version)
-          sounds_enabled = login_record.sounds_enabled
+        if 'shards' in self.session:
+            # TODO(bslatkin): Reuse presence code here.
+            user_id = self.session['shards'].get(shard_id)
+            if user_id:
+                login_record = models.LoginRecord.get_by_id(user_id)
+                if login_record and login_record.shard_id == shard_id:
+                    nickname = login_record.nickname
+                    first_login = False
+                    must_accept_terms = bool(
+                        login_record.accepted_terms_version !=
+                        config.terms_version)
+                    sounds_enabled = login_record.sounds_enabled
 
-    context = {
-      'first_login': first_login,
-      'must_accept_terms': must_accept_terms,
-      'nickname': xml.sax.saxutils.unescape(nickname),
-      'page_name': 'chatroom',
-      'shard_id': shard_id,
-      'short_url': self.request.path_url,
-      'sounds_enabled': sounds_enabled,
-    }
-    context['params'] = json.dumps(context)
+        context = {
+            'first_login': first_login,
+            'must_accept_terms': must_accept_terms,
+            'nickname': xml.sax.saxutils.unescape(nickname),
+            'page_name': 'chatroom',
+            'shard_id': shard_id,
+            'short_url': self.request.path_url,
+            'sounds_enabled': sounds_enabled,
+        }
+        context['params'] = json.dumps(context)
 
-    self.render('chatroom.html', context)
+        self.render('chatroom.html', context)
 
 
 ROUTES = [
-  (r'/', LandingHandler),
-  (r'/create', CreateChatroomHandler),
-  (r'/terms', TermsHandler),
-  (r'/chat/([a-zA-Z0-9-]{1,100})', ChatroomHandler)
+    (r'/', LandingHandler),
+    (r'/create', CreateChatroomHandler),
+    (r'/terms', TermsHandler),
+    (r'/chat/([a-zA-Z0-9-]{1,100})', ChatroomHandler)
 ]

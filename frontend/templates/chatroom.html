@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block favicon %}
-  {% include "icons.html" %}
+    {% include "icons.html" %}
 {% endblock %}
 
 {% block title %}ephemeral.im: {{shard_id}}{% endblock %}
@@ -9,17 +9,17 @@
 {% block additional_css %}
 
 {% if js_mode == 'raw' %}
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatbox.css">
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatroom.css">
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/common.css">
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/footer.css">
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/posts.css">
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/scrollbar.css">
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/settings.css">
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/topics.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatbox.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/chatroom.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/common.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/footer.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/posts.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/scrollbar.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/settings.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/topics.css">
 {% endif %}
 {% if js_mode == 'compiled' %}
-  <link rel="stylesheet" href="/static/{{cache_buster}}/css/compiled.css">
+    <link rel="stylesheet" href="/static/{{cache_buster}}/css/compiled.css">
 {% endif %}
 
 {% endblock additional_css %}
@@ -29,15 +29,15 @@
 <script src='/_ah/channel/jsapi'></script>
 
 {% if js_mode == 'raw' %}
-  <script type="text/javascript" src="/js/closure/goog/base.js"></script>
-  <script type="text/javascript" src="/js/bits/deps.js"></script>
-  <script type="text/javascript">
-    goog.require('bits.startup');
-  </script>
+    <script type="text/javascript" src="/js/closure/goog/base.js"></script>
+    <script type="text/javascript" src="/js/bits/deps.js"></script>
+    <script type="text/javascript">
+        goog.require('bits.startup');
+    </script>
 {% endif %}
 {% if js_mode == 'compiled' %}
-  <script type="text/javascript"
-      src="/static/{{cache_buster}}/compiled.js"></script>
+    <script type="text/javascript"
+        src="/static/{{cache_buster}}/compiled.js"></script>
 {% endif %}
 
 {% endblock additional_js %}
@@ -46,100 +46,96 @@
 {% block body %}
 
 <div class="content-wrapper">
-  <div class="bits-chatbox-container">
+    <div class="bits-chatbox-container">
 
-    <div id="chatbox" class="bits-chatbox">
-      <div class="bits-chatbox-posts">
-        <div class="bits-posts-scrollable">
-          <div class="bits-post-container"></div>
+        <div id="chatbox" class="bits-chatbox">
+            <div class="bits-chatbox-posts">
+                <div class="bits-posts-scrollable">
+                    <div class="bits-post-container"></div>
+                </div>
+            </div>
+            <textarea class="bits-chat-input"></textarea>
         </div>
-      </div>
-      <textarea class="bits-chat-input"></textarea>
-    </div>
 
-    <div class="bits-topic-prompt" id="topic-prompt">
-      <div class="bits-topic-prompt-wrapper">
-        <div class="bits-topic-prompt-title">Start a new topic</div>
-        <div class="bits-topic-prompt-close">&#215;</div>
-        <div class="bits-topic-prompt-helptext">
-          Provide a summary for the link you're about to share. This sets the
-          tone and lets people know if you're serious or joking. You won't be
-          able to edit this later, so be careful. Like everything else, what you
-          write here will fade away in ten days.
+        <div class="bits-topic-prompt" id="topic-prompt">
+            <div class="bits-topic-prompt-wrapper">
+                <div class="bits-topic-prompt-title">Start a new topic</div>
+                <div class="bits-topic-prompt-close">&#215;</div>
+                <div class="bits-topic-prompt-helptext">
+                    Provide a summary for the link you're about to share. This sets the tone and lets people know if you're serious or joking. You won't be able to edit this later, so be careful. Like everything else, what you write here will fade away in ten days.
+                </div>
+                <a class="bits-topic-prompt-link" href="#" target="_blank">Link here</a>
+                <textarea class="bits-topic-prompt-summary"></textarea>
+                <a class="bits-topic-prompt-submit fancy-button"
+                    href="javascript:void(0)">Start</a>
+            </div>
         </div>
-        <a class="bits-topic-prompt-link" href="#" target="_blank">Link here</a>
-        <textarea class="bits-topic-prompt-summary"></textarea>
-        <a class="bits-topic-prompt-submit fancy-button"
-            href="javascript:void(0)">Start</a>
-      </div>
     </div>
-  </div>
 </div>
 
 <div class="bits-footer-bar" id="footer-bar">
-  <div class="bits-footer-settings-left">
-    <span id="nickname-display">{{nickname}}</span>
+    <div class="bits-footer-settings-left">
+        <span id="nickname-display">{{nickname}}</span>
 
-    <a href="javascript:void(0)" id="nickname-change"
-        class="bits-setting-link small" title="Update your look">change</a>
+        <a href="javascript:void(0)" id="nickname-change"
+            class="bits-setting-link small" title="Update your look">change</a>
 
-    <a href="javascript:void(0)" class="bits-setting-link" id="see-roster"
-        title="See who else is present">who's here?</a>
-  </div>
+        <a href="javascript:void(0)" class="bits-setting-link" id="see-roster"
+            title="See who else is present">who's here?</a>
+    </div>
 
-  <a href="/" target="_blank" title="About ephemeral.im"><img src="/static/{{cache_buster}}/logo_wide.png" height="24" width="157"
+    <a href="/" target="_blank" title="About ephemeral.im"><img src="/static/{{cache_buster}}/logo_wide.png" height="24" width="157"
         alt="ephemeral.im" class="footer-logo" border="0"></a>
 
-  <div class="bits-footer-settings-right">
-    <a href="javascript:void(0)" id="get-shorturl" class="bits-setting-link"
-        title="Shard this ephemera with other people">share this</a>
+    <div class="bits-footer-settings-right">
+        <a href="javascript:void(0)" id="get-shorturl" class="bits-setting-link"
+            title="Shard this ephemera with other people">share this</a>
 
-    <a href="http://a.quil.la/LHAXG" target="_blank" class="bits-setting-link"
-        title="Report a bug">report a bug</a>
-  </div>
+        <a href="http://a.quil.la/LHAXG" target="_blank" class="bits-setting-link"
+            title="Report a bug">report a bug</a>
+    </div>
 </div>
 
 <div class="bits-dialog" id="settings-dialog">
-  <div id="welcome-text">
-    <div class="welcome-title">Welcome</div>
+    <div id="welcome-text">
+        <div class="welcome-title">Welcome</div>
 
-    <div class="welcome-detail">
-      This is a private chat. Only people with the secret link can join. Share silly websites, images, and stories. Be serious when you need to. Each post is auto-deleted after ten days, fading like memories.
+        <div class="welcome-detail">
+            This is a private chat. Only people with the secret link can join. Share silly websites, images, and stories. Be serious when you need to. Each post is auto-deleted after ten days, fading like memories.
+        </div>
     </div>
-  </div>
 
-  <div class="settings-section">
-    <label for="setting-nickname">Set your Nickname</label>
-    <br>
-    <input type="text" name="nickname"
-        id="setting-nickname" class="title" value="{{nickname}}">
-    <br>
-    <input type="checkbox" name="sounds_enabled" id="setting-sounds-enabled"
-        {% if sounds_enabled %}checked="checked"{% endif %}>
-    <label for="setting-sounds-enabled">Play sounds</label>
-  </div>
+    <div class="settings-section">
+        <label for="setting-nickname">Set your Nickname</label>
+        <br>
+        <input type="text" name="nickname"
+            id="setting-nickname" class="title" value="{{nickname}}">
+        <br>
+        <input type="checkbox" name="sounds_enabled" id="setting-sounds-enabled"
+            {% if sounds_enabled %}checked="checked"{% endif %}>
+        <label for="setting-sounds-enabled">Play sounds</label>
+    </div>
 
-  <div id="settings-terms" class="settings-section">
-    By clicking below I agree to the terms of use for ephemeral.im, which are
-    available
-    <a title="View the Terms of Service" href="/terms"
-        target="_blank">on this page</a>.
-  </div>
+    <div id="settings-terms" class="settings-section">
+        By clicking below I agree to the terms of use for ephemeral.im, which are available
+        <a title="View the Terms of Service" href="/terms"
+            target="_blank">on this page</a>.
+    </div>
 </div>
 
 <div class="bits-dialog" id="link-dialog">
-  <label for="link-shorturl">
-      Copy and paste this URL
-  </label>
-  <br>
-  <input type="text" name="nickname" id="link-shorturl" class="title"
-      value="{{short_url}}" readonly="readonly">
+    <label for="link-shorturl">
+        Copy and paste this URL
+    </label>
+    <br>
+    <input type="text" name="nickname" id="link-shorturl" class="title"
+        value="{{short_url}}" readonly="readonly">
 </div>
 
 {% include "sounds.html" %}
 
 <script>
-  bits.startup({{params|safe}});
+    bits.startup({{params|safe}});
 </script>
 
 {% endblock body %}

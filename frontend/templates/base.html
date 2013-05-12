@@ -1,44 +1,44 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
 
-    {% block favicon %}
-    <link href="/static/{{cache_buster}}/favicon.png"
-        id="favicon" rel="shortcut icon" type="image/x-icon">
-    {% endblock %}
+        {% block favicon %}
+        <link href="/static/{{cache_buster}}/favicon.png"
+            id="favicon" rel="shortcut icon" type="image/x-icon">
+        {% endblock %}
 
-    <title>{% block title %}ephemeral.im{% endblock %}</title>
+        <title>{% block title %}ephemeral.im{% endblock %}</title>
 
-    {% block additional_meta %}{% endblock %}
+        {% block additional_meta %}{% endblock %}
 
-    <link rel="stylesheet" href="/static/{{cache_buster}}/css/screen.css"
-        type="text/css" media="screen, projection">
-    <link rel="stylesheet" href="/static/{{cache_buster}}/css/print.css"
-        type="text/css" media="print">
-    <!--[if lt IE 8]>
-      <link rel="stylesheet" href="/static/{{cache_buster}}/css/ie.css"
-          type="text/css" media="screen, projection">
-    <![endif]-->
+        <link rel="stylesheet" href="/static/{{cache_buster}}/css/screen.css"
+            type="text/css" media="screen, projection">
+        <link rel="stylesheet" href="/static/{{cache_buster}}/css/print.css"
+            type="text/css" media="print">
+        <!--[if lt IE 8]>
+            <link rel="stylesheet" href="/static/{{cache_buster}}/css/ie.css"
+                    type="text/css" media="screen, projection">
+        <![endif]-->
 
-    {% block additional_css %}{% endblock %}
+        {% block additional_css %}{% endblock %}
 
-    {% block additional_js %}{% endblock %}
+        {% block additional_js %}{% endblock %}
 
-    <script type="text/javascript">
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-33997199-1']);
-      _gaq.push(['_trackPageview']);
+        <script type="text/javascript">
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', 'UA-33997199-1']);
+            _gaq.push(['_trackPageview']);
 
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
-  </head>
-  <body class="bits-page-{{page_name}}">
-    {% block body %}{% endblock %}
-  </body>
+            (function() {
+                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            })();
+        </script>
+    </head>
+    <body class="bits-page-{{page_name}}">
+        {% block body %}{% endblock %}
+    </body>
 </html>

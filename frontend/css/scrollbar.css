@@ -9,8 +9,8 @@
   border-radius: 5px;
   opacity: 0;
   background-color: #ccc;
-  -webkit-transition: opacity .3s ease-out;
-  -moz-transition: opacity .3s ease-out;
+  -webkit-transition: opacity .3s ease-out, width .3s ease-out;
+  -moz-transition: opacity .3s ease-out, width .3s ease-out;
 }
 .goog-slider-thumb {
   outline: 0;
@@ -32,9 +32,16 @@
   -moz-transition: opacity .4s ease-out;
   opacity: 0;
 }
-.goog-slider-vertical:hover .goog-slider-thumb,
-.active .goog-slider-thumb,
-.goog-slider-vertical.active,
 .goog-slider-vertical:hover {
   opacity: 0.5;
+  width: 10px;
+  -webkit-transition: opacity .3s ease-out, width .3s ease-out;
+  -moz-transition: opacity .3s ease-out, width .3s ease-out;
+}
+.goog-slider-vertical:hover .goog-slider-thumb,
+.active .goog-slider-thumb,
+.goog-slider-vertical.active {
+  opacity: 0.5;
+  -webkit-transition: opacity .3s ease-out, width .3s ease-out;
+  -moz-transition: opacity .3s ease-out, width .3s ease-out;
 }

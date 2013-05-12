@@ -32,64 +32,65 @@ import topics
 
 
 class WarmupHandler(webapp.RequestHandler):
-  """Handles warm-up requests by doing nothing."""
+    """Handles warm-up requests by doing nothing."""
 
-  def get(self):
-    pass
+    def get(self):
+        pass
 
 
 class DebugLoggingMiddleware(object):
-  """Sets the log level to debug on each request. Used in dev_appserver."""
+    """Sets the log level to debug on each request. Used in dev_appserver."""
 
-  def __init__(self, app):
-    self.app = app
+    def __init__(self, app):
+        self.app = app
 
-  def __call__(self, environ, start_response):
-    logging.getLogger().setLevel(logging.DEBUG)
-    return self.app(environ, start_response)
+    def __call__(self, environ, start_response):
+        logging.getLogger().setLevel(logging.DEBUG)
+        return self.app(environ, start_response)
 
 
 class ThreadEnvironMiddleware(object):
-  """Makes the current thread's environment available as a global constant."""
+    """Makes the current thread's environment available as a global constant.
+    """
 
-  def __init__(self, app):
-    self.app = app
+    def __init__(self, app):
+        self.app = app
 
-  def __call__(self, environ, start_response):
-    config.request.environ = environ
-    return self.app(environ, start_response)
+    def __call__(self, environ, start_response):
+        config.request.environ = environ
+        return self.app(environ, start_response)
 
 
 LOCAL_ROUTES = [
-  (r'/_ah/warmup', WarmupHandler),
+    (r'/_ah/warmup', WarmupHandler),
 ]
 
 ROUTES = (
-  LOCAL_ROUTES +
-  send_email.ROUTES +
-  landing.ROUTES +
-  posts.ROUTES +
-  presence.ROUTES +
-  topics.ROUTES +
-  []
+    LOCAL_ROUTES +
+    send_email.ROUTES +
+    landing.ROUTES +
+    posts.ROUTES +
+    presence.ROUTES +
+    topics.ROUTES +
+    []
 )
 
 APP = webapp.WSGIApplication(ROUTES, debug=config.debug)
 
 APP = middleware.SessionMiddleware(APP, {
-  'session.type': 'cookie',
-  'session.key': '8bits',
-  'session.httponly': True,
-  'session.secure': not config.debug,
-  'session.cookie_expires': False,
-  'session.validate_key': config.session_validate_key,
-  'session.encrypt_key': config.session_encrypt_key,
+    'session.type': 'cookie',
+    'session.key': '8bits',
+    'session.httponly': True,
+    'session.secure': not config.debug,
+    'session.cookie_expires': False,
+    'session.validate_key': config.session_validate_key,
+    'session.encrypt_key': config.session_encrypt_key,
 })
 
 APP = ThreadEnvironMiddleware(APP)
 
 if config.appstats:
-  APP = recording.appstats_wsgi_middleware(APP)
+    APP = recording.appstats_wsgi_middleware(APP)
 
 if config.debug:
-  APP = DebugLoggingMiddleware(APP)
+    APP = DebugLoggingMiddleware(APP)
