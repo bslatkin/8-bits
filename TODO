@@ -11,6 +11,7 @@ v2 features:
     - auto-populate email/nickname from last shard seen in cookie
     - write opt-out handler
 - XSRF protection
+- Responsive for mobile
 
 -----
 

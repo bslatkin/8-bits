@@ -10,3 +10,6 @@
 [submodule "blueprint-css"]
 	path = blueprint-css
 	url = https://github.com/joshuaclayton/blueprint-css
+[submodule "inlinestyler"]
+	path = inlinestyler
+	url = https://github.com/dlanger/inlinestyler.git
