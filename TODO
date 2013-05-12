@@ -5,12 +5,12 @@ Bugs:
 
 v2 features:
 - Add email notifications for activity digests
+    - create templates
+    - verify behavior in tests
+    - add UI for supplying email address
+    - auto-populate email/nickname from last shard seen in cookie
+    - write opt-out handler
 - XSRF protection
-
-v2 polish:
-- Clean up code comments and style everywhere
-- Pass through error traceback to users
-- Have tooltip disappear after N seconds
 
 -----
 
