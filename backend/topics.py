@@ -55,6 +55,8 @@ def list_topics(root_shard_id, user_id):
     query = query.order(-models.Shard.update_time)
     shard_list = yield query.fetch_async(100)
 
+    print '    !!!shard list is', shard_list
+
     # Get the current user's readstate for each shard that was found.
     read_state_key_list = [
         ndb.Key(models.LoginRecord._get_kind(), user_id,
@@ -75,7 +77,7 @@ def update_read_state(topic_dict, user_id):
     called from within an existing transition.
 
     Args:
-        topic_dict: Maps topioc shard IDs to the new sequence number to assign
+        topic_dict: Maps topic shard IDs to the new sequence number to assign
             for that shard.
         user_id: User ID that is being updated.
     """
@@ -109,6 +111,29 @@ def update_read_state(topic_dict, user_id):
         ndb.transaction(txn)
 
 
+def start_topic(root_shard_id, user_id, post_id, nickname, title, description):
+    """Starts a new topic under a root shard."""
+    shard = models.Shard(
+        id=models.human_uuid(),
+        title=title,
+        description=description,
+        creation_nickname=nickname,
+        root_shard=root_shard_id)
+    shard.put()
+
+    post_key = posts.insert_post(
+        root_shard_id,
+        post_id=post_id,
+        archive_type=models.Post.TOPIC_START,
+        nickname=nickname,
+        user_id=user_id,
+        title=title,
+        body=description,
+        new_topic=shard.shard_id)
+
+    return shard.shard_id, post_key
+
+
 class CreateTopicHandler(base.BaseRpcHandler):
     """Create a new topic shard and returns its ID."""
 
@@ -123,25 +148,11 @@ class CreateTopicHandler(base.BaseRpcHandler):
 
         login_record = self.require_active_login()
 
-        shard = models.Shard(
-            id=models.human_uuid(),
-            title=title,
-            description=description,
-            creation_nickname=login_record.nickname,
-            root_shard=self.shard)
-        shard.put()
+        topic_shard_id, _ = start_topic(
+            self.shard, self.user_id, login_record.nickname,
+            title, description)
 
-        posts.insert_post(
-            self.shard,
-            post_id=post_id,
-            archive_type=models.Post.TOPIC_START,
-            nickname=login_record.nickname,
-            user_id=self.user_id,
-            title=title,
-            body=description,
-            new_topic=shard.shard_id)
-
-        self.json_response['shardId'] = shard.shard_id
+        self.json_response['shardId'] = topic_shard_id
 
 
 class ListTopicsHandler(base.BaseRpcHandler):

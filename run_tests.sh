@@ -19,8 +19,10 @@ CRYPTOLIB=`ls -d pycrypto/build/lib.*`
 DEV_APPSERVER=$(readlink `which dev_appserver.py`)
 APP_ENGINE=$(dirname $DEV_APPSERVER)
 
+cd backend
+
 if [ -z "$ALL_TESTS" ]; then
-    ALL_TESTS=$(find backend/tests -name '*_test.py')
+    ALL_TESTS=$(find tests -name '*_test.py')
 fi
 
 for testpath in $ALL_TESTS; do
@@ -28,5 +30,5 @@ for testpath in $ALL_TESTS; do
     PYTHONPATH=backend:$APP_ENGINE:$APP_ENGINE/lib:$APP_ENGINE/lib/django-1.4:$CRYPTOLIB:$PYTHONPATH \
     python -c "import dev_appserver, os; dev_appserver.fix_sys_path(); \
         os.environ['APPENGINE_RUNTIME'] = 'python27'; \
-        dev_appserver.run_file('$testpath', globals(), 'backend/tests');"
+        dev_appserver.run_file('$testpath', globals(), 'tests');"
 done

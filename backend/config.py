@@ -19,9 +19,6 @@
 import os
 import random
 
-# Where is the app directory located?
-root_dir = os.path.dirname(__file__)
-
 # Run in debug mode. Raw JS locally, pretty-print exceptions.
 debug = True
 
@@ -59,7 +56,7 @@ user_token_lifetime_seconds = 6 * 60 * 60    # 6 hours
 terms_version = 1
 
 # Email address to use for sending notification emails.
-notification_from_email = 'notify@ephemeral.im'
+notification_from_email = 'ephemeral.im <notify@ephemeral.im>'
 
 # Import all secret keys
 from secrets import *

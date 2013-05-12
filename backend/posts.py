@@ -546,6 +546,10 @@ class ListPostsHandler(base.BaseRpcHandler):
             if not post:
                 continue
 
+            # TODO(bslatkin): Drop post entities that are older than
+            # config.ephemeral_lifetime_seconds, in case the background job
+            # takes longer than expected to delete things.
+
             post.sequence = ref.sequence
             adjusted_post_list.append(post)
 

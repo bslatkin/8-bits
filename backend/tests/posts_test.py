@@ -18,6 +18,7 @@
 
 import json
 import logging
+import os
 import unittest
 
 from google.appengine.ext import testbed
@@ -26,6 +27,7 @@ import config
 import models
 import posts
 import presence
+import topics
 
 
 class PostTaskTest(unittest.TestCase):
@@ -34,12 +36,19 @@ class PostTaskTest(unittest.TestCase):
     def setUp(self):
         logging.getLogger().setLevel(logging.DEBUG)
         self.maxDiff = 10**10
+        root_path = os.getcwd()
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_channel_stub()
-        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_datastore_v3_stub(
+            root_path=root_path,
+            use_sqlite=True,
+            require_indexes=True)
         self.testbed.init_memcache_stub()
-        self.testbed.init_taskqueue_stub(root_path=config.root_dir)
+        self.testbed.init_taskqueue_stub(root_path=root_path)
+
+    def tearDown(self):
+        self.testbed.deactivate()
 
     def testSingle(self):
         """Tests successfully inserting and applying a single Post."""
@@ -171,6 +180,66 @@ class PostTaskTest(unittest.TestCase):
         post.sequence = 2  # Pretend to do what apply_posts does
         expected_posts = posts.marshal_posts(shard.shard_id, [post])
         self.assertEquals(expected_posts, found_posts)
+
+    def testReplicate(self):
+        """Tests replicating a post to a topic shard."""
+        shard = models.Shard(id='my-shard-name')
+        shard.put()
+
+        # This post was before the topic change and won't be replicated
+        first_post = posts.insert_post(
+            shard.shard_id,
+            archive_type=models.Post.CHAT,
+            nickname='My name',
+            user_id='abc',
+            body='This will not be replicated')
+        posts.apply_posts(shard.shard_id)
+
+        topic_shard_id, change_topic_post = topics.start_topic(
+            shard.shard_id, 'my-user-id', 'my-post-id', 'my name',
+            'topic title', 'topic description')
+
+        after_shard = shard.key.get()
+        self.assertEquals(None, after_shard.current_topic)
+
+        posts.apply_posts(shard.shard_id)
+
+        after_shard = shard.key.get()
+        self.assertEquals(topic_shard_id, after_shard.current_topic)
+
+        # The post that caused the topic change will be replicated
+        shard_ref_list = list(models.PostReference.query(ancestor=shard.key))
+        shard_post_ids = [r.post_id for r in shard_ref_list]
+        self.assertEquals([first_post.id(), change_topic_post.id()],
+                          shard_post_ids)
+
+        topic_shard = models.Shard.get_by_id(topic_shard_id)
+        self.assertEquals(
+            None, models.PostReference.query(ancestor=topic_shard.key).get())
+
+        posts.apply_posts(topic_shard_id)
+
+        topic_ref_list = list(models.PostReference.query(
+            ancestor=topic_shard.key))
+        topic_post_ids = [r.post_id for r in topic_ref_list]
+        self.assertEquals([change_topic_post.id()], topic_post_ids)
+
+        # This post is after the topic change and will be replicated
+        replicated_post = post_key = posts.insert_post(
+            shard.shard_id,
+            archive_type=models.Post.CHAT,
+            nickname='My name',
+            user_id='abc',
+            body='Here is my message')
+
+        posts.apply_posts(shard.shard_id)
+        posts.apply_posts(topic_shard_id)
+
+        topic_ref_list = list(models.PostReference.query(
+            ancestor=topic_shard.key))
+        topic_post_ids = [r.post_id for r in topic_ref_list]
+        self.assertEquals([change_topic_post.id(), replicated_post.id()],
+                          topic_post_ids)
 
 
 if __name__ == '__main__':
