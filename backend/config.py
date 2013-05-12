@@ -18,13 +18,12 @@
 
 import os
 import random
-import threading
+
+# Where is the app directory located?
+root_dir = os.path.dirname(__file__)
 
 # Run in debug mode. Raw JS locally, pretty-print exceptions.
 debug = True
-
-# Used for global state and preferences local to a single request.
-request = threading.local()
 
 # Run appstats RPC profiling for requests.
 appstats = False

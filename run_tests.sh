@@ -25,7 +25,8 @@ fi
 
 for testpath in $ALL_TESTS; do
   echo "Running $testpath"
-    PYTHONPATH=$PYTHONPATH:backend:$APP_ENGINE:$APP_ENGINE/lib:$CRYPTOLIB \
-    python -c "import dev_appserver; dev_appserver.fix_sys_path(); \
+    PYTHONPATH=backend:$APP_ENGINE:$APP_ENGINE/lib:$APP_ENGINE/lib/django-1.4:$CRYPTOLIB:$PYTHONPATH \
+    python -c "import dev_appserver, os; dev_appserver.fix_sys_path(); \
+        os.environ['APPENGINE_RUNTIME'] = 'python27'; \
         dev_appserver.run_file('$testpath', globals(), 'backend/tests');"
 done

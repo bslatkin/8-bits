@@ -18,6 +18,7 @@
 
 import datetime
 import logging
+import os
 import time
 
 from google.appengine.api import memcache
@@ -211,6 +212,81 @@ def user_logged_out(shard, user_id):
     logging.debug('Logged out user_id=%r from shard=%r', user_id, shard)
 
 
+def change_presence(shard, user_id, nickname, accepted_terms,
+                    sounds_enabled, retrying):
+    """Changes the presence for a user."""
+    def txn():
+        last_nickname = None
+        user_connected = True
+
+        login = models.LoginRecord.get_by_id(user_id)
+        if not login:
+            login = models.LoginRecord(
+                key=ndb.Key(models.LoginRecord._get_kind(), user_id),
+                shard_id=shard)
+        elif only_active_users(login):
+            # This is a heartbeat presence check
+            user_connected = False
+
+        if maybe_update_token(login, force=retrying):
+            logging.debug(
+                'Issuing channel token: user_id=%r, shard=%r, force=%r',
+                user_id, shard, retrying)
+
+        if nickname:
+            # This is a potential nickname change. Right now the client
+            # always sends the nickname on every request, so we need to
+            # check for the difference to detect a rename.
+            last_nickname = login.nickname
+            login.nickname = nickname
+
+        if accepted_terms:
+            # This is a ToS acceptance
+            login.accepted_terms_version = config.terms_version
+
+        login.online = True
+        login.sounds_enabled = sounds_enabled
+        login.put()
+
+        return last_nickname, user_connected, login.browser_token
+
+    last_nickname, user_connected, browser_token = ndb.transaction(txn)
+
+    # Invalidate the cache so the nickname will be updated next time
+    # someone requests the roster.
+    invalidate_user_cache(shard)
+
+    message = None
+    archive_type = None
+
+    if nickname and last_nickname and last_nickname != nickname:
+        message = '%s has changed their nickname to %s' % (
+            last_nickname, nickname)
+        archive_type = models.Post.USER_UPDATE
+        logging.debug('User update user_id=%r, shard=%r', user_id, shard)
+    elif user_connected:
+        message = '%s has joined' % nickname
+        archive_type = models.Post.USER_LOGIN
+        logging.debug('User joined: user_id=%r, shard=%r', user_id, shard)
+    else:
+        logging.debug('User heartbeat: user_id=%r to shard=%r',
+                      user_id, shard)
+
+    if archive_type:
+        posts.insert_post(
+            shard,
+            archive_type=archive_type,
+            nickname=nickname,
+            user_id=user_id,
+            body=message)
+    else:
+        # As long as users are heart-beating, we should be running a
+        # cleanup task for this shard.
+        enqueue_cleanup_task(shard)
+
+    return user_connected, browser_token
+
+
 def get_token(user_id):
     """Gets the channel token for the given user."""
     return user_id
@@ -222,7 +298,7 @@ def enqueue_cleanup_task(shard):
     # it generates for continuation is guaranteed to run.
     offset = time.time() / config.shard_cleanup_period_seconds
     name = 'cleanup-%s-time-%d' % (shard, offset)
-    if name == config.request.environ.get('HTTP_X_APPENGINE_TASKNAME'):
+    if name == os.environ.get('HTTP_X_APPENGINE_TASKNAME'):
         offset += 1
         name = 'cleanup-%s-time-%d' % (shard, offset)
 
@@ -302,74 +378,8 @@ class PresenceHandler(base.BaseRpcHandler):
             user_id = models.human_uuid()
             self.session['shards'][shard] = user_id
 
-        def txn():
-            last_nickname = None
-            user_connected = True
-
-            login = models.LoginRecord.get_by_id(user_id)
-            if not login:
-                login = models.LoginRecord(
-                    key=ndb.Key(models.LoginRecord._get_kind(), user_id),
-                    shard_id=shard)
-            elif only_active_users(login):
-                # This is a heartbeat presence check
-                user_connected = False
-
-            if maybe_update_token(login, force=retrying):
-                logging.debug(
-                    'Issuing channel token: user_id=%r, shard=%r, force=%r',
-                    user_id, shard, retrying)
-
-            if nickname:
-                # This is a potential nickname change. Right now the client
-                # always sends the nickname on every request, so we need to
-                # check for the difference to detect a rename.
-                last_nickname = login.nickname
-                login.nickname = nickname
-
-            if accepted_terms:
-                # This is a ToS acceptance
-                login.accepted_terms_version = config.terms_version
-
-            login.online = True
-            login.sounds_enabled = sounds_enabled
-            login.put()
-
-            return last_nickname, user_connected, login.browser_token
-
-        last_nickname, user_connected, browser_token = ndb.transaction(txn)
-
-        # Invalidate the cache so the nickname will be updated next time
-        # someone requests the roster.
-        invalidate_user_cache(shard)
-
-        message = None
-        archive_type = None
-
-        if nickname and last_nickname and last_nickname != nickname:
-            message = '%s has changed their nickname to %s' % (
-                last_nickname, nickname)
-            archive_type = models.Post.USER_UPDATE
-            logging.debug('User update user_id=%r, shard=%r', user_id, shard)
-        elif user_connected:
-            message = '%s has joined' % nickname
-            archive_type = models.Post.USER_LOGIN
-            logging.debug('User joined: user_id=%r, shard=%r', user_id, shard)
-        else:
-            logging.debug('User heartbeat: user_id=%r to shard=%r',
-                          user_id, shard)
-
-        if archive_type:
-            posts.insert_post(
-                shard,
-                archive_type=archive_type,
-                nickname=nickname,
-                user_id=user_id,
-                body=message)
-        else:
-            # As long as users are heart-beating, we should be running a
-            # cleanup task for this shard.
-            enqueue_cleanup_task(shard)
+        user_connected, browser_token = change_presence(
+            shard, user_id, nickname, accepted_terms, sounds_enabled, retrying)
 
         self.json_response['userConnected'] = user_connected
         self.json_response['browserToken'] = browser_token

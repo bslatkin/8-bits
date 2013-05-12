@@ -190,9 +190,9 @@ class EmailRecord(ndb.Model):
 
 
 class ReadState(ndb.Model):
-    """User's read state for a specific shard (applies to root and topic shards).
+    """User's read state for a specific shard (root and topic shards).
 
-    Parent is the LoginRecord. ID is the Shard for which this is the read state.
+    Parent is the LoginRecord. ID is the Shard this is the read state for.
     """
 
     @classmethod

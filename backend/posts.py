@@ -72,17 +72,23 @@ def enqueue_apply_task(shard, post_id=None):
     if post_id is None:
         post_id = ''
 
-    try:
-        taskqueue.Task(
-            url='/work/apply_posts',
-            params=dict(shard=shard, post_id=post_id),
-            name='apply-%s-join-%s' % (shard, join_index),
-            countdown=1
-        ).add(config.apply_queue)
-    except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
-        logging.debug(
-            'Enqueued apply task for shard=%r but task already present',
-            shard)
+    for i in xrange(3):
+        try:
+            taskqueue.Task(
+                url='/work/apply_posts',
+                params=dict(shard=shard, post_id=post_id),
+                name='apply-%s-join-%s' % (shard, join_index),
+                countdown=1
+            ).add(config.apply_queue)
+        except (taskqueue.TombstonedTaskError,
+                taskqueue.TaskAlreadyExistsError):
+            logging.debug(
+                'Enqueued apply task for shard=%r but task already present',
+                shard)
+        except:
+            # Retry on any intermittent failure.
+            continue
+        break
 
 
 def enqueue_post_task(shard, post_ids, new_topic=None):
@@ -254,7 +260,8 @@ def apply_posts(shard=None,
 
     def txn():
         shard_record = models.Shard.get_by_id(shard)
-        # TODO(bslatkin): Just drop this task entirely if this happens
+        # TODO(bslatkin): Just drop this task entirely if the shard cannot
+        # be found. Could happen for old shards that were cleaned up.
         assert shard_record
 
         # One of the tasks in this batch has a topic assignment. Apply it here.
@@ -307,8 +314,8 @@ def apply_posts(shard=None,
     futures.extend(ndb.put_multi_async(unapplied_receipts))
 
     # Notify all logged in users of the new posts.
-    futures.append(notify_posts(shard, unapplied_post_ids,
-                                sequence_numbers=new_sequence_numbers))
+    futures.append(notify_posts(
+        shard, unapplied_post_ids, sequence_numbers=new_sequence_numbers))
 
     # Replicate posts to a topic shard.
     if replica_shard:

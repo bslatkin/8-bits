@@ -49,18 +49,6 @@ class DebugLoggingMiddleware(object):
         return self.app(environ, start_response)
 
 
-class ThreadEnvironMiddleware(object):
-    """Makes the current thread's environment available as a global constant.
-    """
-
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        config.request.environ = environ
-        return self.app(environ, start_response)
-
-
 LOCAL_ROUTES = [
     (r'/_ah/warmup', WarmupHandler),
 ]
@@ -86,8 +74,6 @@ APP = middleware.SessionMiddleware(APP, {
     'session.validate_key': config.session_validate_key,
     'session.encrypt_key': config.session_encrypt_key,
 })
-
-APP = ThreadEnvironMiddleware(APP)
 
 if config.appstats:
     APP = recording.appstats_wsgi_middleware(APP)
