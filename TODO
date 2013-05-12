@@ -4,7 +4,7 @@ Bugs:
 -----
 
 v2 features:
-- Add email notifications for new topics
+- Add email notifications for activity digests
 
 v2 polish:
 - Clean up code comments and style everywhere
@@ -14,12 +14,7 @@ v2 polish:
 -----
 
 v3 features:
-- Topic menu with auto-threading of chat
-- Read state on topics and non-topic chat
-- Topics dissipate after 15 minutes of no activity
 - Add analytics events to link clicks & UI actions
-
-v3 production:
 - gen204 handler on all event handlers and pubsub delivery
 
 -----
@@ -28,22 +23,3 @@ v4 features:
 - Add share buttons to "share this" dialog
 - Drag/drop image upload
 - New topic title snippeting/preview based on OGP, beautiful soup, etc
-
----
-
-How topics will work:
-
-* New topic submitted: All users get the notification. It adds it to the topic menu with the meta data about the topic? Or it causes all the clients to refetch the topic list and update the menu to match, with the just-posted topic as the new one. Update message can go into chat window.
-
-* User views topic with read state. Clicks on old topic. Sees posts and chat box below it. When does the user's read state get saved? Periodically with presence notifications seems really easy. In the UI, we'll fetch every post after their last read state all the way to the bottom. When they scroll all the way to the bottom, then we can update the read state menu to match. Maybe the read state messages missed can be missing from the currently highlighted topic and only shown for old ones.
-
-* Save read state every 10 seconds if the user has scrolled the window at all. Only can set read state for non-default topics. Default topic read-state will always scroll to the latest post.
-
-* If you are looking at topic X (which is not the current topic) and suddenly someone else changes it to the current topic, then your UI should switch you back to the default topic menu state and start showing you live chats. The same thing happens when you change the topic back to what you were looking at.
-
-# TODO(bslatkin): Mark that we should insert a pseudo task to expire
-# the current topic and tell all users about the expiration. Do this
-# by inserting a new post from the system to change the topic to None
-# outside this transaction.
-
-* Menu actually has 3 states: No topic currently; topic selected by someone else but seeing all chat; digest mode where you're catching up on a selected topic
