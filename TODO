@@ -2,6 +2,7 @@
 - Responsive CSS for mobile
 - Auto-populate email/nickname from last shard seen in cookie
 - Make unbranded version the default in the git repo
+- Don't email me a digest if the only update is from me
 
 
 # Future stuff
