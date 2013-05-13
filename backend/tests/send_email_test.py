@@ -105,12 +105,12 @@ class SendEmailTest(unittest.TestCase):
         posts.apply_posts(shard_id)
         return topic_shard_id
 
-    def get_email(self):
+    def get_email(self, count=1, index=0):
         """Gets a sent email, saves it to the /tmp directory for previewing."""
         mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
         message_list = mail_stub.get_sent_messages()
-        self.assertEquals(1, len(message_list))
-        message = message_list[0]
+        self.assertEquals(count, len(message_list))
+        message = message_list[index]
 
         html_content = message.html.payload
         text_content = message.body.payload
@@ -125,6 +125,17 @@ class SendEmailTest(unittest.TestCase):
 
     def testRootShardOnly(self):
         """Tests when only the root shard has new data."""
+        self.login_user()
+        self.make_post('first', 'my message 1')
+        send_email.send_digest_email('foo@example.com', 1)
+
+        message = self.get_email()
+
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 1 topic, 2 updates",
+                          message.subject)
+
         self.fail()
 
     def testOneTopicNewPost(self):
@@ -151,11 +162,70 @@ class SendEmailTest(unittest.TestCase):
 
     def testNotifyTwiceNoChanges(self):
         """Tests that notifying when there are no changes sends no email."""
-        self.fail()
+        self.login_user()
+
+        topic_shard_id = self.start_topic(
+            'http://www.example.com/path/is/here',
+            'cilantro',
+            'This is my long winded topic description that surely will '
+            'bore you to tears')
+
+        self.make_post('first', 'my message 1')
+        posts.apply_posts(topic_shard_id)
+
+        send_email.send_digest_email('foo@example.com', 1)
+        message = self.get_email()
+
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 1 topic, 2 updates",
+                          message.subject)
+
+        send_email.send_digest_email('foo@example.com', 1)
+
+        mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        message_list = mail_stub.get_sent_messages()
+        self.assertEquals(1, len(message_list))  # One email, not two
 
     def testSecondDigestEmail(self):
         """Tests what the second digest email looks like."""
-        self.fail()
+        self.login_user()
+
+        topic_shard_id = self.start_topic(
+            'http://www.example.com/path/is/here',
+            'cilantro',
+            'This is my long winded topic description that surely will '
+            'bore you to tears')
+
+        self.make_post('first', 'my message 1')
+        self.make_post('second', 'my other message')
+        self.make_post('third', 'message number 3')
+        posts.apply_posts(topic_shard_id)
+
+        send_email.send_digest_email('foo@example.com', 1)
+        message = self.get_email(count=1, index=0)
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 1 topic, 4 updates",
+                          message.subject)
+
+        topic_shard_id = self.start_topic(
+            'http://www.example.com/this/is/another/topic',
+            'lime',
+            'Wow I never thought I would be starting my own topic')
+
+        self.make_post('red', 'this is for a new topic')
+        self.make_post('green', 'and will continue')
+        posts.apply_posts(topic_shard_id)
+
+        send_email.send_digest_email('foo@example.com', 2)
+
+        message = self.get_email(count=2, index=1)
+
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 1 topic, 1 update",
+                          message.subject)
 
     def testManyTopicsManyPosts(self):
         """Tests when many topics have many new posts."""
@@ -221,8 +291,6 @@ class SendEmailTest(unittest.TestCase):
                           message.sender)
         self.assertEquals("What's new: 2 topics, 3 updates",
                           message.subject)
-
-        self.fail()
 
 
 if __name__ == '__main__':

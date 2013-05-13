@@ -15,6 +15,7 @@
 # limitations under the License.
 
 ALL_TESTS="$1"
+TEST_NAME="$2"
 CRYPTOLIB=`ls -d pycrypto/build/lib.*`
 DEV_APPSERVER=$(readlink `which dev_appserver.py`)
 APP_ENGINE=$(dirname $DEV_APPSERVER)
@@ -30,5 +31,6 @@ for testpath in $ALL_TESTS; do
     PYTHONPATH=backend:$APP_ENGINE:$APP_ENGINE/lib:$APP_ENGINE/lib/django-1.4:$CRYPTOLIB:$PYTHONPATH \
     python -c "import dev_appserver, os; dev_appserver.fix_sys_path(); \
         os.environ['APPENGINE_RUNTIME'] = 'python27'; \
-        dev_appserver.run_file('$testpath', globals(), 'tests');"
+        dev_appserver.run_file('$testpath', globals(), 'tests');" \
+        $TEST_NAME
 done

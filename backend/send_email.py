@@ -201,7 +201,7 @@ def send_digest_email(email_address, sequence_number):
         email_record = models.EmailRecord.get_by_id(email_address)
         email_record.sequence_number = sequence_number + 1
         email_record.previous_notified_time = \
-            email_record.previous_notified_time
+            email_record.last_notified_time
         email_record.last_notified_time = datetime.datetime.now()
         email_record.put()
         return email_record
