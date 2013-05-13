@@ -36,6 +36,7 @@ goog.require('bits.topics.TopicPrompt');
 
 bits.startup = function(params) {
   var shardId = params['shard_id'];
+  var emailAddress = params['email_address'];
   var nickname = params['nickname'];
   var firstLogin = params['first_login'];
   var mustAcceptTerms = params['must_accept_terms'];
@@ -50,7 +51,7 @@ bits.startup = function(params) {
 
   // Set up all the various UI components.
   var connection = new bits.connection.Connection(
-      xsrfToken, shardId, nickname, soundsEnabled);
+      xsrfToken, shardId, nickname, soundsEnabled, emailAddress);
 
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));

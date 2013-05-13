@@ -103,6 +103,7 @@ class ChatroomHandler(base.BaseHandler):
             return
 
         nickname = 'Anonymous'
+        email_address = ''
         first_login = True
         must_accept_terms = True
         sounds_enabled = True
@@ -113,6 +114,7 @@ class ChatroomHandler(base.BaseHandler):
             if user_id:
                 login_record = models.LoginRecord.get_by_id(user_id)
                 if login_record and login_record.shard_id == shard_id:
+                    email_address = login_record.email_address
                     nickname = login_record.nickname
                     first_login = False
                     must_accept_terms = bool(
@@ -121,6 +123,7 @@ class ChatroomHandler(base.BaseHandler):
                     sounds_enabled = login_record.sounds_enabled
 
         context = {
+            'email_address': email_address or '',
             'first_login': first_login,
             'must_accept_terms': must_accept_terms,
             'nickname': xml.sax.saxutils.unescape(nickname),

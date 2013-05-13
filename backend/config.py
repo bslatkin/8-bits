@@ -70,6 +70,9 @@ shard_url_template = 'https://%s.appspot.com/chat/' % (
 email_resource_host_prefix = '//%s.appspot.com' % (
     os.environ.get('APPLICATION_ID', ''))
 
+# How often to email users a digest of activity
+default_notify_period_seconds = 6 * 60 * 60  # 6 hours
+
 # Beaker keys, overridden by the 'secrets' module.
 session_encrypt_key = 'for-tests'
 session_validate_key = 'for-tests'

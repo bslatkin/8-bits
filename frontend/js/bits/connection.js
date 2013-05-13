@@ -41,10 +41,11 @@ goog.require('bits.events');
  * @param {string} shardId Shard ID for this connection.
  * @param {string} nickname Initial nickname this user has.
  * @param {boolean} soundsEnabled True if the user should hear sounds.
+ * @param {string} emailAddress Initial email address for the user.
  * @constructor
  */
 bits.connection.Connection =
-    function(xsrfToken, shardId, nickname, soundsEnabled) {
+    function(xsrfToken, shardId, nickname, soundsEnabled, emailAddress) {
   /**
    * @type {goog.debug.Logger}
    * @private
@@ -100,6 +101,12 @@ bits.connection.Connection =
    * @private
    */
   this.shardId_ = shardId;
+
+  /**
+   * @type {string}
+   * @private
+   */
+  this.emailAddress_ = emailAddress;
 
   /**
    * @type {string}
@@ -180,6 +187,8 @@ bits.connection.Connection.prototype.setPresence_ =
   var params = new goog.Uri.QueryData();
   params.add('xsrf_token', this.xsrfToken_);
   params.add('shard', this.shardId_);
+  // TODO(bslatkin): Make it so heartbeat requests do not send this info.
+  params.add('email_address', this.emailAddress_);
   params.add('nickname', this.nickname_);
   params.add('sounds_enabled', this.soundsEnabled_ ? 'true' : '');
   if (opt_acceptedTerms) {
@@ -416,11 +425,13 @@ bits.connection.Connection.prototype.getNextMessageId_ = function() {
  * @param {string} nickname New nickname for the user.
  * @param {boolean} acceptedTerms User has just accepted the terms of service.
  * @param {boolean} soundsEnabled User wants to hear sounds.
+ * @param {string} emailAddress New email address for the user.
  * @private
  */
 bits.connection.Connection.prototype.handleSubmitPresenceChange_ =
-    function(nickname, acceptedTerms, soundsEnabled) {
+    function(nickname, acceptedTerms, soundsEnabled, emailAddress) {
   this.logger_.info('Submitting presence change');
+  this.emailAddress_ = emailAddress;
   this.nickname_ = nickname;
   this.soundsEnabled_ = soundsEnabled;
   this.setPresence_(acceptedTerms);

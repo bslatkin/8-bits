@@ -52,6 +52,12 @@ bits.settings.SettingsDialog = function(shardId, acceptedTerms) {
    * @type {?Element}
    * @private
    */
+  this.emailEl_ = null;
+
+  /**
+   * @type {?Element}
+   * @private
+   */
   this.nicknameEl_ = null;
 
   /**
@@ -137,6 +143,7 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
 
   var element = this.getElement();
 
+  this.emailEl_ = goog.dom.getElement('setting-email-address');
   this.nicknameEl_ = goog.dom.getElement('setting-nickname');
   this.soundsEnabledEl_ = goog.dom.getElement('setting-sounds-enabled');
   this.termsEl_ = goog.dom.getElement('settings-terms');
@@ -172,6 +179,8 @@ bits.settings.SettingsDialog.prototype.exitDocument = function() {
 
 bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
   if (e.key == goog.ui.Dialog.DefaultButtonKeys.OK) {
+    var emailAddress = goog.string.trim(
+        /** @type {string} */ (goog.dom.forms.getValue(this.emailEl_)));
     var nickname = goog.string.trim(
         /** @type {string} */ (goog.dom.forms.getValue(this.nicknameEl_)));
     var soundsEnabled = goog.dom.forms.getValue(this.soundsEnabledEl_) == 'on';
@@ -187,7 +196,8 @@ bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
         this.shardId_, bits.events.EventType.SubmitPresenceChange,
         nickname,
         !this.acceptedTerms_,  // Only send param the first time.
-        soundsEnabled);
+        soundsEnabled,
+        emailAddress);
 
     this.acceptedTerms_ = true;
   } else if (e.key == bits.settings.SettingsDialog.DECLINE.key) {

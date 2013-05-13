@@ -1,7 +1,6 @@
 # v2 features:
 - Add email notifications for activity digests
     - create templates (text)
-    - add UI for supplying email address
 - Responsive CSS for mobile
 - Auto-populate email/nickname from last shard seen in cookie
 - Make unbranded version the default in the git repo

@@ -13,6 +13,18 @@
   margin-top: 15px;
 }
 
+
+.settings-section a:link,
+.settings-section a:visited,
+.settings-section a:active,
+.settings-section a:hover {
+  color: #000;
+}
+
+.settings-option {
+  padding-bottom: 0.5em;
+}
+
 .bits-first-time #settings-terms,
 .bits-first-time #welcome-text,
 .bits-first-time .tutorial-step {
@@ -20,9 +32,9 @@
 }
 
 .welcome-title {
-  font-size: 16px;
-  font-weight: bold;
-  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+  font-size: 20px;
 }
 .welcome-detail {
   margin-top: 0.5em;

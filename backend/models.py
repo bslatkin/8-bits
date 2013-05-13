@@ -187,7 +187,8 @@ class EmailRecord(ndb.Model):
     secret = ndb.TextProperty()
 
     global_opt_out = ndb.BooleanProperty(default=False)
-    min_notify_period_seconds = ndb.IntegerProperty(indexed=False, default=900)
+    min_notify_period_seconds = ndb.IntegerProperty(
+        indexed=False, default=config.default_notify_period_seconds)
 
 
 class ReadState(ndb.Model):

@@ -213,7 +213,7 @@ def user_logged_out(shard, user_id):
 
 
 def change_presence(shard, user_id, nickname, accepted_terms,
-                    sounds_enabled, retrying):
+                    sounds_enabled, retrying, email_address):
     """Changes the presence for a user."""
     def txn():
         last_nickname = None
@@ -246,6 +246,7 @@ def change_presence(shard, user_id, nickname, accepted_terms,
 
         login.online = True
         login.sounds_enabled = sounds_enabled
+        login.email_address = email_address or None
         login.put()
 
         return last_nickname, user_connected, login.browser_token
@@ -358,6 +359,8 @@ class PresenceHandler(base.BaseRpcHandler):
 
     def handle(self):
         shard = self.get_required('shard', str)
+        email_address = self.get_required(
+            'email_address', unicode, '', html_escape=True)
         nickname = self.get_required('nickname', unicode, '', html_escape=True)
         accepted_terms = self.get_required('accepted_terms', str, '') == 'true'
         sounds_enabled = self.get_required('sounds_enabled', str, '') == 'true'
@@ -379,7 +382,8 @@ class PresenceHandler(base.BaseRpcHandler):
             self.session['shards'][shard] = user_id
 
         user_connected, browser_token = change_presence(
-            shard, user_id, nickname, accepted_terms, sounds_enabled, retrying)
+            shard, user_id, nickname, accepted_terms, sounds_enabled,
+            retrying, email_address)
 
         self.json_response['userConnected'] = user_connected
         self.json_response['browserToken'] = browser_token

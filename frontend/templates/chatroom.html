@@ -98,22 +98,32 @@
 
 <div class="bits-dialog" id="settings-dialog">
     <div id="welcome-text">
-        <div class="welcome-title">Welcome</div>
+        <div class="welcome-title">Welcome to {{site_name}}</div>
 
         <div class="welcome-detail">
-            This is a private chat. Only people with the secret link can join. Share silly websites, images, and stories. Be serious when you need to. Each post is auto-deleted after ten days, fading like memories.
+            This is a private chat with close friends. Only people with the secret link can join. Share silly websites, images, and stories. Be serious when you need to. Each post is auto-deleted after ten days, fading like memories.
         </div>
     </div>
 
     <div class="settings-section">
-        <label for="setting-nickname">Set your Nickname</label>
-        <br>
-        <input type="text" name="nickname"
-            id="setting-nickname" class="title" value="{{nickname}}">
-        <br>
-        <input type="checkbox" name="sounds_enabled" id="setting-sounds-enabled"
-            {% if sounds_enabled %}checked="checked"{% endif %}>
-        <label for="setting-sounds-enabled">Play sounds</label>
+        <div class="settings-option">
+            <label for="setting-nickname">My nickname</label>
+            <br>
+            <input type="text" name="nickname"
+                id="setting-nickname" class="title" value="{{nickname}}">
+        </div>
+        <div class="settings-option">
+            <label for="setting-email-address">Email me about this stream</label>
+            <br>
+            <input type="text" name="email_address"
+                id="setting-email-address" class="title" value="{{email_address}}"
+                placeholder="alice@example.com (optional)">
+        </div>
+        <div class="settings-option">
+            <input type="checkbox" name="sounds_enabled" id="setting-sounds-enabled"
+                {% if sounds_enabled %}checked="checked"{% endif %}>
+            <label for="setting-sounds-enabled">Play sounds</label>
+        </div>
     </div>
 
     <div id="settings-terms" class="settings-section">
