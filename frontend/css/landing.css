@@ -12,7 +12,7 @@ body.bits-page-landing {
 }
 
 .landing-message {
-  width: 100%;
+  width: 650px;
   min-height: 500px;
   padding: 0 0 50px 0;
 }
@@ -85,23 +85,33 @@ body.bits-page-landing {
 
 
 
-.landing-wrapper img {
-  width: 80%;
-  height: auto;
-}
 
-@media (min-width: 800px) {
-  .landing-message {
-    width: 650px;
-  }
-  .landing-message img {
-    width: auto;
-    height: auto;
-  }
-}
 @media (max-width: 799px) {
+  .landing-message {
+    width: 100%;
+    max-width: 650px;
+    min-height: 0;
+  }
+  .landing-image {
+    padding: 10px 0;
+  }
   .landing-create-image-c {
     width: 60%;
     max-width: 300px;
+  }
+  .landing-message-text {
+    padding: 20px;
+    max-width: 490px;
+    margin: 0 auto;
+  }
+  .landing-wrapper img {
+    width: 90%;
+    height: auto;
+  }
+  .landing-button-container {
+    padding: 0;
+  }
+  .landing-footer {
+    height: auto;
   }
 }

@@ -225,7 +225,7 @@ body.bits-page-landing {
 
 .landing-message {
   width: 650px;
-  min-height: 450px;
+  min-height: 500px;
   padding: 0 0 50px 0;
 }
 
@@ -293,7 +293,41 @@ body.bits-page-landing {
   font-size: 13px;
   line-height: 13px;
   font-family: Helvetica, sans-serif;
-}.bits-posts-scrollable {
+}
+
+
+
+
+@media (max-width: 799px) {
+  .landing-message {
+    width: 100%;
+    max-width: 650px;
+    min-height: 0;
+  }
+  .landing-image {
+    padding: 10px 0;
+  }
+  .landing-create-image-c {
+    width: 60%;
+    max-width: 300px;
+  }
+  .landing-message-text {
+    padding: 20px;
+    max-width: 490px;
+    margin: 0 auto;
+  }
+  .landing-wrapper img {
+    width: 90%;
+    height: auto;
+  }
+  .landing-button-container {
+    padding: 0;
+  }
+  .landing-footer {
+    height: auto;
+  }
+}
+.bits-posts-scrollable {
   position: relative;
   overflow: hidden;
 }
@@ -506,6 +540,22 @@ body.bits-page-landing {
   background-image: url(../tutorial.png);
   background-repeat: no-repeat;
   background-position: 90px -30px;
+}
+.bits-page-terms .container {
+  padding: 0 10px;
+}
+
+@media (max-width: 799px) {
+  .bits-page-terms .container {
+    width: auto;
+  }
+  .bits-page-terms img {
+    width: 80%;
+    height: auto;
+  }
+  .landing-create-image-c {
+    width: 60%;
+  }
 }
 .bits-topic {
   height: 75px;
