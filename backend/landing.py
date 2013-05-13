@@ -121,6 +121,20 @@ class ChatroomHandler(base.BaseHandler):
                         login_record.accepted_terms_version !=
                         config.terms_version)
                     sounds_enabled = login_record.sounds_enabled
+            else:
+                # Pre-populate the user's settings info from the newest other
+                # shard the user has.
+                all_user_ids = self.session['shards'].values()
+                all_login_records = ndb.get_multi([
+                    ndb.Key(models.LoginRecord._get_kind(), user_id)
+                    for user_id in all_user_ids])
+                all_login_records = [r for r in all_login_records if r]
+                all_login_records.sort(key=lambda x: x.last_update_time)
+                if all_login_records:
+                    login_record = all_login_records[-1]
+                    email_address = login_record.email_address
+                    nickname = login_record.nickname
+                    sounds_enabled = login_record.sounds_enabled
 
         context = {
             'email_address': email_address or '',
