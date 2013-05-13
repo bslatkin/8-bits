@@ -37,3 +37,10 @@ a.bits-chatroom-link:active {
   color: #000;
   background-color: #eee;
 }
+
+
+@media (max-width: 799px) {
+  .bits-chatbox-container {
+    width: 100%;
+  }
+}

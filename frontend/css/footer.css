@@ -44,3 +44,12 @@
   color: #555;
   text-decoration: none;
 }
+
+@media (max-width: 799px) {
+  .footer-logo-link {
+    position: relative;
+    bottom: 25px;
+    pointer-events: none;
+    opacity: 0.1;
+  }
+}

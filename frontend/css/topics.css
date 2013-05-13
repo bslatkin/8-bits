@@ -143,3 +143,23 @@
 .bits-topic-prompt-summary:-moz-placeholder {
   color: #888;
 }
+
+@media (max-width: 799px) {
+  .bits-topic-prompt-close {
+    top: 0;
+    right: 0;
+  }
+  .bits-topic-prompt-wrapper {
+    padding: 0 10px;
+    margin: 0;
+    width: 95%;
+    position: relative;
+  }
+  .bits-topic-prompt {
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  .bits-topic-prompt-summary {
+    height: 46px;
+  }
+}

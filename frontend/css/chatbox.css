@@ -54,3 +54,9 @@
 .bits-chat-input:-moz-placeholder {
   color: #888;
 }
+
+@media (max-width: 799px) {
+  .bits-chat-input {
+    height: 46px;
+  }
+}

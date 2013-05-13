@@ -54,6 +54,12 @@
 .bits-chat-input:-moz-placeholder {
   color: #888;
 }
+
+@media (max-width: 799px) {
+  .bits-chat-input {
+    height: 46px;
+  }
+}
 body.bits-page-chatroom {
   height: 100%;
   width: 100%;
@@ -92,6 +98,13 @@ a.bits-chatroom-link:active {
 .bits-chat-input {
   color: #000;
   background-color: #eee;
+}
+
+
+@media (max-width: 799px) {
+  .bits-chatbox-container {
+    width: 100%;
+  }
 }
 /* goog.ui.Dialog styling */
 .modal-dialog {
@@ -209,6 +222,15 @@ a.bits-chatroom-link:active {
 .bits-footer-bar a:active {
   color: #555;
   text-decoration: none;
+}
+
+@media (max-width: 799px) {
+  .footer-logo-link {
+    position: relative;
+    bottom: 25px;
+    pointer-events: none;
+    opacity: 0.1;
+  }
 }
 body.bits-page-landing {
   height: 100%;
@@ -701,4 +723,24 @@ body.bits-page-landing {
 }
 .bits-topic-prompt-summary:-moz-placeholder {
   color: #888;
+}
+
+@media (max-width: 799px) {
+  .bits-topic-prompt-close {
+    top: 0;
+    right: 0;
+  }
+  .bits-topic-prompt-wrapper {
+    padding: 0 10px;
+    margin: 0;
+    width: 95%;
+    position: relative;
+  }
+  .bits-topic-prompt {
+    max-height: 100%;
+    overflow-y: auto;
+  }
+  .bits-topic-prompt-summary {
+    height: 46px;
+  }
 }
