@@ -59,4 +59,7 @@
   .bits-chat-input {
     height: 46px;
   }
+  .bits-chatbox-posts {
+    bottom: 50px;
+  }
 }

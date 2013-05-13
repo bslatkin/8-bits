@@ -59,6 +59,9 @@
   .bits-chat-input {
     height: 46px;
   }
+  .bits-chatbox-posts {
+    bottom: 50px;
+  }
 }
 body.bits-page-chatroom {
   height: 100%;
@@ -396,7 +399,6 @@ body.bits-page-landing {
   overflow: hidden;
   text-align: right;
   word-wrap: break-word;
-  white-space: nowrap;
 }
 .bits-post-chat-separator {
   float: left;
@@ -417,6 +419,7 @@ body.bits-page-landing {
 .bits-post-info {
   line-height: 20px;
   height: 20px;  /* need height for strict overflow */
+  overflow: hidden;
 }
 .bits-post-presence-body,
 .bits-post-error-body,
@@ -467,6 +470,15 @@ body.bits-page-landing {
 .bits-post-topic-title a:active {
   text-decoration: underline;
   color: #000;
+}
+
+@media (max-width: 799px) {
+  .bits-post-chat-nickname {
+    width: 56px;  /* 8 characters wide; 7px each */
+  }
+  .bits-post-chat-body {
+    margin-left: 70px; /* Two characters of margin, 7px each */
+  }
 }
 .goog-slider-vertical {
   overflow: hidden;
