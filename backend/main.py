@@ -55,10 +55,11 @@ LOCAL_ROUTES = [
 
 ROUTES = (
     LOCAL_ROUTES +
-    send_email.ROUTES +
+    jobs.ROUTES +
     landing.ROUTES +
     posts.ROUTES +
     presence.ROUTES +
+    send_email.ROUTES +
     topics.ROUTES +
     []
 )

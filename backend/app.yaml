@@ -71,7 +71,7 @@ handlers:
 
 # Background jobs and work that is not user-facing.
 - url: /jobs/.*
-  script: jobs.APP
+  script: main.APP
   login: admin
   secure: always
 
