@@ -1,11 +1,11 @@
 // Copyright 2010 Brett Slatkin, Nathan Naze
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,12 +65,12 @@ bits.posts.ArchiveType = {
 /**
  * A post to display.
  *
- * @param {object} postMap the map of post attributes.
- * @extends {goog.ui.Control}
+ * @param {Object} postMap the map of post attributes.
+ * @extends goog.ui.Control
  * @constructor
  */
 bits.posts.Post = function(postMap) {
-  goog.base(this);
+  goog.base(this, null);
 
   /**
    * @type {string}
@@ -98,7 +98,7 @@ bits.posts.Post = function(postMap) {
   this.body = postMap['body'] || null;
 
   /**
-   * @type {number?}
+   * @type {?number}
    */
   this.postTimeMs = postMap['postTimeMs'] || null;
 
@@ -117,7 +117,7 @@ bits.posts.Post = function(postMap) {
   this.postId = postMap['postId'] || null;
 
   /**
-   * @type {string}
+   * @type {?number}
    */
   this.sequenceId = postMap['sequenceId'] || null;
 
@@ -302,7 +302,7 @@ bits.posts.Post.prototype.renderTopic = function(element, newTopic) {
 /**
  * Decorates an existing HTML DIV element as a Post.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.posts.Post.prototype.decorateInternal = function(element) {
   bits.posts.Post.superClass_.decorateInternal.call(this, element);
@@ -342,7 +342,7 @@ bits.posts.Post.prototype.exitDocument = function() {
  * Contains multiple Post instances in a scrollable, self-populating view.
  *
  * @param {string} shardId ID of the shard this is for.
- * @extends {goog.ui.Component}
+ * @extends goog.ui.Component
  * @constructor
  */
 bits.posts.PostContainer = function(shardId) {
@@ -375,7 +375,7 @@ bits.posts.PostContainer = function(shardId) {
 
   /**
    * Lowest sequence number that is present in this container.
-   * @type {number?}
+   * @type {?number}
    */
   this.lowestSequenceId = null;
 
@@ -412,7 +412,7 @@ bits.posts.PostContainer.prototype.createDom = function() {
 /**
  * Decorates an existing HTML DIV element as a PostContainer.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.posts.PostContainer.prototype.decorateInternal = function(element) {
   bits.posts.PostContainer.superClass_.decorateInternal.call(this, element);
@@ -489,7 +489,7 @@ bits.posts.PostContainer.prototype.exitDocument = function() {
 
 /**
  * Handles when a post is received and should be added to the container.
- * @param {object} postMap Post JSON object received from the server.
+ * @param {Object} postMap Post JSON object received from the server.
  */
 bits.posts.PostContainer.prototype.handlePostReceived = function(postMap) {
   this.addOrUpdatePost(new bits.posts.Post(postMap));
@@ -498,7 +498,7 @@ bits.posts.PostContainer.prototype.handlePostReceived = function(postMap) {
 
 /**
  * Handles when historical posts were received.
- * @param {Array.<object>} postMapList List of post JSON objects.
+ * @param {Array.<Object>} postMapList List of post JSON objects.
  */
 bits.posts.PostContainer.prototype.handleHistoricalPostsReceived =
     function(postMapList) {

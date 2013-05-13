@@ -23,7 +23,8 @@ python ./closure-library/closure/bin/build/closurebuilder.py  \
   --output_mode="compiled" \
   --compiler_jar="./closure-compiler.jar" \
   --output_file="frontend/js/bits/compiled.js" \
-  --compiler_flags="--compilation_level=SIMPLE_OPTIMIZATIONS"
+  --compiler_flags="--compilation_level=SIMPLE_OPTIMIZATIONS" \
+  --compiler_flags="--warning_level=VERBOSE"
 
 # TODO(bslatkin): Use --compilation_level=ADVANCED_OPTIMIZATIONS
 

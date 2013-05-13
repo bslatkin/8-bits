@@ -35,6 +35,7 @@ goog.require('bits.posts.ArchiveType');
  * @param {string} shardId ID of the shard to notify for.
  * @param {string} nickname Nickname of the user.
  * @param {boolean} soundsEnabled True if the user should hear sounds.
+ * @extends goog.Disposable
  * @constructor
  */
 bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
@@ -73,7 +74,7 @@ bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
   this.normalFaviconUrl_ = favEl.getAttribute('href');
 
   /**
-   * @type {string}
+   * @type {?string}
    * @private
    */
   this.flashFaviconUrl_ = goog.dom.dataset.get(favEl, 'flashUrl');
@@ -100,31 +101,36 @@ bits.notifier.Notifier = function(shardId, nickname, soundsEnabled) {
    * @type {HTMLMediaElement}
    * @private
    */
-  this.loginAudio_ = goog.dom.getElement('bits-sound-login');
+  this.loginAudio_ = /** @type {HTMLMediaElement} */ (
+      goog.dom.getElement('bits-sound-login'));
 
   /**
    * @type {HTMLMediaElement}
    * @private
    */
-  this.receiveChatAudio_ = goog.dom.getElement('bits-sound-receivechat');
+  this.receiveChatAudio_ = /** @type {HTMLMediaElement} */ (
+      goog.dom.getElement('bits-sound-receivechat'));
 
   /**
    * @type {HTMLMediaElement}
    * @private
    */
-  this.userJoinAudio_ = goog.dom.getElement('bits-sound-userjoin');
+  this.userJoinAudio_ = /** @type {HTMLMediaElement} */ (
+      goog.dom.getElement('bits-sound-userjoin'));
 
   /**
    * @type {HTMLMediaElement}
    * @private
    */
-  this.userLeaveAudio_ = goog.dom.getElement('bits-sound-userleave');
+  this.userLeaveAudio_ = /** @type {HTMLMediaElement} */ (
+      goog.dom.getElement('bits-sound-userleave'));
 
   /**
    * @type {HTMLMediaElement}
    * @private
    */
-  this.topicStartAudio_ = goog.dom.getElement('bits-sound-news');
+  this.topicStartAudio_ = /** @type {HTMLMediaElement} */ (
+      goog.dom.getElement('bits-sound-news'));
 
   /**
    * @type {boolean}
@@ -216,7 +222,7 @@ bits.notifier.Notifier.FLASH_PERIOD_INVERTED = 1000;
  */
 bits.notifier.Notifier.prototype.disposeInternal = function() {
   bits.notifier.Notifier.superClass_.disposeInternal.call(this);
-  this.shardId_ = null;
+  this.shardId_ = '';
 };
 
 
@@ -253,7 +259,7 @@ bits.notifier.Notifier.prototype.setFlashing_ = function(flashing) {
 
 /**
  * Handles when a new post is sent to the server side.
- * @param {object} postMap Post that was received.
+ * @param {Object} postMap Post that was received.
  * @private
  */
 bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
@@ -266,7 +272,7 @@ bits.notifier.Notifier.prototype.handlePostSent_ = function(postMap) {
 
 /**
  * Handles when a new topic is sent to the server side.
- * @param {object} postMap Post that was received.
+ * @param {Object} postMap Post that was received.
  * @private
  */
 bits.notifier.Notifier.prototype.handleTopicSent_ = function(postMap) {
@@ -279,7 +285,7 @@ bits.notifier.Notifier.prototype.handleTopicSent_ = function(postMap) {
 
 /**
  * Handles when new posts are received.
- * @param {object} postMap Post that was received.
+ * @param {Object} postMap Post that was received.
  * @private
  */
 bits.notifier.Notifier.prototype.handlePostReceived_ = function(postMap) {

@@ -35,12 +35,12 @@ goog.require('bits.topics.TopicPrompt');
 
 
 bits.startup = function(params) {
-  var shardId = params.shard_id;
-  var nickname = params.nickname;
-  var firstLogin = params.first_login;
-  var mustAcceptTerms = params.must_accept_terms;
-  var soundsEnabled = params.sounds_enabled;
-  var xsrfToken = params.xsrf_token;
+  var shardId = params['shard_id'];
+  var nickname = params['nickname'];
+  var firstLogin = params['first_login'];
+  var mustAcceptTerms = params['must_accept_terms'];
+  var soundsEnabled = params['sounds_enabled'];
+  var xsrfToken = params['xsrf_token'];
 
   var c = new goog.debug.Console();
   c.setCapturing(true);

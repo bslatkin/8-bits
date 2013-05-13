@@ -1,11 +1,11 @@
 // Copyright 2010 Brett Slatkin, Nathan Naze
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,15 @@ goog.provide('bits.events.EventType');
 goog.provide('bits.events.PubSub');
 
 goog.require('goog.array');
+goog.require('goog.debug.ErrorHandler');
 goog.require('goog.debug.Logger');
 goog.require('goog.object');
 goog.require('goog.pubsub.PubSub');
 
 
+/**
+ * @enum {string}
+ */
 bits.events.EventType = {
   // User submits a new Post that should be sent to the server side.
   // Args:
@@ -137,6 +141,12 @@ bits.events.PubSub.getRealTopic_ = function(shardId, eventType) {
 };
 
 
+/**
+ * Publishes a message.
+ * @param {string} shardId ID of the shard to publish the message on.
+ * @param {bits.events.EventType} eventType Type of event to publish.
+ * @param {...*} var_args Arguments to publish in the message.
+ */
 bits.events.PubSub.publish = function(shardId, eventType, var_args) {
   bits.events.PubSub.setup();
 
@@ -153,7 +163,13 @@ bits.events.PubSub.publish = function(shardId, eventType, var_args) {
   bits.events.PubSub.bridge_.publish.apply(bits.events.PubSub.bridge_, args);
 };
 
-
+/**
+ * Subscribes to event messages.
+ * @param {string} shardId ID of the shard to receive messages for.
+ * @param {bits.events.EventType} eventType Type of event to receive.
+ * @param {Function} fn Callback function to invoke on new events.
+ * @param {Object=} opt_context Context to pass to the callback.
+ */
 bits.events.PubSub.subscribe = function(shardId, eventType, fn, opt_context) {
   bits.events.PubSub.setup();
 

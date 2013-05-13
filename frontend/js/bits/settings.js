@@ -31,6 +31,13 @@ goog.require('goog.ui.Component');
 goog.require('bits.events');
 
 
+/**
+ * Creates a settings dialog.
+ * @param {string} shardId ID of the shard this dialog is for.
+ * @param {boolean} acceptedTerms Whether the user has already accepted terms.
+ * @extends goog.ui.Component
+ * @constructor
+ */
 bits.settings.SettingsDialog = function(shardId, acceptedTerms) {
   goog.base(this);
 
@@ -42,19 +49,19 @@ bits.settings.SettingsDialog = function(shardId, acceptedTerms) {
   this.dialog_.setVisible(false);
 
   /**
-   * @type {Element?}
+   * @type {?Element}
    * @private
    */
   this.nicknameEl_ = null;
 
   /**
-   * @type {Element?}
+   * @type {?Element}
    * @private
    */
   this.soundsEnabledEl_ = null;
 
   /**
-   * @type {Element?}
+   * @type {?Element}
    * @private
    */
   this.termsEl_ = null;
@@ -78,7 +85,7 @@ bits.settings.SettingsDialog = function(shardId, acceptedTerms) {
    * @private
    */
   this.sizeMonitor_ = new goog.dom.ViewportSizeMonitor();
-}
+};
 goog.inherits(bits.settings.SettingsDialog, goog.ui.Component);
 
 
@@ -105,10 +112,11 @@ bits.settings.SettingsDialog.DECLINE = {
 /**
  * Decorates an existing HTML DIV element as a PostContainer.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.settings.SettingsDialog.prototype.decorateInternal = function(element) {
-  bits.settings.SettingsDialog.superClass_.decorateInternal.call(this, element);
+  bits.settings.SettingsDialog.superClass_.decorateInternal.call(
+      this, element);
 };
 
 
@@ -129,12 +137,11 @@ bits.settings.SettingsDialog.prototype.enterDocument = function() {
 
   var element = this.getElement();
 
-  this.nicknameEl_ = goog.dom.getElement('setting-nickname', element);
-  this.soundsEnabledEl_ = goog.dom.getElement(
-      'setting-sounds-enabled', element);
-  this.termsEl_ = goog.dom.getElement('settings-terms', element);
+  this.nicknameEl_ = goog.dom.getElement('setting-nickname');
+  this.soundsEnabledEl_ = goog.dom.getElement('setting-sounds-enabled');
+  this.termsEl_ = goog.dom.getElement('settings-terms');
 
-  goog.style.setStyle(element, 'display', null);
+  goog.style.setStyle(element, 'display', undefined);
   this.dialog_.getContentElement().appendChild(element);
 
   this.eh_.listen(
@@ -166,7 +173,7 @@ bits.settings.SettingsDialog.prototype.exitDocument = function() {
 bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
   if (e.key == goog.ui.Dialog.DefaultButtonKeys.OK) {
     var nickname = goog.string.trim(
-        goog.dom.forms.getValue(this.nicknameEl_));
+        /** @type {string} */ (goog.dom.forms.getValue(this.nicknameEl_)));
     var soundsEnabled = goog.dom.forms.getValue(this.soundsEnabledEl_) == 'on';
 
     // TODO(bslatkin): Show a error message to users about invalid nicknames.
@@ -192,6 +199,10 @@ bits.settings.SettingsDialog.prototype.handleDialogSelect_ = function(e) {
 };
 
 
+/**
+ * Sets the dialog to visible.
+ * @param {boolean} isVisible What the new state should be.
+ */
 bits.settings.SettingsDialog.prototype.setVisible = function(isVisible) {
   if (isVisible && this.dialog_.isVisible()) {
     return

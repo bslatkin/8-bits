@@ -24,12 +24,15 @@ goog.require('goog.events');
 goog.require('goog.json');
 goog.require('goog.net.EventType');
 goog.require('goog.net.XhrManager');
+goog.require('goog.net.XhrLite');
 goog.require('goog.object');
 goog.require('goog.string');
 goog.require('goog.Timer');
 goog.require('goog.Uri');
 
 goog.require('bits.events');
+
+
 
 /**
  * Creates a new connection.
@@ -105,23 +108,22 @@ bits.connection.Connection =
   this.nickname_ = nickname;
 
   /**
-   * @type {string}
+   * @type {boolean}
    * @private
    */
   this.soundsEnabled_ = soundsEnabled;
 
   /**
    * The browser token currently being used for the channel.
-   * @type {string}
+   * @type {?string}
    * @private
    */
   this.browserToken_ = null;
 
   /**
    * This is an external object goog.appengine.Channel.
-   * TODO(bslatkin): Make this work with the closure compiler.
    *
-   * @type {object?}
+   * @type {?Object}
    */
   this.channel_ = null;
 
@@ -190,8 +192,8 @@ bits.connection.Connection.prototype.setPresence_ =
   this.xhrManager_.send(
       this.getNextMessageId_(),
       '/rpc/presence',
-      opt_method='POST',
-      opt_content=params.toString(),
+      'POST',
+      params.toString(),
       null,
       null,
       goog.bind(this.handleSetPresenceComplete_, this));
@@ -234,7 +236,7 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
   // while. This could be a page reload or a first time load. Send an event so
   // other components can take appropriate action, such as clearing out old
   // posts since they're out of date.
-  var firstRequest = !this.browserToken_ || response.userConnected;
+  var firstRequest = !this.browserToken_ || response['userConnected'];
   if (firstRequest) {
     this.establishConnection_();
   } else if (hadErrors) {
@@ -246,8 +248,8 @@ bits.connection.Connection.prototype.handleSetPresenceComplete_ =
   // issued on the first presence request, relogin presence requests, and
   // after errors.
   var reinitChannel = firstRequest || !this.channel_ || hadErrors;
-  if (this.browserToken_ != response.browserToken || reinitChannel) {
-    this.browserToken_ = response.browserToken;
+  if (this.browserToken_ != response['browserToken'] || reinitChannel) {
+    this.browserToken_ = response['browserToken'];
     this.allocateChannel_();
   }
 
@@ -280,7 +282,7 @@ bits.connection.Connection.prototype.closeChannel_ = function() {
 bits.connection.Connection.prototype.allocateChannel_ = function() {
   this.closeChannel_();
 
-  var factory = new goog.appengine.Channel(this.browserToken_);
+  var factory = new window['goog']['appengine']['Channel'](this.browserToken_);
   this.channel_ = factory.open({
     'onopen': goog.bind(this.handleChannelOpen_, this),
     'onmessage': goog.bind(this.handleChannelMessage_, this),
@@ -329,7 +331,7 @@ bits.connection.Connection.prototype.handleHeartbeat_ = function() {
 
 /**
  * Handles when a message is received on the channel.
- * @param {object} event App Engine channel event object.
+ * @param {Object} event App Engine channel event object.
  * @private
  */
 bits.connection.Connection.prototype.handleChannelMessage_ = function(event) {
@@ -349,14 +351,14 @@ bits.connection.Connection.prototype.handleChannelMessage_ = function(event) {
             this.shardId_, bits.events.EventType.PostReceived, postMap);
     }, this);
   } else {
-    this.logger_.debug('Unknown message type: ' + rawMessage);
+    this.logger_.warning('Unknown message type: ' + rawMessage);
   }
 };
 
 
 /**
  * Handles when errors happen on the channel.
- * @param {object} event App Engine channel error object.
+ * @param {Object} event App Engine channel event object.
  * @private
  */
 bits.connection.Connection.prototype.handleChannelError_ = function(event) {
@@ -375,7 +377,7 @@ bits.connection.Connection.prototype.handleChannelError_ = function(event) {
 
 /**
  * Handles when the channel closes.
- * @param {object} event App Engine channel event object.
+ * @param {Object} event App Engine channel event object.
  * @private
  */
 bits.connection.Connection.prototype.handleChannelClose_ = function(event) {
@@ -389,7 +391,7 @@ bits.connection.Connection.prototype.handleChannelClose_ = function(event) {
  * This logs detailed information about the Xhr. It's still up to functions
  * that make Xhrs to properly do retries and calls to reportError_.
  *
- * @param {object} event XHR error event.
+ * @param {Object} event XHR error event.
  * @private
  */
 bits.connection.Connection.prototype.handleSendError_ = function(event) {
@@ -400,12 +402,12 @@ bits.connection.Connection.prototype.handleSendError_ = function(event) {
 
 /**
  * Gets the next unique message ID and increments it.
- * @return {number} Next unique message ID.
+ * @return {string} Next unique message ID.
  */
 bits.connection.Connection.prototype.getNextMessageId_ = function() {
   var messageId = this.nextMessageId_;
   this.nextMessageId_++;
-  return messageId;
+  return '' + messageId;
 };
 
 
@@ -427,7 +429,7 @@ bits.connection.Connection.prototype.handleSubmitPresenceChange_ =
 
 /**
  * Handles the bits.events.EventType.SubmitPost event.
- * @param {object} postMap JSON representation of a post.
+ * @param {Object} postMap JSON representation of a post.
  * @private
  */
 bits.connection.Connection.prototype.handleSubmitPost_ = function(postMap) {
@@ -446,8 +448,8 @@ bits.connection.Connection.prototype.handleSubmitPost_ = function(postMap) {
   this.xhrManager_.send(
       this.getNextMessageId_(),
       '/rpc/post',
-      opt_method='POST',
-      opt_content=params.toString(),
+      'POST',
+      params.toString(),
       null,
       null,
       goog.bind(this.handleSubmitPostSuccessful_, this, postMap));
@@ -462,7 +464,7 @@ bits.connection.Connection.prototype.handleSubmitPost_ = function(postMap) {
 
 /**
  * Handles when a post is successfully submitted.
- * @param {object} postMap JSON representation of a post.
+ * @param {Object} postMap JSON representation of a post.
  * @param {goog.events.Event} event XHR event.
  * @private
  */
@@ -561,8 +563,8 @@ bits.connection.Connection.prototype.requestRoster_ = function() {
   this.xhrManager_.send(
       this.getNextMessageId_(),
       '/rpc/show_roster',
-      opt_method='POST',
-      opt_content=params.toString(),
+      'POST',
+      params.toString(),
       null,
       null,
       goog.bind(this.handleRequestRosterSuccessful_, this));
@@ -617,8 +619,8 @@ bits.connection.Connection.prototype.requestOldPosts_ =
   this.xhrManager_.send(
       this.getNextMessageId_(),
       '/rpc/list_posts',
-      opt_method='POST',
-      opt_content=params.toString(),
+      'POST',
+      params.toString(),
       null,
       null,
       goog.bind(this.handleRequestHistoricalPostsSuccessful_, this,
@@ -667,8 +669,8 @@ bits.connection.Connection.prototype.handleSubmitTopic_ =
   this.xhrManager_.send(
       this.getNextMessageId_(),
       '/rpc/create_topic',
-      opt_method='POST',
-      opt_content=params.toString(),
+      'POST',
+      params.toString(),
       null,
       null,
       goog.bind(this.handleSubmitTopicSuccessful_, this, link, summary));

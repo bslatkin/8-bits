@@ -1,11 +1,11 @@
 // Copyright 2010 Brett Slatkin, Nathan Naze
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,9 @@ goog.require('bits.util');
 /**
  * Creates a new ChatBox.
  *
- * @param {string} Shard ID for this chatbox.
+ * @param {string} shardId Shard ID for this chatbox.
  * @constructor
+ * @extends goog.ui.Component
  */
 bits.chatbox.ChatBox = function(shardId) {
   goog.base(this);
@@ -67,7 +68,7 @@ bits.chatbox.ChatBox = function(shardId) {
   this.eh_ = new goog.events.EventHandler(this);
 
   /**
-   * @type {goog.events.KeyHandler?}
+   * @type {?goog.events.KeyHandler}
    * @private
    */
   this.kh_ = null;
@@ -86,12 +87,12 @@ bits.chatbox.ChatBox.PLACEHOLDER_TEXT_ =
 /**
  * Decorates an existing HTML DIV element as a ChatBox.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.chatbox.ChatBox.prototype.decorateInternal = function(element) {
   bits.chatbox.ChatBox.superClass_.decorateInternal.call(this, element);
 
-  var element = this.getElement();
+  element = this.getElement();
 
   var postEl = goog.dom.getElementByClass('bits-posts-scrollable', element);
   this.postContainer_.decorate(postEl);
@@ -141,8 +142,8 @@ bits.chatbox.ChatBox.prototype.onKey_ = function(event) {
   if (event.keyCode == goog.events.KeyCodes.ENTER) {
     event.preventDefault();
 
-    var chatText = goog.string.trim(
-        goog.dom.forms.getValue(this.chatInput_.getElement()));
+    var chatText = goog.string.trim(/** @type {string} */
+        (goog.dom.forms.getValue(this.chatInput_.getElement())));
 
     // TODO(bslatkin): Actually show a warning to the user about this.
     if (!chatText || chatText > 4096) {

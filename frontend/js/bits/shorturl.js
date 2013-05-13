@@ -32,6 +32,7 @@ goog.require('bits.events');
 /**
  * Constructs the short URL dialog.
  * @param {string} shardId Shard for this short URL dialog.
+ * @extends goog.ui.Component
  * @constructor
  */
 bits.shorturl.ShortUrlDialog = function(shardId) {
@@ -72,7 +73,7 @@ goog.inherits(bits.shorturl.ShortUrlDialog, goog.ui.Component);
 /**
  * Decorates an existing HTML DIV element as a PostContainer.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.shorturl.ShortUrlDialog.prototype.decorateInternal = function(element) {
   bits.shorturl.ShortUrlDialog.superClass_.decorateInternal.call(this, element);
@@ -95,7 +96,7 @@ bits.shorturl.ShortUrlDialog.prototype.enterDocument = function() {
   bits.shorturl.ShortUrlDialog.superClass_.enterDocument.call(this);
 
   var element = this.getElement();
-  goog.style.setStyle(element, 'display', null);
+  goog.style.setStyle(element, 'display', undefined);
   this.dialog_.getContentElement().appendChild(element);
 
   this.eh_.listen(
@@ -132,7 +133,7 @@ bits.shorturl.ShortUrlDialog.prototype.setVisible_ = function(isVisible) {
   this.dialog_.setVisible(isVisible);
   if (isVisible) {
     this.dialog_.reposition();
-    var urlText = goog.dom.getElement('link-shorturl', this.getElement());
+    var urlText = goog.dom.getElement('link-shorturl');
     urlText.focus();
     urlText.select();
   }

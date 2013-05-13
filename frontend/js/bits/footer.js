@@ -25,6 +25,12 @@ goog.require('goog.ui.Component');
 goog.require('bits.events');
 
 
+/**
+ * Creates a new footerbar.
+ * @param {string} shardId ID of the shard this footer is for.
+ * @extends goog.ui.Component
+ * @constructor
+ */
 bits.footer.FooterBar = function(shardId) {
   goog.base(this);
 
@@ -44,7 +50,7 @@ goog.inherits(bits.footer.FooterBar, goog.ui.Component);
 /**
  * Decorates an existing HTML DIV element as a FooterBar.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.footer.FooterBar.prototype.decorateInternal = function(element) {
   bits.footer.FooterBar.superClass_.decorateInternal.call(this, element);

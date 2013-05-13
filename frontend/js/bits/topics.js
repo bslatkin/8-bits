@@ -44,45 +44,45 @@ goog.require('bits.events');
 /**
  * A topic to display in the topic menu.
  *
- * @param {object} topicMap Map of topic attributes.
- * @extends {goog.ui.Control}
+ * @param {Object} topicMap Map of topic attributes.
+ * @extends goog.ui.Control
  * @constructor
  */
 bits.topics.Topic = function(topicMap) {
-  goog.base(this);
+  goog.base(this, null);
 
   /**
-   * @type {string}
+   * @type {?string}
    * @private
    */
-  this.shardId = topicMap['shardId'] || null;
+  this.shardId_ = topicMap['shardId'] || null;
 
   /**
-   * @type {string}
+   * @type {?string}
    * @private
    */
-  this.createdNickname = topicMap['createdNickname'] || null;
+  this.createdNickname_ = topicMap['createdNickname'] || null;
 
   /**
-   * @type {string}
+   * @type {?string}
    * @private
    */
-  this.url = topicMap['url'] || null;
+  this.url_ = topicMap['url'] || null;
 
   /**
-   * @type {string}
+   * @type {?string}
    * @private
    */
-  this.description = topicMap['description'] || null;
+  this.description_ = topicMap['description'] || null;
 
   /**
-   * @type {number?}
+   * @type {?number}
    * @private
    */
-  this.updateTimeMs = topicMap['updateTimeMs'] || null;
+  this.updateTimeMs_ = topicMap['updateTimeMs'] || null;
 
   /**
-   * @type {goog.date.DateTime}
+   * @type {?goog.date.DateTime}
    * @private
    */
   this.updateDateTime = null;
@@ -104,24 +104,24 @@ bits.topics.Topic.prototype.createDom = function() {
   var containerEl = this.dom_.createDom('div', 'bits-topic-title-c');
 
   var nicknameEl = this.dom_.createDom('span', 'bits-topic-nickname');
-  nicknameEl.innerHTML = this.createdNickname;
+  nicknameEl.innerHTML = this.createdNickname_;
 
   var separatorEl = this.dom_.createDom('span', 'bits-topic-separator');
   this.dom_.setTextContent(separatorEl, ': ');
 
   var titleEl = this.dom_.createDom('a', 'bits-topic-title');
-  titleEl.href = this.url;
+  titleEl.href = this.url_;
   titleEl.setAttribute('target', '_blank');
   this.dom_.setTextContent(
       titleEl,
-      this.url.replace(/http(s?):\/\/(www\.)?([^ '"\)\(]+)/g, '$3'));
+      this.url_.replace(/http(s?):\/\/(www\.)?([^ '"\)\(]+)/g, '$3'));
 
   containerEl.appendChild(nicknameEl);
   containerEl.appendChild(separatorEl);
   containerEl.appendChild(titleEl);
 
   var descriptionEl = this.dom_.createDom('div', 'bits-topic-description');
-  descriptionEl.innerHTML = this.description;
+  descriptionEl.innerHTML = this.description_;
 
   element.appendChild(containerEl);
   element.appendChild(descriptionEl);
@@ -132,7 +132,7 @@ bits.topics.Topic.prototype.createDom = function() {
 /**
  * Decorates an existing HTML DIV element as a Post.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.topics.Topic.prototype.decorateInternal = function(element) {
   bits.topics.Topic.superClass_.decorateInternal.call(this, element);
@@ -168,11 +168,11 @@ bits.topics.Topic.prototype.exitDocument = function() {
 
 /**
  * Creates a topic menu
- * @extends {goog.ui.Component}
+ * @extends goog.ui.Control
  * @constructor
  */
 bits.topics.TopicMenu = function(shardId) {
-  goog.base(this);
+  goog.base(this, null);
 
   this.setSupportedState(goog.ui.Component.State.OPENED, true);
 
@@ -252,7 +252,7 @@ bits.topics.TopicMenu.prototype.createDom = function() {
 /**
  * Decorates an existing HTML DIV element.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.topics.TopicMenu.prototype.decorateInternal = function(element) {
   bits.topics.TopicMenu.superClass_.decorateInternal.call(this, element);
@@ -315,13 +315,13 @@ bits.topics.TopicMenu.prototype.sortChildren_ = function() {
   var children = [];
   this.container_.forEachChild(function(c) { children.push(c) });
   goog.array.sort(children, function(a, b) {
-    if (a.updateTimeMs && b.updateTimeMs) {
-      return a.updateTimeMs - b.updateTimeMs;
+    if (a.updateTimeMs_ && b.updateTimeMs_) {
+      return a.updateTimeMs_ - b.updateTimeMs_;
     }
-    if (a.updateTimeMs && !b.updateTimeMs) {
+    if (a.updateTimeMs_ && !b.updateTimeMs_) {
       return 1;
     }
-    if (!a.updateTimeMs && b.updateTimeMs) {
+    if (!a.updateTimeMs_ && b.updateTimeMs_) {
       return -1;
     }
     return 0;
@@ -336,7 +336,7 @@ bits.topics.TopicMenu.prototype.sortChildren_ = function() {
  *
  */
 bits.topics.TopicMenu.prototype.selectTopic = function(shardId) {
-  var topic = this.topicIdMap_.get(shardId);
+  var topic = /** @type {bits.topics.Topic} */ (this.topicIdMap_.get(shardId));
   if (!topic) {
     return;
   }
@@ -380,7 +380,7 @@ bits.topics.TopicMenu.prototype.handleTopicClick = function(event) {
  * Prompts the user for detail about a topic.
  *
  * @param {string} shardId ID of the shard for starting topics.
- * @extends {goog.ui.Component}
+ * @extends goog.ui.Component
  * @constructor
  */
 bits.topics.TopicPrompt = function(shardId) {
@@ -399,7 +399,7 @@ bits.topics.TopicPrompt = function(shardId) {
   this.eh_ = new goog.events.EventHandler(this);
 
   /**
-   * @type {goog.events.KeyHandler?}
+   * @type {?goog.events.KeyHandler}
    * @private
    */
   this.kh_ = null;
@@ -412,7 +412,7 @@ bits.topics.TopicPrompt = function(shardId) {
       bits.topics.TopicPrompt.PLACEHOLDER_TEXT_);
 
   /**
-   * @type {string}
+   * @type {?string}
    * @private
    */
   this.pendingLink_ = null;
@@ -450,7 +450,7 @@ bits.topics.TopicPrompt.PLACEHOLDER_TEXT_ =
 /**
  * Decorates an existing HTML DIV element as a TopicPrompt.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.topics.TopicPrompt.prototype.decorateInternal = function(element) {
   bits.topics.TopicPrompt.superClass_.decorateInternal.call(this, element);
@@ -555,7 +555,8 @@ bits.topics.TopicPrompt.prototype.submit = function(opt_event) {
   }
 
   var summaryText = goog.string.trim(
-      goog.dom.forms.getValue(this.summaryInput_.getElement()));
+      /** @type {string} */ (
+          goog.dom.forms.getValue(this.summaryInput_.getElement())));
 
   // TODO(bslatkin): Notify the user that they have to type something
   if (summaryText.length == 0) {

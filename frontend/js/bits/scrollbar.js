@@ -30,7 +30,7 @@ goog.require('goog.ui.Slider');
 
 /**
  * Creates a new scrollbar.
- *
+ * @extends goog.ui.Slider
  * @constructor
  */
 bits.ui.Scrollbar = function() {
@@ -85,7 +85,7 @@ bits.ui.Scrollbar.prototype.setTarget = function(target) {
 /**
  * Decorates an existing HTML DIV element as a scroller.
  *
- * @param {HTMLElement} element The DIV element to decorate.
+ * @param {Element} element The DIV element to decorate.
  */
 bits.ui.Scrollbar.prototype.decorateInternal = function(element) {
   bits.ui.Scrollbar.superClass_.decorateInternal.call(this, element);
