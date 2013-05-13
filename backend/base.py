@@ -58,6 +58,8 @@ class BaseHandler(webapp.RequestHandler):
     # Allow requests with the POST verb.
     post_enabled = True
 
+    session = None
+
     def _require_xsrf_token(self):
         # TODO(bslatkin): Rotate the token periodically.
         if 'xsrf_token' not in self.session:
@@ -136,18 +138,20 @@ class BaseHandler(webapp.RequestHandler):
 
     def render(self, template_name, context=None):
         """Renders the given template and context."""
-        js_mode = 'compiled'
-        if config.debug and config.is_dev_appserver:
-            js_mode = self.request.get('js_mode', 'raw')
-
         my_context = {
             'cache_buster': config.version_id,
             'host_url': self.request.host_url,
-            'js_mode': js_mode,
+            'js_mode': 'compiled',
             'page_name': 'base',
             'site_name': config.site_name,
-            'xsrf_token': self.session['xsrf_token'],
         }
+
+        if config.debug and config.is_dev_appserver:
+            my_context.update(js_mode=self.request.get('js_mode', 'raw'))
+
+        if self.session and 'xsrf_token' in self.session:
+            my_context.update(xsrf_token=self.session['xsrf_token'])
+
         if context:
             my_context.update(context)
 
