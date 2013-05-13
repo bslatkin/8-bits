@@ -67,7 +67,7 @@ shard_url_template = 'https://%s.appspot.com/chat/' % (
     os.environ.get('APPLICATION_ID', '')) + '%s'
 
 # Hostname to use for resources in emails
-email_resource_host_prefix = '//%s.appspot.com' % (
+email_resource_host_prefix = 'https://%s.appspot.com' % (
     os.environ.get('APPLICATION_ID', ''))
 
 # How often to email users a digest of activity

@@ -53,7 +53,7 @@ def enqueue_email_tasks(emails_set):
     task_list = []
     for email_address, email_record in zip(emails_set, email_record_list):
         sequence_number = 1
-        countdown = 0
+        countdown = config.default_notify_period_seconds
         if email_record:
             sequence_number = email_record.sequence_number
             countdown = email_record.min_notify_period_seconds

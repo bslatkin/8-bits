@@ -104,6 +104,12 @@
   word-wrap: break-word;
   word-break: break-all;
 }
+.bits-topic-prompt-link:link,
+.bits-topic-prompt-link:visited,
+.bits-topic-prompt-link:active,
+.bits-topic-prompt-link:hover {
+  color: #000;
+}
 
 .bits-topic-prompt-helptext {
   margin: 15px 0;

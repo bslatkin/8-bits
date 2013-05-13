@@ -22,7 +22,7 @@
 
         {% if not email_record.global_opt_out %}
             <p>
-                You will be notified of new updates across all {{site_name}} streams at most every {{email_record.min_notify_period_seconds}} second{{email_record.min_notify_period_seconds|pluralize}}.
+                You will be notified of new updates across all {{site_name}} streams at most once every {{email_record.min_notify_period_seconds}} second{{email_record.min_notify_period_seconds|pluralize}}.
             </p>
         {% endif %}
 
