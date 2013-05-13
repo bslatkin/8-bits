@@ -129,6 +129,7 @@ class BaseHandler(webapp.RequestHandler):
             'host_url': self.request.host_url,
             'js_mode': js_mode,
             'page_name': 'base',
+            'site_name': config.site_name,
         }
         if context:
             my_context.update(context)

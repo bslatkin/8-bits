@@ -245,10 +245,6 @@ def send_digest_email(email_address, sequence_number):
         site_name=config.site_name
     )
 
-    if email_record.previous_notified_time:
-        context.update(
-            previous_notified_time=email_record.previous_notified_time)
-
     text_data = template.render('templates/digest_email.txt', context)
     html_data = template.render('templates/digest_email_output.html', context)
     sender = config.notification_from_email
@@ -274,6 +270,61 @@ class EmailDigestWorker(base.BaseHandler):
         send_digest_email(email_address, sequence_number)
 
 
+class ContactSettingsHandler(base.BaseHandler):
+    """Renders the contact settings page."""
+
+    def get(self):
+        address = self.get_required('address', str, '')
+        secret = self.get_required('secret', str, '')
+
+        email_record = None
+        if address:
+            email_record = models.EmailRecord.get_by_id(address)
+
+        context = dict(
+            address=address,
+            email_record=email_record,
+            page_name='contact_settings',
+            secret=secret
+        )
+
+        if not email_record or email_record.secret != secret:
+            context.update(email_auth_error=True)
+
+        self.render('contact_settings.html', context)
+
+    def post(self):
+        address = self.get_required('address', str, '')
+        secret = self.get_required('secret', str, '')
+        action = self.get_required('action', str).lower()
+
+        opt_out = action == 'opt-out'
+        opt_in = action == 'opt-in'
+
+        def txn():
+            if not address:
+                raise ndb.Rollback()
+
+            email_record = models.EmailRecord.get_by_id(address)
+            if not email_record or email_record.secret != secret:
+                raise ndb.Rollback()
+
+            if opt_out:
+                logging.debug('Opting out of email. address=%r', address)
+                email_record.global_opt_out = True
+            elif opt_in:
+                logging.debug('Opting-in to email. address=%r', address)
+                email_record.global_opt_out = False
+            else:
+                raise ndb.Rollback()
+
+            email_record.put()
+
+        ndb.transaction(txn)
+        self.redirect('/email?address=%s&secret=%s' % (address, secret))
+
+
 ROUTES = [
+    (r'/email', ContactSettingsHandler),
     (r'/work/email_digest', EmailDigestWorker),
 ]

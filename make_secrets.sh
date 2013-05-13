@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TARGET=backend/secrets2.py
+TARGET=backend/secrets.py
 
 if [ -e $TARGET ]
 then

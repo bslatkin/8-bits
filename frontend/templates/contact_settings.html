@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+<div class="container">
+
+    <div class="prepend-top">
+        <a href="/"><img src="/static/{{cache_buster}}/logo.png" border="0"
+            width="600" height="92" alt="{{site_name}}"></a>
+    </div>
+
+    <h2>Contact settings</h2>
+
+    {% if email_auth_error %}
+        <p>
+            Sorry, but something is wrong with the email address or secret you supplied.
+        </p>
+    {% else %}
+        <p>
+            These are the email contact settings for <b>{{email_record.email_address}}</b>.
+        </p>
+
+        {% if not email_record.global_opt_out %}
+            <p>
+                You will be notified of new updates across all {{site_name}} streams at most every {{email_record.min_notify_period_seconds}} second{{email_record.min_notify_period_seconds|pluralize}}.
+            </p>
+        {% endif %}
+
+        <form action="/email" method="post">
+            <input type="hidden" name="address" value="{{address}}">
+            <input type="hidden" name="secret" value="{{secret}}">
+            {% if email_record.global_opt_out %}
+                <p>
+                    You are currently opted-out of all email. If you'd like to receive emails again, please click the following button:
+                    <input type="submit" name="action" value="Opt-in">
+                </p>
+            {% else %}
+                <p>
+                    To never receive another email from this site again, please click the following button:
+                    <input type="submit" name="action" value="Opt-out">
+                </p>
+            {% endif %}
+        </form>
+    {% endif %}
+
+</div>
+
+{% endblock body %}

@@ -19,7 +19,7 @@
 import json
 import logging
 import os
-import random
+import time
 import unittest
 
 from google.appengine.ext import testbed
@@ -65,28 +65,44 @@ class SendEmailTest(unittest.TestCase):
         send_email.send_digest_email('foo@example.com', 1)
         self.fail()
 
-    def make_post(self, post_id, message):
+    def login_user(self, shard_id=None):
+        """Logs in the user."""
+        if shard_id is None:
+            shard_id = self.shard.shard_id
+
+        login_id = presence.user_logged_in(shard_id, self.user_id)
+        login_record = models.LoginRecord.get_by_id(login_id)
+        login_record.email_address = 'foo@example.com'
+        login_record.put()
+
+    def make_post(self, post_id, message, shard_id=None):
         """Makes a test post."""
+        if shard_id is None:
+            shard_id = self.shard.shard_id
+
         post_key = posts.insert_post(
-            self.shard.shard_id,
+            shard_id,
             post_id=post_id,
             archive_type=models.Post.CHAT,
             nickname='My name',
             user_id=self.user_id,
             body=message)
-        posts.apply_posts(self.shard.shard_id)
+        posts.apply_posts(shard_id)
         return post_key
 
-    def start_topic(self, url, nickname, description):
+    def start_topic(self, url, nickname, description, shard_id=None):
         """Makes a test topic."""
+        if shard_id is None:
+            shard_id = self.shard.shard_id
+
         topic_shard_id, _ = topics.start_topic(
-            self.shard.shard_id,
+            shard_id,
             self.user_id,
-            'my-post-id-' % random.randint(),
+            'my-post-id-%d' % time.time(),
             nickname,
             url,
             description)
-        posts.apply_posts(self.shard.shard_id)
+        posts.apply_posts(shard_id)
         return topic_shard_id
 
     def get_email(self):
@@ -113,10 +129,7 @@ class SendEmailTest(unittest.TestCase):
 
     def testOneTopicNewPost(self):
         """Tests when a single topic has a new post."""
-        login_id = presence.user_logged_in(self.shard.shard_id, self.user_id)
-        login_record = models.LoginRecord.get_by_id(login_id)
-        login_record.email_address = 'foo@example.com'
-        login_record.put()
+        self.login_user()
 
         topic_shard_id = self.start_topic(
             'http://www.example.com/path/is/here',
@@ -146,10 +159,69 @@ class SendEmailTest(unittest.TestCase):
 
     def testManyTopicsManyPosts(self):
         """Tests when many topics have many new posts."""
-        self.fail()
+        self.login_user()
 
-    def testManyUsers(self):
-        """Tests when many users have participated."""
+        topic_shard_id = self.start_topic(
+            'http://www.example.com/path/is/here',
+            'cilantro',
+            'This is my long winded topic description that surely will '
+            'bore you to tears')
+
+        self.make_post('first', 'my message 1')
+        self.make_post('second', 'my other message')
+        self.make_post('third', 'message number 3')
+        posts.apply_posts(topic_shard_id)
+
+        topic_shard_id = self.start_topic(
+            'http://www.example.com/this/is/another/topic',
+            'lime',
+            'Wow I never thought I would be starting my own topic')
+
+        self.make_post('red', 'this is for a new topic')
+        self.make_post('green', 'and will continue')
+        posts.apply_posts(topic_shard_id)
+
+        send_email.send_digest_email('foo@example.com', 1)
+
+        message = self.get_email()
+
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 2 topics, 5 updates",
+                          message.subject)
+
+    def testMultipleShards(self):
+        """Tests when the user is part of multiple shards."""
+        shard1 = models.Shard(id='my-shard-1')
+        shard1.put()
+        shard2 = models.Shard(id='my-shard-2')
+        shard2.put()
+
+        self.login_user('my-shard-1')
+        self.login_user('my-shard-2')
+
+        topic_id = self.start_topic(
+            'http://example.com/1', 'peanut', 'hi there',
+            shard_id='my-shard-1')
+        self.make_post('first', 'my message here', shard_id='my-shard-1')
+        posts.apply_posts(topic_id)
+
+        topic_id = self.start_topic(
+            'http://example.com/2', 'cashew', 'this is nuts!',
+            shard_id='my-shard-2')
+        self.make_post('second', 'my second here', shard_id='my-shard-2')
+        self.make_post('third', 'my third here', shard_id='my-shard-2')
+        posts.apply_posts(topic_id)
+
+        send_email.send_digest_email('foo@example.com', 1)
+
+        message = self.get_email()
+
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 2 topics, 3 updates",
+                          message.subject)
+
         self.fail()
 
 
