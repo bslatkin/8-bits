@@ -183,6 +183,7 @@ class EmailRecord(ndb.Model):
     creation_time = ndb.DateTimeProperty(auto_now_add=True)
     last_update_time = ndb.DateTimeProperty(auto_now=True)
     last_notified_time = ndb.DateTimeProperty()
+    previous_notified_time = ndb.DateTimeProperty()
     secret = ndb.TextProperty()
 
     global_opt_out = ndb.BooleanProperty(default=False)

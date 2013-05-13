@@ -13,3 +13,6 @@
 [submodule "tools/inlinestyler"]
 	path = tools/inlinestyler
 	url = https://github.com/dlanger/inlinestyler.git
+[submodule "tools/antwort"]
+	path = tools/antwort
+	url = https://github.com/InterNations/antwort.git

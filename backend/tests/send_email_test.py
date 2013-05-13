@@ -36,6 +36,8 @@ class SendEmailTest(unittest.TestCase):
 
     def setUp(self):
         logging.getLogger().setLevel(logging.DEBUG)
+        config.email_resource_host_prefix = 'http://localhost:8080'
+        config.shard_url_template = 'http://localhost:8080/chat/%s'
         self.maxDiff = 10**10
         root_path = os.getcwd()
         self.testbed = testbed.Testbed()
@@ -74,6 +76,10 @@ class SendEmailTest(unittest.TestCase):
         posts.apply_posts(self.shard.shard_id)
         return post_key
 
+    def testRootShardOnly(self):
+        """Tests when only the root shard has new data."""
+        self.fail()
+
     def testOneTopicNewPost(self):
         """Tests when a single topic has a new post."""
         login_id = presence.user_logged_in(self.shard.shard_id, self.user_id)
@@ -82,8 +88,13 @@ class SendEmailTest(unittest.TestCase):
         login_record.put()
 
         topic_shard_id, _ = topics.start_topic(
-            self.shard.shard_id, self.user_id, 'my-post-id', 'my name',
-            'topic title', 'topic description')
+            self.shard.shard_id,
+            self.user_id,
+            'my-post-id',
+            'cilantro',
+            'http://www.example.com/path/is/here',
+            'This is my long winded topic description that surely will '
+            'bore you to tears')
         posts.apply_posts(self.shard.shard_id)
 
         self.make_post('first', 'my message 1')
@@ -95,8 +106,36 @@ class SendEmailTest(unittest.TestCase):
         message_list = mail_stub.get_sent_messages()
         self.assertEquals(1, len(message_list))
         message = message_list[0]
-        print 'html %r' % message.html.payload
-        print 'text %r' % message.body.payload
+
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 1 topic, 2 updates",
+                          message.subject)
+
+        html_content = message.html.payload
+        text_content = message.body.payload
+
+        output_path = '/tmp/test_email_output_%s' % self.id()
+        print 'Writing output to', output_path
+
+        open(output_path + '.html', 'w').write(html_content)
+        open(output_path + '.txt', 'w').write(text_content)
+
+    def testNotifyTwiceNoChanges(self):
+        """Tests that notifying when there are no changes sends no email."""
+        self.fail()
+
+    def testSecondDigestEmail(self):
+        """Tests what the second digest email looks like."""
+        self.fail()
+
+    def testManyTopicsManyPosts(self):
+        """Tests when many topics have many new posts."""
+        self.fail()
+
+    def testManyUsers(self):
+        """Tests when many users have participated."""
+        self.fail()
 
 
 if __name__ == '__main__':

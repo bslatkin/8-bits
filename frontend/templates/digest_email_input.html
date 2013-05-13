@@ -1,1 +1,133 @@
-html here
+{% extends "email_container.html" %}
+
+{% block content %}
+
+<style type="text/css">
+.header {
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-weight: normal;
+    font-size: 20px;
+    line-height: 20px;
+    color: #000000;
+}
+.content {
+    font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 14px;
+    line-height: 16px;
+    color: #000000;
+}
+em {
+    font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+    font-weight: normal;
+    font-style: italic;
+    font-size: 14px;
+    line-height: 14px;
+    color: #888888;
+}
+strong {
+    font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+    font-weight: bold;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 20px;
+    color: #000000;
+}
+a {
+    color: #000000;
+}
+.shard-section {
+
+}
+.shard-info {
+    font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 14px;
+    line-height: 16px;
+    color: #888888;
+}
+.topic-list {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+.topic-item,
+.topic-link,
+.topic-nickname,
+.topic-description {
+    font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 12px;
+    line-height: 14px;
+    color: #000000;
+}
+.disclaimer-text {
+    font-family: Menlo, Monaco, Andale Mono, monospace, sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 9px;
+    line-height: 9px;
+    color: #888888;
+}
+.disclaimer-text a {
+    color: #888888;
+}
+</style>
+
+<div class="content">
+
+<div class="header">
+{{email_title}}
+</div>
+<br>
+
+{% if previous_notified_time %}
+<div class="shard-info">
+    In the past {{previous_notified_time|timesince}}
+</div>
+<br>
+{% endif %}
+
+<br>
+
+{% for shard_dict in shard_list %}
+<div class="shard-section">
+    <strong><a href="{{shard_dict.shard_url}}">{{shard_dict.shard_id}}</a></strong>
+    <br>
+    <div class="shard-info">
+        <span>{{shard_dict.total_topics}} topic{{shard_dict.total_topics|pluralize}}</span>,
+        <span>{{shard_dict.total_updates}} update{{shard_dict.total_updates|pluralize}}</span>
+    </div>
+    {% if shard_dict.topic_list %}
+        <br>
+        <ul class="topic-list">
+        {% for topic_dict in shard_dict.topic_list %}
+            <li class="topic-item">
+                <a class="topic-link" href="{{topic_dict.title}}">{{topic_dict.title}}</a>
+                <br>
+                <span class="topic-nickname">{{topic_dict.creation_nickname}}:</span>
+                <span class="topic-description">{{topic_dict.description}}</span>
+            </li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% if not forloop.last %}
+    <br><br>
+{% endif %}
+{% endfor %}
+
+</div>
+
+<br><br>
+<div class="disclaimer-text">
+    <center>
+        To stop receiving these emails, please visit <a href="{{email_resource_host_prefix}}/email">your settings page</a>.
+    </center>
+</div>
+<br>
+
+{% endblock content %}

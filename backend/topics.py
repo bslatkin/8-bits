@@ -55,8 +55,6 @@ def list_topics(root_shard_id, user_id):
     query = query.order(-models.Shard.update_time)
     shard_list = yield query.fetch_async(100)
 
-    print '    !!!shard list is', shard_list
-
     # Get the current user's readstate for each shard that was found.
     read_state_key_list = [
         ndb.Key(models.LoginRecord._get_kind(), user_id,
@@ -149,8 +147,8 @@ class CreateTopicHandler(base.BaseRpcHandler):
         login_record = self.require_active_login()
 
         topic_shard_id, _ = start_topic(
-            self.shard, self.user_id, login_record.nickname,
-            title, description)
+            self.shard, self.user_id, post_id,
+            login_record.nickname, title, description)
 
         self.json_response['shardId'] = topic_shard_id
 

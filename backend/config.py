@@ -55,8 +55,25 @@ user_token_lifetime_seconds = 6 * 60 * 60    # 6 hours
 # Current version of the terms of service
 terms_version = 1
 
-# Email address to use for sending notification emails.
-notification_from_email = 'ephemeral.im <notify@ephemeral.im>'
+# Name of the site to use in alt-text and various titles
+site_name = '8-bits of ephemera'
 
-# Import all secret keys
-from secrets import *
+# Email address to use for sending notification emails.
+notification_from_email = '8-bits of ephemera <%s.appspotmail.com>' % (
+    os.environ.get('APPLICATION_ID', 'test-app'))
+
+# Template used for shard URLs
+shard_url_template = 'https://%s.appspot.com/chat/' % (
+    os.environ.get('APPLICATION_ID', '')) + '%s'
+
+# Hostname to use for resources in emails
+email_resource_host_prefix = '//%s.appspot.com' % (
+    os.environ.get('APPLICATION_ID', ''))
+
+# Beaker keys, overridden by the 'secrets' module.
+session_encrypt_key = 'for-tests'
+session_validate_key = 'for-tests'
+
+# Import all secret keys and config overrides if we're in the actual container.
+if os.environ.get('SERVER_SOFTWARE'):
+    from secrets import *

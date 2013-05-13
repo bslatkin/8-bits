@@ -377,7 +377,7 @@ bits.topics.TopicMenu.prototype.handleTopicClick = function(event) {
 
 
 /**
- * Prompts the user for detail about a topic. 
+ * Prompts the user for detail about a topic.
  *
  * @param {string} shardId ID of the shard for starting topics.
  * @extends {goog.ui.Component}
@@ -444,7 +444,7 @@ goog.inherits(bits.topics.TopicPrompt, goog.ui.Component);
  * @const
  */
 bits.topics.TopicPrompt.PLACEHOLDER_TEXT_ =
-    'Type what you think about this topic here';
+    'Type what you think about this link here';
 
 
 /**
