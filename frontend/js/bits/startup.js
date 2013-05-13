@@ -1,11 +1,11 @@
 // Copyright 2010 Brett Slatkin, Nathan Naze
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ bits.startup = function(params) {
   var firstLogin = params.first_login;
   var mustAcceptTerms = params.must_accept_terms;
   var soundsEnabled = params.sounds_enabled;
+  var xsrfToken = params.xsrf_token;
 
   var c = new goog.debug.Console();
   c.setCapturing(true);
@@ -49,7 +50,7 @@ bits.startup = function(params) {
 
   // Set up all the various UI components.
   var connection = new bits.connection.Connection(
-      shardId, nickname, soundsEnabled);
+      xsrfToken, shardId, nickname, soundsEnabled);
 
   var chatbox = new bits.chatbox.ChatBox(shardId);
   chatbox.decorate(goog.dom.getElement('chatbox'));

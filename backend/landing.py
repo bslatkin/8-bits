@@ -29,7 +29,7 @@ import ndb
 class LandingHandler(base.BaseHandler):
     """Renders the landing page."""
 
-    def get(self):
+    def handle_request(self):
         # Treat xyz.example.com/the same as www.example.com/chat/xyz
         host_parts = self.request.host.split('.')
         if len(host_parts) > 2 and host_parts[0] != 'www':
@@ -43,16 +43,14 @@ class LandingHandler(base.BaseHandler):
 class TermsHandler(base.BaseHandler):
     """Renders the terms of service page."""
 
-    def get(self):
+    def handle_request(self):
         self.render('terms.html', dict(page_name='terms'))
 
 
 class CreateChatroomHandler(base.BaseHandler):
     """Creates a new chatroom URL and redirects the user to it."""
 
-    def post(self):
-        # TODO(bslatkin): Add XSRF protection
-
+    def handle_request(self):
         shard_id = None
         while True:
             def txn():
@@ -130,6 +128,7 @@ class ChatroomHandler(base.BaseHandler):
             'shard_id': shard_id,
             'short_url': self.request.path_url,
             'sounds_enabled': sounds_enabled,
+            'xsrf_token': self.session['xsrf_token'],
         }
         context['params'] = json.dumps(context)
 

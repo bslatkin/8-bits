@@ -8,7 +8,6 @@ v2 features:
     - create templates
     - verify behavior in tests
     - add UI for supplying email address
-- XSRF protection on posts
 - Responsive CSS for mobile
 - Auto-populate email/nickname from last shard seen in cookie
 

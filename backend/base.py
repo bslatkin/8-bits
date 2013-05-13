@@ -49,7 +49,6 @@ class PostError(Error):
     """A posting could not be made."""
 
 
-# TODO(bslatkin): Add XSRF protection to this class.
 class BaseHandler(webapp.RequestHandler):
     """Base handler for handling web requests."""
 
@@ -59,18 +58,35 @@ class BaseHandler(webapp.RequestHandler):
     # Allow requests with the POST verb.
     post_enabled = True
 
+    def _require_xsrf_token(self):
+        # TODO(bslatkin): Rotate the token periodically.
+        if 'xsrf_token' not in self.session:
+            self.session['xsrf_token'] = models.human_uuid()
+            self.session.save()
+
     def get(self, *args):
         if not self.get_enabled:
             self.response.set_status(405)
             return
         self.session = self.request.environ['beaker.session']
+        self._require_xsrf_token()
         self.handle_request(*args)
 
     def post(self, *args):
         if not self.post_enabled:
             self.response.set_status(405)
             return
+
         self.session = self.request.environ['beaker.session']
+        self._require_xsrf_token()
+
+        found_token = self.request.get('xsrf_token')
+        if found_token != self.session['xsrf_token']:
+            logging.warning('XSRF token invalid! session=%r', self.session)
+            self.response.headers['X-Why'] = 'Bad XSRF token'
+            self.response.set_status(403)
+            return
+
         self.handle_request(*args)
 
     def handle_request(self, *args):
@@ -130,6 +146,7 @@ class BaseHandler(webapp.RequestHandler):
             'js_mode': js_mode,
             'page_name': 'base',
             'site_name': config.site_name,
+            'xsrf_token': self.session['xsrf_token'],
         }
         if context:
             my_context.update(context)

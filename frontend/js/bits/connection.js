@@ -1,11 +1,11 @@
 // Copyright 2010 Brett Slatkin, Nathan Naze
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,12 +34,14 @@ goog.require('bits.events');
 /**
  * Creates a new connection.
  *
+ * @param {string} xsrfToken XSRF prevention token for this connection.
  * @param {string} shardId Shard ID for this connection.
  * @param {string} nickname Initial nickname this user has.
  * @param {boolean} soundsEnabled True if the user should hear sounds.
  * @constructor
  */
-bits.connection.Connection = function(shardId, nickname, soundsEnabled) {
+bits.connection.Connection =
+    function(xsrfToken, shardId, nickname, soundsEnabled) {
   /**
    * @type {goog.debug.Logger}
    * @private
@@ -83,6 +85,12 @@ bits.connection.Connection = function(shardId, nickname, soundsEnabled) {
   this.retryTimer_ = new goog.Timer(5);
 
   this.eh_.listen(this.retryTimer_, goog.Timer.TICK, this.setPresence_);
+
+  /**
+   * @type {string}
+   * @private
+   */
+  this.xsrfToken_ = xsrfToken;
 
   /**
    * @type {string}
@@ -168,6 +176,7 @@ bits.connection.Connection.prototype.setPresence_ =
   this.retryTimer_.stop();
 
   var params = new goog.Uri.QueryData();
+  params.add('xsrf_token', this.xsrfToken_);
   params.add('shard', this.shardId_);
   params.add('nickname', this.nickname_);
   params.add('sounds_enabled', this.soundsEnabled_ ? 'true' : '');
@@ -429,6 +438,7 @@ bits.connection.Connection.prototype.handleSubmitPost_ = function(postMap) {
   postMap['postTimeMs'] = (new goog.date.DateTime()).getTime();
 
   var params = new goog.Uri.QueryData();
+  params.add('xsrf_token', this.xsrfToken_);
   params.add('body', postMap['body']);
   params.add('post_id', postMap['postId']);
   params.add('type', postMap['archiveType']);
@@ -546,6 +556,7 @@ bits.connection.Connection.prototype.reportError_ =
  */
 bits.connection.Connection.prototype.requestRoster_ = function() {
   var params = new goog.Uri.QueryData();
+  params.add('xsrf_token', this.xsrfToken_);
   params.add('shard', this.shardId_);
   this.xhrManager_.send(
       this.getNextMessageId_(),
@@ -595,6 +606,7 @@ bits.connection.Connection.prototype.requestOldPosts_ =
     function(opt_start, opt_end, opt_count) {
   // TODO(bslatkin): Add a guard so only one of these is outstanding.
   var params = new goog.Uri.QueryData();
+  params.add('xsrf_token', this.xsrfToken_);
   var start = opt_start || 0;
   var end = opt_end || 0;
   var count = opt_count || 100;
@@ -646,10 +658,11 @@ bits.connection.Connection.prototype.handleRequestHistoricalPostsSuccessful_ =
 bits.connection.Connection.prototype.handleSubmitTopic_ =
     function(link, summary) {
   var params = new goog.Uri.QueryData();
-  var postId = bits.connection.Connection.uuidCompact();
+  params.add('xsrf_token', this.xsrfToken_);
   params.add('shard', this.shardId_);
   params.add('title', link);
   params.add('description', summary);
+  var postId = bits.connection.Connection.uuidCompact();
   params.add('post_id', postId);
   this.xhrManager_.send(
       this.getNextMessageId_(),

@@ -39,7 +39,7 @@
 
         <div class="landing-button-container clear">
             <form action="/create" method="post" id="create-form">
-                {# TODO: XSRF protection #}
+                <input type="hidden" name="xsrf_token" value="{{xsrf_token}}">
                 <a href="javascript:void(0)" onclick="document.getElementById('create-form').submit();"
                     class="landing-create-image-c">
                     <img class="landing-create-image" width="300" height="49"
