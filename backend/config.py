@@ -66,6 +66,9 @@ notification_from_email = '8-bits of ephemera <%s.appspotmail.com>' % (
 shard_url_template = 'https://%s.appspot.com/chat/' % (
     os.environ.get('APPLICATION_ID', '')) + '%s'
 
+# Homepage URL
+homepage_url = 'https://%s.appspot.com/' % os.environ.get('APPLICATION_ID', '')
+
 # Hostname to use for resources in emails
 email_resource_host_prefix = 'https://%s.appspot.com' % (
     os.environ.get('APPLICATION_ID', ''))

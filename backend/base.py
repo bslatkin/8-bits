@@ -140,6 +140,7 @@ class BaseHandler(webapp.RequestHandler):
         """Renders the given template and context."""
         my_context = {
             'cache_buster': config.version_id,
+            'homepage_url': config.homepage_url,
             'host_url': self.request.host_url,
             'js_mode': 'compiled',
             'page_name': 'base',
