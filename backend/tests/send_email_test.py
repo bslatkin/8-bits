@@ -63,7 +63,10 @@ class SendEmailTest(unittest.TestCase):
         """Tests sending the digest email when there are no topics."""
         self.make_post('first', 'my message 1')
         send_email.send_digest_email('foo@example.com', 1)
-        self.fail()
+
+        mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        message_list = mail_stub.get_sent_messages()
+        self.assertEquals(0, len(message_list))
 
     def login_user(self, shard_id=None):
         """Logs in the user."""
@@ -98,11 +101,12 @@ class SendEmailTest(unittest.TestCase):
         topic_shard_id, _ = topics.start_topic(
             shard_id,
             self.user_id,
-            'my-post-id-%d' % time.time(),
+            'my-post-id-%f' % time.time(),
             nickname,
             url,
             description)
         posts.apply_posts(shard_id)
+        posts.apply_posts(topic_shard_id)
         return topic_shard_id
 
     def get_email(self, count=1, index=0):
@@ -133,10 +137,30 @@ class SendEmailTest(unittest.TestCase):
 
         self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
                           message.sender)
-        self.assertEquals("What's new: 1 topic, 2 updates",
+        self.assertEquals("What's new: 1 topic, 1 update",
                           message.subject)
 
-        self.fail()
+    def testMultipleRootShardsOnly(self):
+        """Tests multiple root shards have new data with no topics."""
+        shard1 = models.Shard(id='my-shard-1')
+        shard1.put()
+        shard2 = models.Shard(id='my-shard-2')
+        shard2.put()
+
+        self.login_user(shard1.shard_id)
+        self.login_user(shard2.shard_id)
+
+        self.make_post('first', 'my message 1', shard_id=shard1.shard_id)
+        self.make_post('second', 'my message 2', shard_id=shard2.shard_id)
+
+        send_email.send_digest_email('foo@example.com', 1)
+
+        message = self.get_email()
+
+        self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
+                          message.sender)
+        self.assertEquals("What's new: 2 topics, 2 updates",
+                          message.subject)
 
     def testOneTopicNewPost(self):
         """Tests when a single topic has a new post."""
@@ -224,7 +248,7 @@ class SendEmailTest(unittest.TestCase):
 
         self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
                           message.sender)
-        self.assertEquals("What's new: 1 topic, 1 update",
+        self.assertEquals("What's new: 1 topic, 3 updates",
                           message.subject)
 
     def testManyTopicsManyPosts(self):
@@ -257,7 +281,7 @@ class SendEmailTest(unittest.TestCase):
 
         self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
                           message.sender)
-        self.assertEquals("What's new: 2 topics, 5 updates",
+        self.assertEquals("What's new: 2 topics, 7 updates",
                           message.subject)
 
     def testMultipleShards(self):
@@ -289,7 +313,7 @@ class SendEmailTest(unittest.TestCase):
 
         self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
                           message.sender)
-        self.assertEquals("What's new: 2 topics, 3 updates",
+        self.assertEquals("What's new: 2 topics, 5 updates",
                           message.subject)
 
 

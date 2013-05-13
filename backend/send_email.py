@@ -97,12 +97,17 @@ def get_topic_info(root_shard_id, email_address):
         root_shard_id, user_id)
     shard_and_state_list.sort(key=lambda x: x[0].update_time)
 
-    # TODO(bslatkin): What about read-state for the root shard itself?
-
     topic_list = []
     update_dict = {}
     total_updates = 0
     for topic_shard, read_state in shard_and_state_list:
+        # Do not include the root shard in the list of topics if any other
+        # topics exist, since it will always include all of the updates for
+        # related topics. We only want it to be in the list for the very
+        # first email digest for each user if a topic was never started.
+        if len(shard_and_state_list) > 1 and not topic_shard.root_shard:
+            continue
+
         start_sequence = 1
         end_sequence = topic_shard.sequence_number
         if read_state:
@@ -114,8 +119,6 @@ def get_topic_info(root_shard_id, email_address):
             continue
 
         total_updates += updates_count
-
-        # TODO(bslatkin): Restrict the updated topics to just new topics?
 
         # TODO(bslatkin): Fetch all of the new posts for this topic and
         # extract the nicknames and/or gravatars of the users who have

@@ -42,6 +42,7 @@ def list_topics(root_shard_id, user_id):
                 be in order of update_time with most recently updated shards
                 first.
     """
+    # TODO(bslatkin): Remove the root_shard return value.
     root_shard_future = models.Shard.get_by_id_async(
         root_shard_id, use_cache=False, use_memcache=False)
 
@@ -55,6 +56,11 @@ def list_topics(root_shard_id, user_id):
     query = query.order(-models.Shard.update_time)
     shard_list = yield query.fetch_async(100)
 
+    # Include the root shard in the list of topics so the email digester
+    # will include updates to the root shard if no topics have ever been sent.
+    root_shard = yield root_shard_future
+    shard_list.append(root_shard)
+
     # Get the current user's readstate for each shard that was found.
     read_state_key_list = [
         ndb.Key(models.LoginRecord._get_kind(), user_id,
@@ -62,8 +68,6 @@ def list_topics(root_shard_id, user_id):
         for shard in shard_list]
     read_state_list = yield ndb.get_multi_async(read_state_key_list)
     shard_and_state_list = zip(shard_list, read_state_list)
-
-    root_shard = yield root_shard_future
 
     raise ndb.Return((root_shard, shard_and_state_list))
 

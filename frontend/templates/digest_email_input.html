@@ -110,12 +110,14 @@ a {
     {% if shard_dict.topic_list %}
         <ul class="topic-list">
         {% for topic_dict in shard_dict.topic_list %}
-            <li class="topic-item">
-                <a class="topic-link" href="{{topic_dict.title}}">{{topic_dict.title}}</a>
-                <br>
-                <span class="topic-nickname">{{topic_dict.creation_nickname}}:</span>
-                <span class="topic-description">{{topic_dict.description}}</span>
-            </li>
+            {% if topic_dict.title %}
+                <li class="topic-item">
+                    <a class="topic-link" href="{{topic_dict.title}}">{{topic_dict.title}}</a>
+                    <br>
+                    <span class="topic-nickname">{{topic_dict.creation_nickname}}:</span>
+                    <span class="topic-description">{{topic_dict.description}}</span>
+                </li>
+            {% endif %}
         {% endfor %}
         </ul>
     {% endif %}
