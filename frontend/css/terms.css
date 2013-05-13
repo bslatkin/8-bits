@@ -1,0 +1,16 @@
+.bits-page-terms .container {
+  padding: 0 10px;
+}
+
+@media (max-width: 799px) {
+  .bits-page-terms .container {
+    width: auto;
+  }
+  .bits-page-terms img {
+    width: 80%;
+    height: auto;
+  }
+  .landing-create-image-c {
+    width: 60%;
+  }
+}
