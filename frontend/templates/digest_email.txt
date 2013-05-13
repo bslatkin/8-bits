@@ -1,7 +1,20 @@
-text here
-{% for shard, topic_info_list in shards.iteritems %}
-Shard: {{shard}}
-{% for topic_info in topic_info_list %}
-{{topic_info.title}}
-{% endfor %}
-{% endfor %}
+{{site_name}}
+
+{{email_title|safe}}
+{% if email_record.previous_notified_time %}in the past {{email_record.previous_notified_time|timesince}}
+{% endif %}
+
+{% for shard_dict in shard_list %}{{shard_dict.shard_url|safe}}
+{{shard_dict.total_topics}} topic{{shard_dict.total_topics|pluralize}}, {{shard_dict.total_updates}} update{{shard_dict.total_updates|pluralize}}
+{% if shard_dict.topic_list %}{% for topic_dict in shard_dict.topic_list %}{% if topic_dict.title %}
+{{topic_dict.title|safe}}
+{{topic_dict.creation_nickname|safe}}: {{topic_dict.description|safe}}
+{% endif %}{% endfor %}{% endif %}{% if not forloop.last %}
+
+{% endif %}{% endfor %}
+
+
+
+To stop receiving these emails, please visit your settings page:
+
+{{email_resource_host_prefix}}/email?address={{email_record.email_address}}&secret={{email_record.secret}}
