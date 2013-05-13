@@ -19,6 +19,7 @@
 import json
 import logging
 import os
+import random
 import unittest
 
 from google.appengine.ext import testbed
@@ -76,6 +77,36 @@ class SendEmailTest(unittest.TestCase):
         posts.apply_posts(self.shard.shard_id)
         return post_key
 
+    def start_topic(self, url, nickname, description):
+        """Makes a test topic."""
+        topic_shard_id, _ = topics.start_topic(
+            self.shard.shard_id,
+            self.user_id,
+            'my-post-id-' % random.randint(),
+            nickname,
+            url,
+            description)
+        posts.apply_posts(self.shard.shard_id)
+        return topic_shard_id
+
+    def get_email(self):
+        """Gets a sent email, saves it to the /tmp directory for previewing."""
+        mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
+        message_list = mail_stub.get_sent_messages()
+        self.assertEquals(1, len(message_list))
+        message = message_list[0]
+
+        html_content = message.html.payload
+        text_content = message.body.payload
+
+        output_path = '/tmp/test_email_output_%s' % self.id()
+        print 'Writing output to', output_path
+
+        open(output_path + '.html', 'w').write(html_content)
+        open(output_path + '.txt', 'w').write(text_content)
+
+        return message
+
     def testRootShardOnly(self):
         """Tests when only the root shard has new data."""
         self.fail()
@@ -87,39 +118,23 @@ class SendEmailTest(unittest.TestCase):
         login_record.email_address = 'foo@example.com'
         login_record.put()
 
-        topic_shard_id, _ = topics.start_topic(
-            self.shard.shard_id,
-            self.user_id,
-            'my-post-id',
-            'cilantro',
+        topic_shard_id = self.start_topic(
             'http://www.example.com/path/is/here',
+            'cilantro',
             'This is my long winded topic description that surely will '
             'bore you to tears')
-        posts.apply_posts(self.shard.shard_id)
 
         self.make_post('first', 'my message 1')
         posts.apply_posts(topic_shard_id)
 
         send_email.send_digest_email('foo@example.com', 1)
 
-        mail_stub = self.testbed.get_stub(testbed.MAIL_SERVICE_NAME)
-        message_list = mail_stub.get_sent_messages()
-        self.assertEquals(1, len(message_list))
-        message = message_list[0]
+        message = self.get_email()
 
         self.assertEquals('8-bits of ephemera <test-app.appspotmail.com>',
                           message.sender)
         self.assertEquals("What's new: 1 topic, 2 updates",
                           message.subject)
-
-        html_content = message.html.payload
-        text_content = message.body.payload
-
-        output_path = '/tmp/test_email_output_%s' % self.id()
-        print 'Writing output to', output_path
-
-        open(output_path + '.html', 'w').write(html_content)
-        open(output_path + '.txt', 'w').write(text_content)
 
     def testNotifyTwiceNoChanges(self):
         """Tests that notifying when there are no changes sends no email."""
